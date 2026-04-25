@@ -9,6 +9,7 @@ export const register = asyncHandler(async (req, res) => {
 });
 
 export const login = asyncHandler(async (req, res) => {
+   console.log("LOGIN BODY:", req.body);
   validateLoginInput(req.body);
   const data = await loginUser(req.body);
   res.json({ success: true, data });

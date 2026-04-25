@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Eye, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import Badge from "../../../components/common/Badge";
@@ -58,7 +59,8 @@ export default function ProjectsPage() {
       key: "actions",
       label: "Actions",
       render: (row) => (
-        <Link className="text-gold-2" to={`/projects/${row._id}`}>
+        <Link className="inline-flex items-center gap-2 text-gold-2" to={`/projects/${row._id}`}>
+          <Eye className="h-4 w-4" />
           View
         </Link>
       ),
@@ -73,7 +75,7 @@ export default function ProjectsPage() {
           <h2 className="mt-2 font-display text-3xl">Search by requirement, not guesswork</h2>
         </div>
         <Link to="/projects/new">
-          <Button>Add Project</Button>
+          <Button icon={Plus}>Add Project</Button>
         </Link>
       </div>
 
@@ -91,4 +93,3 @@ export default function ProjectsPage() {
     </div>
   );
 }
-

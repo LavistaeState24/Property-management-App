@@ -1,3 +1,5 @@
+import { Building2, MapPin, Wallet } from "lucide-react";
+
 import Badge from "../common/Badge";
 
 export default function ProjectCard({ project }) {
@@ -13,16 +15,21 @@ export default function ProjectCard({ project }) {
       <div className="mt-5 grid grid-cols-2 gap-3 text-sm text-muted">
         <div>
           <p className="text-xs uppercase tracking-[0.2em]">Type</p>
-          <p className="mt-1 text-ivory">{project.configuration || project.propertyType}</p>
+          <div className="mt-1 flex items-center gap-2 text-ivory">
+            <Building2 className="h-4 w-4 text-gold-2" />
+            <p>{project.configuration || project.propertyType}</p>
+          </div>
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.2em]">Budget</p>
-          <p className="mt-1 text-ivory">
-            {project.priceRange?.min?.toLocaleString("en-IN")} - {project.priceRange?.max?.toLocaleString("en-IN")}
-          </p>
+          <div className="mt-1 flex items-center gap-2 text-ivory">
+            <Wallet className="h-4 w-4 text-gold-2" />
+            <p>
+              {project.priceRange?.min?.toLocaleString("en-IN")} - {project.priceRange?.max?.toLocaleString("en-IN")}
+            </p>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

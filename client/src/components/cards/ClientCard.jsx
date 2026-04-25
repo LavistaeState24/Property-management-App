@@ -1,3 +1,5 @@
+import { BadgeIndianRupee, MapPin, Phone, Shapes } from "lucide-react";
+
 import Badge from "../common/Badge";
 
 export default function ClientCard({ client }) {
@@ -6,16 +8,27 @@ export default function ClientCard({ client }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-display text-xl text-ivory">{client.name}</h3>
-          <p className="mt-1 text-sm text-muted">{client.phone}</p>
+          <div className="mt-1 flex items-center gap-2 text-sm text-muted">
+            <Phone className="h-4 w-4" />
+            <p>{client.phone}</p>
+          </div>
         </div>
         <Badge tone="gold">{client.status}</Badge>
       </div>
       <div className="mt-4 space-y-2 text-sm text-muted">
-        <p>Area: <span className="text-ivory">{client.preferredArea || "Not specified"}</span></p>
-        <p>Type: <span className="text-ivory">{client.propertyType || "Not specified"}</span></p>
-        <p>Budget: <span className="text-ivory">{client.budgetMin || "-"} - {client.budgetMax || "-"}</span></p>
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4" />
+          <p>Area: <span className="text-ivory">{client.preferredArea || "Not specified"}</span></p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Shapes className="h-4 w-4" />
+          <p>Type: <span className="text-ivory">{client.propertyType || "Not specified"}</span></p>
+        </div>
+        <div className="flex items-center gap-2">
+          <BadgeIndianRupee className="h-4 w-4" />
+          <p>Budget: <span className="text-ivory">{client.budgetMin || "-"} - {client.budgetMax || "-"}</span></p>
+        </div>
       </div>
     </div>
   );
 }
-
