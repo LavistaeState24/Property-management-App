@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { ArrowRight, Building2, CalendarClock, FolderKanban, TrendingUp, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
+import Button from "../../../components/common/Button";
 import StatCard from "../../../components/common/StatCard";
 import ProjectCard from "../../../components/cards/ProjectCard";
 import ClientCard from "../../../components/cards/ClientCard";
@@ -34,9 +37,15 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-3">
-        <StatCard label="Total Projects" value={summary?.totalProjects ?? "--"} accent="gold" meta="Inventory" />
-        <StatCard label="Active Projects" value={summary?.activeProjects ?? "--"} accent="green" meta="Live" />
-        <StatCard label="Upcoming Launches" value={summary?.upcomingProjects ?? "--"} accent="wine" meta="Pipeline" />
+        <StatCard label="Total Projects" value={summary?.totalProjects ?? "--"} accent="gold" meta="Inventory" icon={FolderKanban} />
+        <StatCard label="Active Projects" value={summary?.activeProjects ?? "--"} accent="green" meta="Live" icon={TrendingUp} />
+        <StatCard
+          label="Upcoming Launches"
+          value={summary?.upcomingProjects ?? "--"}
+          accent="wine"
+          meta="Pipeline"
+          icon={CalendarClock}
+        />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.2fr,0.8fr]">
@@ -46,6 +55,11 @@ export default function DashboardPage() {
               <p className="text-xs uppercase tracking-[0.3em] text-gold">Inventory Picks</p>
               <h3 className="mt-2 font-display text-2xl">Fresh project additions</h3>
             </div>
+            <Link to="/projects">
+              <Button variant="secondary" icon={Building2} iconRight={ArrowRight}>
+                View all
+              </Button>
+            </Link>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {projects.map((project) => (
@@ -56,8 +70,13 @@ export default function DashboardPage() {
 
         <div className="space-y-6">
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-            <p className="text-xs uppercase tracking-[0.3em] text-gold">Today</p>
-            <h3 className="mt-2 font-display text-2xl">Follow-up radar</h3>
+            <div className="flex items-center gap-3">
+              <CalendarClock className="h-5 w-5 text-gold-2" />
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-gold">Today</p>
+                <h3 className="mt-2 font-display text-2xl">Follow-up radar</h3>
+              </div>
+            </div>
             <div className="mt-5 space-y-3">
               {followups.length ? (
                 followups.map((followup) => (
@@ -73,8 +92,20 @@ export default function DashboardPage() {
           </div>
 
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-            <p className="text-xs uppercase tracking-[0.3em] text-gold">Leads</p>
-            <h3 className="mt-2 font-display text-2xl">Priority clients</h3>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-gold-2" />
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-gold">Leads</p>
+                  <h3 className="mt-2 font-display text-2xl">Priority clients</h3>
+                </div>
+              </div>
+              <Link to="/clients">
+                <Button variant="secondary" icon={Users} iconRight={ArrowRight}>
+                  View all
+                </Button>
+              </Link>
+            </div>
             <div className="mt-5 grid gap-4">
               {clients.map((client) => (
                 <ClientCard key={client._id} client={client} />
@@ -86,4 +117,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

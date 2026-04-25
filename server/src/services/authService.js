@@ -25,13 +25,28 @@ export const registerUser = async (payload) => {
 };
 
 export const loginUser = async ({ email, password }) => {
+  console.log("LOGIN EMAIL:", email);
+  console.log("LOGIN PASSWORD:", password);
+
   const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
 
-  if (!user || !(await user.comparePassword(password))) {
-    throw new ApiError(401, "Invalid credentials");
+  console.log("USER FOUND:", user ? user.email : "No user found");
+  console.log("STORED PASSWORD:", user?.password);
+
+  if (!user) {
+    throw new ApiError(401, "User not found");
+  }
+
+  const isPasswordMatch = await user.comparePassword(password);
+
+  console.log("PASSWORD MATCH:", isPasswordMatch);
+
+  if (!isPasswordMatch) {
+    throw new ApiError(401, "Password does not match");
   }
 
   const token = signToken({ id: user._id, role: user.role });
+
   return { user: sanitizeUser(user), token };
 };
 

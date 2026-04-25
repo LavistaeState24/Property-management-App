@@ -1,4 +1,5 @@
 import cors from "cors";
+import authRoutes from "./routes/authRoutes.js";
 import express from "express";
 import morgan from "morgan";
 import path from "path";
@@ -24,6 +25,7 @@ app.get("/api/health", (_req, res) => {
   res.json({ success: true, message: "Server is healthy" });
 });
 
+app.use("/api/auth", authRoutes);
 app.use("/api", apiRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);

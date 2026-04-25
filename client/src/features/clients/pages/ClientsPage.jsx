@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import Button from "../../../components/common/Button";
@@ -38,7 +39,7 @@ export default function ClientsPage() {
           <h2 className="mt-2 font-display text-3xl">Client and pipeline management</h2>
         </div>
         <Link to="/clients/new">
-          <Button>Add Client</Button>
+          <Button icon={Plus}>Add Client</Button>
         </Link>
       </div>
 
@@ -46,4 +47,3 @@ export default function ClientsPage() {
     </div>
   );
 }
-

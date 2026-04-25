@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Building2, ClipboardList, Link2, ScrollText, Sparkles, Wallet } from "lucide-react";
 import { useParams } from "react-router-dom";
 
 import Badge from "../../../components/common/Badge";
@@ -41,33 +42,48 @@ export default function ProjectDetailsPage() {
         </div>
         <div className="flex items-center gap-3">
           <Badge tone="green">{project.status}</Badge>
-          <Button onClick={handleGenerateShare}>Generate Client Link</Button>
+          <Button onClick={handleGenerateShare} icon={Link2}>Generate Client Link</Button>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
         <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-          <h3 className="font-display text-2xl">Project intelligence</h3>
+          <div className="flex items-center gap-3">
+            <Sparkles className="h-5 w-5 text-gold-2" />
+            <h3 className="font-display text-2xl">Project intelligence</h3>
+          </div>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-muted">Configuration</p>
-              <p className="mt-2 text-lg text-ivory">{project.configuration || project.propertyType}</p>
+              <div className="mt-2 flex items-center gap-2 text-lg text-ivory">
+                <Building2 className="h-4 w-4 text-gold-2" />
+                <p>{project.configuration || project.propertyType}</p>
+              </div>
             </div>
             <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-muted">Budget</p>
-              <p className="mt-2 text-lg text-ivory">
-                {project.priceRange?.min?.toLocaleString("en-IN")} - {project.priceRange?.max?.toLocaleString("en-IN")}
-              </p>
+              <div className="mt-2 flex items-center gap-2 text-lg text-ivory">
+                <Wallet className="h-4 w-4 text-gold-2" />
+                <p>
+                  {project.priceRange?.min?.toLocaleString("en-IN")} - {project.priceRange?.max?.toLocaleString("en-IN")}
+                </p>
+              </div>
             </div>
             <div className="rounded-3xl border border-white/10 bg-black/20 p-4 md:col-span-2">
               <p className="text-xs uppercase tracking-[0.2em] text-muted">Amenities</p>
-              <p className="mt-2 text-lg text-ivory">{project.amenities?.join(", ") || "Not added"}</p>
+              <div className="mt-2 flex items-center gap-2 text-lg text-ivory">
+                <ClipboardList className="h-4 w-4 text-gold-2" />
+                <p>{project.amenities?.join(", ") || "Not added"}</p>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-          <h3 className="font-display text-2xl">Internal controls</h3>
+          <div className="flex items-center gap-3">
+            <ScrollText className="h-5 w-5 text-gold-2" />
+            <h3 className="font-display text-2xl">Internal controls</h3>
+          </div>
           <div className="mt-5 space-y-4 text-sm text-muted">
             <div>
               <p className="text-xs uppercase tracking-[0.2em]">Builder Details</p>
@@ -93,4 +109,3 @@ export default function ProjectDetailsPage() {
     </div>
   );
 }
-
