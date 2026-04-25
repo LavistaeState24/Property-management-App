@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-
 import { navigationItems } from "./navigation";
 
 export const SIDEBAR_WIDTH = "18rem";
@@ -12,19 +11,25 @@ export default function Sidebar({ isOpen, onClose }) {
     if (window.innerWidth < 1024) {
       onClose();
     }
-  }, [location.pathname, onClose]);
+  }, [location.pathname]);
 
   return (
     <aside
-      className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-72 border-r border-white/10 bg-ink/95 px-4 py-5 shadow-glass backdrop-blur-xl transition-transform duration-300 ease-out ${
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={`fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] w-64 flex-col border-r border-white/10 bg-[#0d0c0a]/95 px-4 py-5 shadow-glass backdrop-blur-xl transition-transform duration-300 ease-out
+  ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
     >
-      <div className="mb-8 px-2">
-        <p className="text-xs uppercase tracking-[0.4em] text-gold">Lavista</p>
-        <h1 className="mt-2 font-display text-2xl text-ivory">Estate CRM</h1>
+      {/* Brand */}
+      <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
+        <p className="font-serif text-lg leading-none text-[#f3d79b]">
+          Lavista
+        </p>
+        <p className="mt-1 text-xs tracking-wide text-white/55">
+          Property Management
+        </p>
       </div>
-      <nav className="space-y-2">
+
+      {/* Navigation */}
+      <nav className="flex-1 space-y-2">
         {navigationItems.map((link) => {
           const Icon = link.icon;
 
@@ -32,20 +37,29 @@ export default function Sidebar({ isOpen, onClose }) {
             <NavLink
               key={link.to}
               to={link.to}
+              onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
-                  isActive
-                    ? "border border-gold/20 bg-gradient-to-r from-gold/20 to-transparent text-gold-2"
-                    : "text-muted hover:bg-white/5 hover:text-ivory"
+                `group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200
+            ${isActive
+                  ? "border border-[#c9a35d]/25 bg-gradient-to-r from-[#c9a35d]/20 to-transparent text-[#f3d79b] shadow-[0_0_22px_rgba(201,163,93,0.12)]"
+                  : "text-white/60 hover:bg-white/[0.06] hover:text-white"
                 }`
               }
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              {link.label}
+              <Icon className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+              <span className="truncate">{link.label}</span>
             </NavLink>
           );
         })}
       </nav>
+
+      {/* Bottom Card */}
+      <div className="mt-6 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] p-4">
+        <p className="text-sm font-medium text-white">CRM System</p>
+        <p className="mt-1 text-xs leading-5 text-white/50">
+          Manage projects, clients, follow-ups and property leads.
+        </p>
+      </div>
     </aside>
   );
 }

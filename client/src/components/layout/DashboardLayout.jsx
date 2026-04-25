@@ -5,16 +5,27 @@ import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 
 export default function DashboardLayout() {
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsSidebarOpen(window.innerWidth >= 1024);
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+
+    const handleBreakpointChange = (event) => {
+      setIsDesktop(event.matches);
+      setIsSidebarOpen(event.matches);
     };
 
-    window.addEventListener("resize", handleResize);
+    setIsDesktop(mediaQuery.matches);
+    setIsSidebarOpen(mediaQuery.matches);
 
-    return () => window.removeEventListener("resize", handleResize);
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleBreakpointChange);
+      return () => mediaQuery.removeEventListener("change", handleBreakpointChange);
+    }
+
+    mediaQuery.addListener(handleBreakpointChange);
+    return () => mediaQuery.removeListener(handleBreakpointChange);
   }, []);
 
   const closeSidebar = () => setIsSidebarOpen(false);
@@ -34,8 +45,8 @@ export default function DashboardLayout() {
         />
       ) : null}
 
-      <div className={`transition-[padding] duration-300 ${isSidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
-        <main className="min-h-screen px-4 pb-8 pt-20 sm:px-6 lg:px-8">
+      <div className={`transition-[padding] duration-300 ${isDesktop && isSidebarOpen ? "lg:pl-64" : "lg:pl-0"}`}>
+        <main className="min-h-screen px-4 pb-8 pt-20 sm:px-6 lg:px-4">
           <div className="mx-auto max-w-7xl">
             <Outlet />
           </div>

@@ -1,6 +1,6 @@
 import { LogOut, Menu, SquareUserRound } from "lucide-react";
-
 import Button from "../common/Button";
+import Logo from "../../assets/Logo.png";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
@@ -8,20 +8,28 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-4 py-3 shadow-xl">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-ivory transition hover:border-gold/50 hover:bg-white/10"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-ivory transition hover:border-gold/50 hover:bg-white/10"
             onClick={onToggleSidebar}
             aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
           >
             <Menu className="h-5 w-5" />
           </button>
           <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-[0.35em] text-gold">Control Room</p>
-            <h2 className="truncate font-display text-lg text-ivory sm:text-xl">Premium property operations</h2>
+            <div className="mt-1 flex items-center gap-3">
+
+              {/* Logo */}
+              <img
+                src={Logo}
+                className="h-10 w-auto object-contain sm:h-11"
+                alt="Lavista"
+              />
+            </div>
           </div>
+
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 sm:flex">
@@ -29,8 +37,8 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
               <SquareUserRound className="h-4 w-4" />
             </div>
             <div className="text-right">
-              <p className="text-sm text-ivory">{user?.name}</p>
               <p className="text-xs uppercase tracking-[0.22em] text-muted">{user?.role}</p>
+              <p className="text-sm text-ivory">{user?.name}</p>
             </div>
           </div>
           <Button variant="secondary" icon={LogOut} onClick={logout}>
