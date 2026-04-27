@@ -8,13 +8,29 @@ const shareLinkSchema = new mongoose.Schema(
       ref: "Project",
       required: true,
     },
-    sharedWithClientName: String,
+    sharedWithClientName: { type: String, trim: true, minlength: 3, maxlength: 60 },
     token: {
       type: String,
       unique: true,
       default: () => crypto.randomBytes(12).toString("hex"),
     },
-    selectedFields: [String],
+    selectedFields: [{
+      type: String,
+      enum: [
+        "publicAlias",
+        "location",
+        "propertyType",
+        "configuration",
+        "sizeRange",
+        "priceRange",
+        "possessionDate",
+        "amenities",
+        "brochure",
+        "sampleHouseVideoUrl",
+        "projectImages",
+        "status",
+      ],
+    }],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -26,4 +42,3 @@ const shareLinkSchema = new mongoose.Schema(
 );
 
 export const ShareLink = mongoose.model("ShareLink", shareLinkSchema);
-

@@ -6,10 +6,8 @@ import {
   updateClient,
 } from "../services/clientService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { validateClientInput } from "../validators/clientValidator.js";
 
 export const createClientHandler = asyncHandler(async (req, res) => {
-  validateClientInput(req.body);
   const client = await createClient(req.body, req.user._id);
   res.status(201).json({ success: true, data: client });
 });
@@ -33,4 +31,3 @@ export const deleteClientHandler = asyncHandler(async (req, res) => {
   await deleteClient(req.params.id);
   res.json({ success: true, message: "Client deleted successfully" });
 });
-

@@ -11,7 +11,7 @@ const followupSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
     },
-    note: { type: String, required: true },
+    note: { type: String, required: true, trim: true, minlength: 3, maxlength: 500 },
     dueDate: { type: Date, required: true },
     type: {
       type: String,
@@ -29,4 +29,3 @@ const followupSchema = new mongoose.Schema(
 );
 
 export const Followup = mongoose.model("Followup", followupSchema);
-

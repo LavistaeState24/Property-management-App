@@ -1,16 +1,12 @@
 import { getCurrentUser, listUsers, loginUser, registerUser } from "../services/authService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { validateLoginInput, validateRegisterInput } from "../validators/authValidator.js";
 
 export const register = asyncHandler(async (req, res) => {
-  validateRegisterInput(req.body);
   const data = await registerUser(req.body);
   res.status(201).json({ success: true, data });
 });
 
 export const login = asyncHandler(async (req, res) => {
-   console.log("LOGIN BODY:", req.body);
-  validateLoginInput(req.body);
   const data = await loginUser(req.body);
   res.json({ success: true, data });
 });
