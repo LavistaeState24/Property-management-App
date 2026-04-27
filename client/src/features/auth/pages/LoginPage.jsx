@@ -103,6 +103,7 @@ export default function LoginPage() {
                 label="Email"
                 type="email"
                 icon={Mail}
+                placeholder="Enter your email"
                 value={loginForm.email}
                 onChange={(event) => setLoginForm((prev) => ({ ...prev, email: event.target.value }))}
               />
@@ -110,6 +111,7 @@ export default function LoginPage() {
                 label="Password"
                 type={showLoginPassword ? "text" : "password"}
                 icon={KeyRound}
+                placeholder="Enter your password"
                 value={loginForm.password}
                 onChange={(event) => setLoginForm((prev) => ({ ...prev, password: event.target.value }))}
                 rightElement={
@@ -133,6 +135,7 @@ export default function LoginPage() {
               <FormInput
                 label="Full Name"
                 icon={UserRound}
+                placeholder="Enter your full name"
                 value={registerForm.name}
                 onChange={(event) => setRegisterForm((prev) => ({ ...prev, name: event.target.value }))}
               />
@@ -140,6 +143,7 @@ export default function LoginPage() {
                 label="Email"
                 type="email"
                 icon={Mail}
+                placeholder="Enter your email"
                 value={registerForm.email}
                 onChange={(event) => setRegisterForm((prev) => ({ ...prev, email: event.target.value }))}
               />
@@ -147,6 +151,7 @@ export default function LoginPage() {
                 label="Password"
                 type={showRegisterPassword ? "text" : "password"}
                 icon={KeyRound}
+                 placeholder="Create a strong password"
                 value={registerForm.password}
                 onChange={(event) => setRegisterForm((prev) => ({ ...prev, password: event.target.value }))}
                 rightElement={

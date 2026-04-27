@@ -1,7 +1,7 @@
 export default function SelectDropdown({ label, options = [], className = "", icon: Icon, ...props }) {
   return (
     <label className={`flex flex-col gap-2 ${className}`}>
-      <span className="text-sm text-muted">{label}</span>
+      <span className="font-semibold text-md text-muted">{label}</span>
       <div className="relative">
         {Icon ? (
           <Icon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
