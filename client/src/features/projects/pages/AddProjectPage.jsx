@@ -90,35 +90,166 @@ export default function AddProjectPage() {
       </div>
 
       <form className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2" onSubmit={handleSubmit}>
-        <FormInput label="Project Name" icon={Building2} value={form.projectName} onChange={(event) => setForm((prev) => ({ ...prev, projectName: event.target.value }))} />
-        <FormInput label="Client-safe Alias" icon={Building2} value={form.publicAlias} onChange={(event) => setForm((prev) => ({ ...prev, publicAlias: event.target.value }))} />
-        <FormInput label="Location" icon={MapPin} value={form.location} onChange={(event) => setForm((prev) => ({ ...prev, location: event.target.value }))} />
-        <FormInput label="Area" icon={MapPin} value={form.area} onChange={(event) => setForm((prev) => ({ ...prev, area: event.target.value }))} />
-        <SelectDropdown label="Property Type" icon={Shapes} value={form.propertyType} options={propertyTypes} onChange={(event) => setForm((prev) => ({ ...prev, propertyType: event.target.value }))} />
-        <FormInput label="Configuration" icon={Shapes} value={form.configuration} onChange={(event) => setForm((prev) => ({ ...prev, configuration: event.target.value }))} placeholder="3 BHK" />
-        <FormInput label="Size Min" value={form.sizeRange.min} onChange={(event) => updateNested("sizeRange", "min", event.target.value)} />
-        <FormInput label="Size Max" value={form.sizeRange.max} onChange={(event) => updateNested("sizeRange", "max", event.target.value)} />
-        <FormInput label="Price Min" icon={Wallet} value={form.priceRange.min} onChange={(event) => updateNested("priceRange", "min", event.target.value)} />
-        <FormInput label="Price Max" icon={Wallet} value={form.priceRange.max} onChange={(event) => updateNested("priceRange", "max", event.target.value)} />
-        <FormInput label="Total Plot Size" value={form.totalPlotSize} onChange={(event) => setForm((prev) => ({ ...prev, totalPlotSize: event.target.value }))} />
-        <FormInput label="Total Blocks" value={form.totalBlocks} onChange={(event) => setForm((prev) => ({ ...prev, totalBlocks: event.target.value }))} />
-        <FormInput label="Total Units" value={form.totalUnits} onChange={(event) => setForm((prev) => ({ ...prev, totalUnits: event.target.value }))} />
-        <FormInput label="Available Units" value={form.availableUnits} onChange={(event) => setForm((prev) => ({ ...prev, availableUnits: event.target.value }))} />
-        <FormInput label="Possession Date" icon={CalendarDays} type="date" value={form.possessionDate} onChange={(event) => setForm((prev) => ({ ...prev, possessionDate: event.target.value }))} />
-        <SelectDropdown label="Status" value={form.status} options={projectStatuses} onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))} />
-        <FormInput label="Amenities" className="lg:col-span-2" value={form.amenities} onChange={(event) => setForm((prev) => ({ ...prev, amenities: event.target.value }))} placeholder="Clubhouse, Pool, Concierge" />
-        <FormInput label="Sample House Video URL" className="lg:col-span-2" value={form.sampleHouseVideoUrl} onChange={(event) => setForm((prev) => ({ ...prev, sampleHouseVideoUrl: event.target.value }))} />
-        <FormInput label="Builder Details" className="lg:col-span-2" value={form.builderDetails} onChange={(event) => setForm((prev) => ({ ...prev, builderDetails: event.target.value }))} />
-        <FormInput label="Internal Notes" className="lg:col-span-2" value={form.internalNotes} onChange={(event) => setForm((prev) => ({ ...prev, internalNotes: event.target.value }))} />
+
+        <FormInput label="Project Name"
+          icon={Building2}
+          placeholder="Enter project name"
+          value={form.projectName}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, projectName: event.target.value }))} />
+
+        <FormInput label="Client-safe Alias"
+          icon={Building2}
+          placeholder="Enter client-safe alias"
+          value={form.publicAlias}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, publicAlias: event.target.value }))} />
+
+        <FormInput label="Location"
+          icon={MapPin}
+          placeholder="Enter project location"
+          value={form.location}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, location: event.target.value }))} />
+
+        <FormInput label="Area"
+          icon={MapPin}
+          placeholder="Enter area name"
+          value={form.area}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, area: event.target.value }))} />
+
+        <SelectDropdown label="Property Type"
+          icon={Shapes}
+          value={form.propertyType}
+          options={propertyTypes}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, propertyType: event.target.value }))} />
+
+        <FormInput label="Configuration"
+          icon={Shapes}
+          placeholder="3 BHK / 4 BHK"
+          value={form.configuration}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, configuration: event.target.value }))} />
+
+        <FormInput label="Size Min"
+          placeholder="Minimum size (sq ft)"
+          value={form.sizeRange.min}
+          onChange={(event) => updateNested("sizeRange", "min", event.target.value)} />
+
+        <FormInput label="Size Max"
+          placeholder="Maximum size (sq ft)"
+          value={form.sizeRange.max}
+          onChange={(event) => updateNested("sizeRange", "max", event.target.value)} />
+
+        <FormInput label="Price Min"
+          icon={Wallet}
+          placeholder="Minimum price"
+          value={form.priceRange.min}
+          onChange={(event) => updateNested("priceRange", "min", event.target.value)} />
+
+        <FormInput label="Price Max"
+          icon={Wallet}
+          placeholder="Maximum price"
+          value={form.priceRange.max}
+          onChange={(event) => updateNested("priceRange", "max", event.target.value)} />
+
+        <FormInput label="Total Plot Size"
+          placeholder="Enter total plot size (sq yd)"
+          value={form.totalPlotSize}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, totalPlotSize: event.target.value }))} />
+
+        <FormInput label="Total Blocks"
+          placeholder="Enter number of blocks"
+          value={form.totalBlocks}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, totalBlocks: event.target.value }))} />
+
+        <FormInput label="Total Units"
+          placeholder="Enter total units"
+          value={form.totalUnits}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, totalUnits: event.target.value }))} />
+
+        <FormInput label="Available Units"
+          placeholder="Enter available units"
+          value={form.availableUnits}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, availableUnits: event.target.value }))} />
+
+        <FormInput label="Possession Date"
+          icon={CalendarDays}
+          type="date"
+          value={form.possessionDate}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, possessionDate: event.target.value }))} />
+
+        <SelectDropdown label="Status"
+          value={form.status}
+          options={projectStatuses}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, status: event.target.value }))} />
+
+        <FormInput label="Amenities"
+          className="lg:col-span-2"
+          placeholder="Clubhouse, Pool, Gym, Garden"
+          value={form.amenities}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, amenities: event.target.value }))} />
+
+        <FormInput label="Sample House Video URL"
+          className="lg:col-span-2"
+          placeholder="Paste YouTube / Drive link"
+          value={form.sampleHouseVideoUrl}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, sampleHouseVideoUrl: event.target.value }))} />
+
+        <FormInput label="Builder Details"
+          className="lg:col-span-2"
+          placeholder="Enter builder / developer details"
+          value={form.builderDetails}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, builderDetails: event.target.value }))} />
+
+        <FormInput label="Internal Notes"
+          className="lg:col-span-2"
+          placeholder="Add internal notes (not visible to client)"
+          value={form.internalNotes}
+          onChange={(event) =>
+            setForm((prev) =>
+              ({ ...prev, internalNotes: event.target.value }))} />
+
         <div className="lg:col-span-2 grid gap-4 md:grid-cols-3">
-          <UploadBox label="Brochure Upload" helpText="Wire this to `/api/uploads` for PDFs and branded brochures." />
-          <UploadBox label="Floor Plans" helpText="Attach image or PDF floor plans using the upload API." />
-          <UploadBox label="Project Images" helpText="Upload hero images, lifestyle shots, and walkthrough stills." />
+          <UploadBox label="Brochure Upload" helpText="Upload project brochure (PDF)" />
+          <UploadBox label="Floor Plans" helpText="Upload floor plans (image/PDF)" />
+          <UploadBox label="Project Images" helpText="Upload project visuals & renders" />
         </div>
+
         {error ? <p className="lg:col-span-2 text-sm text-rose-300">{error}</p> : null}
+
         <div className="lg:col-span-2">
-          <Button disabled={submitting} icon={Save}>{submitting ? "Saving..." : "Save Project"}</Button>
+          <Button disabled={submitting} icon={Save}>
+            {submitting ? "Saving..." : "Save Project"}
+          </Button>
         </div>
+
       </form>
     </div>
   );
