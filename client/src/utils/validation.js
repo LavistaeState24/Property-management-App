@@ -2,12 +2,14 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const INDIAN_PHONE_REGEX = /^[6-9]\d{9}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,32}$/;
 const NUMBER_REGEX = /^\d+(\.\d+)?$/;
+const HTTPS_URL_REGEX = /^https:\/\/[^\s/$.?#].[^\s]*$/i;
 
 export const validationPatterns = {
   email: EMAIL_REGEX,
   indianPhone: INDIAN_PHONE_REGEX,
   password: PASSWORD_REGEX,
   number: NUMBER_REGEX,
+  httpsUrl: HTTPS_URL_REGEX,
 };
 
 export const normalizeText = (value) => (typeof value === "string" ? value.trim() : value);
@@ -149,4 +151,17 @@ export const dateRules = (label, { required = false } = {}) => ({
 
     return Number.isNaN(new Date(value).getTime()) ? `${label} must be a valid date` : true;
   },
+});
+
+export const httpsUrlRules = (label, { required = false } = {}) => ({
+  ...(required ? { required: `${label} is required` } : {}),
+  validate: (value) => {
+    if (!value) {
+      return required ? `${label} is required` : true;
+    }
+
+    const normalized = typeof value === "string" ? value.trim() : value;
+    return HTTPS_URL_REGEX.test(normalized) ? true : `${label} must be a valid https URL`;
+  },
+  setValueAs: normalizeText,
 });

@@ -211,7 +211,6 @@ export default function LoginPage() {
               />
               <FormInput
                 label="Confirm Password"
-                ref={ref}
                 type={showRegisterPassword ? "text" : "password"}
                 icon={KeyRound}
                 placeholder="Re-enter your password"

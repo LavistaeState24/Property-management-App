@@ -9,10 +9,12 @@ import SelectDropdown from "../../../components/common/SelectDropdown";
 import UploadBox from "../../../components/common/UploadBox";
 import { projectStatuses, propertyTypes } from "../../../constants/theme";
 import { projectService } from "../../../services/projectService";
+import { uploadService } from "../../../services/uploadService";
 import {
   applyServerErrors,
   dateRules,
   getErrorMessage,
+  httpsUrlRules,
   numberRules,
   selectRules,
   textRules,
@@ -34,7 +36,8 @@ const initialState = {
   availableUnits: "",
   possessionDate: "",
   amenities: "",
-  sampleHouseVideoUrl: "",
+  hasSampleVideo: "false",
+  sampleVideoUrl: "",
   internalNotes: "",
   builderDetails: "",
   status: "active",
@@ -43,20 +46,58 @@ const initialState = {
 export default function AddProjectPage() {
   const navigate = useNavigate();
   const [formError, setFormError] = useState("");
+  const [brochureAsset, setBrochureAsset] = useState(null);
+  const [brochureError, setBrochureError] = useState("");
+  const [isUploadingBrochure, setIsUploadingBrochure] = useState(false);
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
     setError,
+    setValue,
   } = useForm({
     mode: "onBlur",
+    shouldUnregister: true,
     defaultValues: initialState,
   });
 
   const sizeMin = watch("sizeRange.min");
   const priceMin = watch("priceRange.min");
   const totalUnits = watch("totalUnits");
+  const hasSampleVideo = watch("hasSampleVideo");
+
+  const handleBrochureUpload = async (file) => {
+    setBrochureError("");
+
+    if (file.type !== "application/pdf") {
+      setBrochureError("Only PDF brochure files are allowed");
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      setBrochureError("Brochure PDF must be 50MB or smaller");
+      return;
+    }
+
+    setIsUploadingBrochure(true);
+
+    try {
+      const [uploadedAsset] = await uploadService.uploadFiles([file]);
+      setBrochureAsset(uploadedAsset);
+      setValue("brochure", uploadedAsset, { shouldDirty: true, shouldValidate: true });
+    } catch (requestError) {
+      setBrochureError(requestError.response?.data?.message || "Unable to upload brochure");
+    } finally {
+      setIsUploadingBrochure(false);
+    }
+  };
+
+  const removeBrochure = () => {
+    setBrochureAsset(null);
+    setBrochureError("");
+    setValue("brochure", null, { shouldDirty: true, shouldValidate: true });
+  };
 
   const onSubmit = async (formValues) => {
     setFormError("");
@@ -81,6 +122,9 @@ export default function AddProjectPage() {
           .split(",")
           .map((item) => item.trim())
           .filter(Boolean),
+        brochure: brochureAsset || null,
+        hasSampleVideo: formValues.hasSampleVideo === "true",
+        sampleVideoUrl: formValues.hasSampleVideo === "true" ? formValues.sampleVideoUrl : null,
       };
 
       await projectService.create(payload);
@@ -251,26 +295,55 @@ export default function AddProjectPage() {
           error={getErrorMessage(errors.status)}
           {...register("status", selectRules("Status"))}
         />
-
+      
         <FormInput
           label="Amenities"
-          className="lg:col-span-2"
+          className="lg:col-span-1"
           placeholder="Clubhouse, Pool, Gym, Garden"
           error={getErrorMessage(errors.amenities)}
           {...register("amenities", textRules("Amenities", { min: 3, max: 300 }))}
         />
 
-        <FormInput
-          label="Sample House Video URL"
-          className="lg:col-span-2"
-          placeholder="Paste YouTube / Drive link"
-          error={getErrorMessage(errors.sampleHouseVideoUrl)}
-          {...register("sampleHouseVideoUrl", textRules("Sample house video URL", { min: 10, max: 300, required: false }))}
-        />
+        <div className="flex flex-col gap-2 lg:col-span-1">
+          <span className="text-md text-muted">Sample House Video</span>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center gap-6 flex-wrap">
+              <label className="flex items-center gap-3 text-sm text-ivory">
+                <input
+                  type="radio"
+                  value="true"
+                  className="h-4 w-4 accent-[#c9a35d]"
+                  {...register("hasSampleVideo", { required: "Sample house video selection is required" })}
+                />
+                <span>Add Video URL</span>
+              </label>
+              <label className="flex items-center gap-3 text-sm text-ivory">
+                <input
+                  type="radio"
+                  value="false"
+                  className="h-4 w-4 accent-[#c9a35d]"
+                  {...register("hasSampleVideo", { required: "Sample house video selection is required" })}
+                />
+                <span>No Video Available</span>
+              </label>
+            </div>
+            {errors.hasSampleVideo ? (
+              <p className="mt-3 text-sm text-rose-300">{getErrorMessage(errors.hasSampleVideo)}</p>
+            ) : null}
+          </div>
+          {hasSampleVideo === "true" ? (
+            <FormInput
+              label="Video URL"
+              placeholder="Paste YouTube / Vimeo / HTTPS link"
+              error={getErrorMessage(errors.sampleVideoUrl)}
+              {...register("sampleVideoUrl", httpsUrlRules("Video URL", { required: true }))}
+            />
+          ) : null}
+        </div>
 
         <FormInput
           label="Builder Details"
-          className="lg:col-span-2"
+          className="lg:col-span-1"
           placeholder="Enter builder / developer details"
           error={getErrorMessage(errors.builderDetails)}
           {...register("builderDetails", textRules("Builder details", { min: 3, max: 300, required: false }))}
@@ -278,21 +351,28 @@ export default function AddProjectPage() {
 
         <FormInput
           label="Internal Notes"
-          className="lg:col-span-2"
+          className="lg:col-span-1"
           placeholder="Add internal notes (not visible to client)"
           error={getErrorMessage(errors.internalNotes)}
           {...register("internalNotes", textRules("Internal notes", { min: 0, max: 500, required: false }))}
         />
 
-        <div className="lg:col-span-2 grid gap-4 md:grid-cols-3">
-          <UploadBox label="Brochure Upload" helpText="Upload project brochure (PDF)" />
-          <UploadBox label="Floor Plans" helpText="Upload floor plans (image/PDF)" />
-          <UploadBox label="Project Images" helpText="Upload project visuals & renders" />
+        <div className="lg:col-span-1 grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+          <input type="hidden" {...register("brochure")} />
+          <UploadBox
+            label="Brochure Upload"
+            helpText="Click to upload or drag and drop a PDF brochure up to 50MB"
+            asset={brochureAsset}
+            uploading={isUploadingBrochure}
+            error={brochureError || getErrorMessage(errors.brochure)}
+            onFileChange={handleBrochureUpload}
+            onRemove={removeBrochure}
+          />
         </div>
 
         {formError ? <p className="lg:col-span-2 text-sm text-rose-300">{formError}</p> : null}
 
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 justify-end text-right">
           <Button disabled={isSubmitting} icon={Save}>
             {isSubmitting ? "Saving..." : "Save Project"}
           </Button>

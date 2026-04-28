@@ -13,9 +13,12 @@ export const projectService = {
     const { data } = await api.get(`/projects/${id}`);
     return data.data;
   },
+  getClientShare: async (id) => {
+    const { data } = await api.get(`/projects/${id}/client-share`);
+    return data.data;
+  },
   dashboardSummary: async () => {
     const { data } = await api.get("/projects/dashboard-summary");
     return data.data;
   },
 };
-

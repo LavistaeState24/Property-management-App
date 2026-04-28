@@ -15,6 +15,7 @@ const ProjectDetailsPage = lazy(() => import("../features/projects/pages/Project
 const ClientsPage = lazy(() => import("../features/clients/pages/ClientsPage"));
 const AddClientPage = lazy(() => import("../features/clients/pages/AddClientPage"));
 const FollowupsPage = lazy(() => import("../features/followups/pages/FollowupsPage"));
+const SharedHistoryPage = lazy(() => import("../features/share/pages/SharedHistoryPage"));
 const SharePreviewPage = lazy(() => import("../features/share/pages/SharePreviewPage"));
 const SettingsPage = lazy(() => import("../features/settings/pages/SettingsPage"));
 
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
           { path: "clients", element: withSuspense(<ClientsPage />) },
           { path: "clients/new", element: withSuspense(<AddClientPage />) },
           { path: "followups", element: withSuspense(<FollowupsPage />) },
+          { path: "shared-history", element: withSuspense(<SharedHistoryPage />) },
           { path: "settings", element: withSuspense(<SettingsPage />) },
         ],
       },
