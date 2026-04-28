@@ -13,6 +13,14 @@ export const projectService = {
     const { data } = await api.get(`/projects/${id}`);
     return data.data;
   },
+  update: async (id, payload) => {
+    const { data } = await api.put(`/projects/${id}`, payload);
+    return data.data;
+  },
+  remove: async (id) => {
+    const { data } = await api.delete(`/projects/${id}`);
+    return data;
+  },
   getClientShare: async (id) => {
     const { data } = await api.get(`/projects/${id}/client-share`);
     return data.data;
