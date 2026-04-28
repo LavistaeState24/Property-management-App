@@ -6,6 +6,7 @@ export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const INDIAN_PHONE_REGEX = /^[6-9]\d{9}$/;
 export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,32}$/;
 export const URL_REGEX = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
+export const ASSET_URL_REGEX = /^(https?:\/\/[^\s/$.?#].[^\s]*|\/[^\s]+)$/i;
 
 export const normalizeString = (value) => (typeof value === "string" ? value.trim() : "");
 
@@ -186,6 +187,20 @@ export const validateOptionalUrl = (errors, field, value, label) => {
   }
 
   if (!URL_REGEX.test(normalized)) {
+    setError(errors, field, `${label} must be a valid URL`);
+  }
+
+  return normalized;
+};
+
+export const validateOptionalAssetUrl = (errors, field, value, label) => {
+  const normalized = normalizeString(value);
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (!ASSET_URL_REGEX.test(normalized)) {
     setError(errors, field, `${label} must be a valid URL`);
   }
 

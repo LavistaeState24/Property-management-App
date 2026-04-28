@@ -3,6 +3,7 @@ import {
   deleteProject,
   getDashboardSummary,
   getProjectById,
+  getClientSafeProjectShare,
   getProjects,
   updateProject,
 } from "../services/projectService.js";
@@ -21,6 +22,12 @@ export const listProjectsHandler = asyncHandler(async (req, res) => {
 export const getProjectHandler = asyncHandler(async (req, res) => {
   const project = await getProjectById(req.params.id);
   res.json({ success: true, data: project });
+});
+
+export const getClientSafeProjectShareHandler = asyncHandler(async (req, res) => {
+  const origin = `${req.protocol}://${req.get("host")}`;
+  const safeProject = await getClientSafeProjectShare(req.params.id, req.user, origin);
+  res.json({ success: true, data: safeProject });
 });
 
 export const updateProjectHandler = asyncHandler(async (req, res) => {

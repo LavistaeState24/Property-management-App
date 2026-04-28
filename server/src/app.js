@@ -16,8 +16,8 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "30mb" }));
+app.use(express.urlencoded({ limit: "30mb", extended: true }));
 app.use(morgan("dev"));
 app.use("/uploads", express.static(path.resolve("uploads")));
 

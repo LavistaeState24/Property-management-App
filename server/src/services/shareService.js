@@ -11,7 +11,8 @@ const defaultClientFields = [
   "possessionDate",
   "amenities",
   "brochure",
-  "sampleHouseVideoUrl",
+  "hasSampleVideo",
+  "sampleVideoUrl",
   "projectImages",
   "status",
 ];
@@ -58,4 +59,3 @@ export const getShareLinkPreview = async (token) => {
     project: safePayload,
   };
 };
-

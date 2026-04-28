@@ -15,7 +15,8 @@ const allowedFields = [
   "possessionDate",
   "amenities",
   "brochure",
-  "sampleHouseVideoUrl",
+  "hasSampleVideo",
+  "sampleVideoUrl",
   "projectImages",
   "status",
 ];
