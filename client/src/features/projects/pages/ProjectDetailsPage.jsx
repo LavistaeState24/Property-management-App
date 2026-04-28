@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link2, ScrollText, Send, Sparkles } from "lucide-react";
 import { useParams } from "react-router-dom";
-import Logo from "../../assets/Logo.png";
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
@@ -10,6 +9,7 @@ import Modal from "../../../components/common/Modal";
 import { useAuth } from "../../../hooks/useAuth";
 import { projectService } from "../../../services/projectService";
 import { shareRecordService } from "../../../services/shareRecordService";
+import { authStorage } from "../../../utils/storage";
 import {
   applyServerErrors,
   emailRules,
@@ -101,6 +101,11 @@ export default function ProjectDetailsPage() {
 
   const handleWhatsAppShare = async (formValues) => {
     setShareError("");
+
+    if (!authStorage.getRawToken()) {
+      setShareError("Your session has expired. Please log in again before sharing.");
+      return;
+    }
 
     try {
       const safeProject = await projectService.getClientShare(id);

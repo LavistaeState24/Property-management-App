@@ -3,6 +3,7 @@ import {
   validateDate,
   validateEnum,
   validateNumber,
+  validateOptionalAssetUrl,
   validateOptionalText,
   validateOptionalUrl,
   validateRequiredText,
@@ -45,6 +46,28 @@ export const validateProjectInput = (payload) => {
     errors.availableUnits = "Available units cannot exceed total units";
   }
 
+  const hasSampleVideo = Boolean(payload.hasSampleVideo);
+  const sampleVideoUrl = validateOptionalUrl(errors, "sampleVideoUrl", payload.sampleVideoUrl, "Sample house video URL") || undefined;
+
+  if (hasSampleVideo && !sampleVideoUrl) {
+    errors.sampleVideoUrl = "Sample house video URL is required";
+  }
+
+  if (!hasSampleVideo && payload.sampleVideoUrl) {
+    errors.sampleVideoUrl = "Sample house video URL must be empty when no video is available";
+  }
+
+  const brochure = payload.brochure
+    ? {
+        name: validateOptionalText(errors, "brochure.name", payload.brochure.name, {
+          label: "Brochure name",
+          min: 1,
+          max: 120,
+        }) || undefined,
+        url: validateOptionalAssetUrl(errors, "brochure.url", payload.brochure.url, "Brochure URL") || undefined,
+      }
+    : undefined;
+
   const sanitized = {
     projectName: validateRequiredText(errors, "projectName", payload.projectName, { label: "Project name", min: 3, max: 100 }),
     publicAlias: validateRequiredText(errors, "publicAlias", payload.publicAlias, { label: "Client-safe alias", min: 3, max: 100 }),
@@ -68,7 +91,9 @@ export const validateProjectInput = (payload) => {
     availableUnits,
     possessionDate: validateDate(errors, "possessionDate", payload.possessionDate, { label: "Possession date", required: true }),
     amenities,
-    sampleHouseVideoUrl: validateOptionalUrl(errors, "sampleHouseVideoUrl", payload.sampleHouseVideoUrl, "Sample house video URL") || undefined,
+    brochure,
+    hasSampleVideo,
+    sampleVideoUrl: hasSampleVideo ? sampleVideoUrl : null,
     internalNotes: validateOptionalText(errors, "internalNotes", payload.internalNotes, { label: "Internal notes", max: 500 }) || undefined,
     builderDetails: validateOptionalText(errors, "builderDetails", payload.builderDetails, { label: "Builder details", max: 300 }) || undefined,
     status: validateEnum(errors, "status", payload.status || "active", { label: "Status", values: projectStatuses }),

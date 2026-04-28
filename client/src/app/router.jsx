@@ -14,6 +14,7 @@ const AddProjectPage = lazy(() => import("../features/projects/pages/AddProjectP
 const ProjectDetailsPage = lazy(() => import("../features/projects/pages/ProjectDetailsPage"));
 const ClientsPage = lazy(() => import("../features/clients/pages/ClientsPage"));
 const AddClientPage = lazy(() => import("../features/clients/pages/AddClientPage"));
+const ClientDetailsPage = lazy(() => import("../features/clients/pages/ClientDetailsPage"));
 const FollowupsPage = lazy(() => import("../features/followups/pages/FollowupsPage"));
 const SharedHistoryPage = lazy(() => import("../features/share/pages/SharedHistoryPage"));
 const SharePreviewPage = lazy(() => import("../features/share/pages/SharePreviewPage"));
@@ -47,9 +48,26 @@ export const router = createBrowserRouter([
               </RoleBasedRoute>
             ),
           },
+          {
+            path: "projects/:id/edit",
+            element: withSuspense(
+              <RoleBasedRoute allowedRoles={["super-admin", "admin", "manager", "marketing"]}>
+                <AddProjectPage />
+              </RoleBasedRoute>
+            ),
+          },
           { path: "projects/:id", element: withSuspense(<ProjectDetailsPage />) },
           { path: "clients", element: withSuspense(<ClientsPage />) },
           { path: "clients/new", element: withSuspense(<AddClientPage />) },
+          {
+            path: "clients/:id/edit",
+            element: withSuspense(
+              <RoleBasedRoute allowedRoles={["super-admin", "admin", "manager", "sales"]}>
+                <AddClientPage />
+              </RoleBasedRoute>
+            ),
+          },
+          { path: "clients/:id", element: withSuspense(<ClientDetailsPage />) },
           { path: "followups", element: withSuspense(<FollowupsPage />) },
           { path: "shared-history", element: withSuspense(<SharedHistoryPage />) },
           { path: "settings", element: withSuspense(<SettingsPage />) },

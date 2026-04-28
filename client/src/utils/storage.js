@@ -1,6 +1,11 @@
 const TOKEN_KEY = "pmcrm_token";
 const USER_KEY = "pmcrm_user";
 
+const clearStoredAuth = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+};
+
 const decodeTokenPayload = (token) => {
   try {
     const [, payload] = token.split(".");
@@ -35,22 +40,31 @@ export const authStorage = {
   getToken: () => {
     const token = localStorage.getItem(TOKEN_KEY);
 
-    if (!isTokenValid(token)) {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
+    if (!token) {
+      return null;
+    }
+
+    const payload = decodeTokenPayload(token);
+
+    if (!payload) {
+      return token;
+    }
+
+    if (!payload.exp || payload.exp * 1000 <= Date.now()) {
+      clearStoredAuth();
       return null;
     }
 
     return token;
   },
+  getRawToken: () => localStorage.getItem(TOKEN_KEY),
   setToken: (token) => localStorage.setItem(TOKEN_KEY, token),
   removeToken: () => localStorage.removeItem(TOKEN_KEY),
   getUser: () => {
     const token = localStorage.getItem(TOKEN_KEY);
 
     if (!isTokenValid(token)) {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
+      clearStoredAuth();
       return null;
     }
 
@@ -64,8 +78,5 @@ export const authStorage = {
     }
   },
   setUser: (user) => localStorage.setItem(USER_KEY, JSON.stringify(user)),
-  clear: () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-  },
+  clear: clearStoredAuth,
 };

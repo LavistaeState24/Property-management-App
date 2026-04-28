@@ -1,7 +1,7 @@
 import { Building2, CalendarDays, MapPin, Save, Shapes, Wallet } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
@@ -41,11 +41,62 @@ const initialState = {
   internalNotes: "",
   builderDetails: "",
   status: "active",
+  brochure: null,
+};
+
+const mapProjectToForm = (project) => ({
+  projectName: project.projectName || "",
+  publicAlias: project.publicAlias || "",
+  location: project.location || "",
+  area: project.area || "",
+  propertyType: project.propertyType || "",
+  configuration: project.configuration || "",
+  sizeRange: {
+    min: project.sizeRange?.min?.toString() || "",
+    max: project.sizeRange?.max?.toString() || "",
+    unit: project.sizeRange?.unit || "sqft",
+  },
+  priceRange: {
+    min: project.priceRange?.min?.toString() || "",
+    max: project.priceRange?.max?.toString() || "",
+    currencyLabel: project.priceRange?.currencyLabel || "INR",
+  },
+  totalPlotSize: project.totalPlotSize || "",
+  totalBlocks: project.totalBlocks?.toString() || "",
+  totalUnits: project.totalUnits?.toString() || "",
+  availableUnits: project.availableUnits?.toString() || "",
+  possessionDate: project.possessionDate ? new Date(project.possessionDate).toISOString().slice(0, 10) : "",
+  amenities: Array.isArray(project.amenities) ? project.amenities.join(", ") : "",
+  hasSampleVideo: project.hasSampleVideo ? "true" : "false",
+  sampleVideoUrl: project.sampleVideoUrl || "",
+  internalNotes: project.internalNotes || "",
+  builderDetails: project.builderDetails || "",
+  status: project.status || "active",
+  brochure: project.brochure || null,
+});
+
+const normalizeBrochureAsset = (brochure) => {
+  if (!brochure?.url) {
+    return null;
+  }
+
+  return {
+    ...brochure,
+    name:
+      brochure.name ||
+      brochure.filename ||
+      brochure.url.split("/").pop()?.replace(/^\d+-/, "") ||
+      "Brochure.pdf",
+  };
 };
 
 export default function AddProjectPage() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
   const [formError, setFormError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [isLoadingProject, setIsLoadingProject] = useState(isEditMode);
   const [brochureAsset, setBrochureAsset] = useState(null);
   const [brochureError, setBrochureError] = useState("");
   const [isUploadingBrochure, setIsUploadingBrochure] = useState(false);
@@ -53,19 +104,64 @@ export default function AddProjectPage() {
     register,
     handleSubmit,
     watch,
+    trigger,
     formState: { errors, isSubmitting },
     setError,
     setValue,
+    reset,
   } = useForm({
     mode: "onBlur",
     shouldUnregister: true,
     defaultValues: initialState,
   });
 
+  useEffect(() => {
+    if (!isEditMode) {
+      return;
+    }
+
+    const loadProject = async () => {
+      setIsLoadingProject(true);
+      setLoadError("");
+
+      try {
+        const project = await projectService.getById(id);
+        reset(mapProjectToForm(project));
+        const normalizedBrochure = normalizeBrochureAsset(project.brochure);
+        setBrochureAsset(normalizedBrochure);
+        setValue("brochure", normalizedBrochure, { shouldDirty: false, shouldValidate: false });
+      } catch (requestError) {
+        setLoadError(requestError.response?.data?.message || "Unable to load project details");
+      } finally {
+        setIsLoadingProject(false);
+      }
+    };
+
+    loadProject();
+  }, [id, isEditMode, reset]);
+
   const sizeMin = watch("sizeRange.min");
   const priceMin = watch("priceRange.min");
   const totalUnits = watch("totalUnits");
   const hasSampleVideo = watch("hasSampleVideo");
+
+  useEffect(() => {
+    if (sizeMin !== undefined) {
+      trigger("sizeRange.max");
+    }
+  }, [sizeMin, trigger]);
+
+  useEffect(() => {
+    if (priceMin !== undefined) {
+      trigger("priceRange.max");
+    }
+  }, [priceMin, trigger]);
+
+  useEffect(() => {
+    if (totalUnits !== undefined) {
+      trigger("availableUnits");
+    }
+  }, [totalUnits, trigger]);
 
   const handleBrochureUpload = async (file) => {
     setBrochureError("");
@@ -127,6 +223,12 @@ export default function AddProjectPage() {
         sampleVideoUrl: formValues.hasSampleVideo === "true" ? formValues.sampleVideoUrl : null,
       };
 
+      if (isEditMode) {
+        await projectService.update(id, payload);
+        navigate(`/projects/${id}`);
+        return;
+      }
+
       await projectService.create(payload);
       navigate("/projects");
     } catch (requestError) {
@@ -134,11 +236,30 @@ export default function AddProjectPage() {
     }
   };
 
+  if (isLoadingProject) {
+    return <p className="text-sm text-muted">Loading project details...</p>;
+  }
+
+  if (loadError) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-rose-300">{loadError}</p>
+        <Button variant="secondary" onClick={() => navigate("/projects")}>
+          Back to Projects
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-gold">Inventory Onboarding</p>
-        <h2 className="mt-2 font-display text-3xl">Add a premium project Details</h2>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold">
+          {isEditMode ? "Inventory Editing" : "Inventory Onboarding"}
+        </p>
+        <h2 className="mt-2 font-display text-3xl">
+          {isEditMode ? "Update premium project details" : "Add a premium project Details"}
+        </h2>
       </div>
 
       <form className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
@@ -192,6 +313,7 @@ export default function AddProjectPage() {
 
         <FormInput
           label="Size Min"
+          type="number"
           placeholder="Minimum size (sq ft)"
           error={getErrorMessage(errors.sizeRange?.min)}
           {...register("sizeRange.min", numberRules("Minimum size", { required: true, min: 1 }))}
@@ -199,6 +321,7 @@ export default function AddProjectPage() {
 
         <FormInput
           label="Size Max"
+          type="number"
           placeholder="Maximum size (sq ft)"
           error={getErrorMessage(errors.sizeRange?.max)}
           {...register("sizeRange.max", {
@@ -218,6 +341,7 @@ export default function AddProjectPage() {
         <FormInput
           label="Price Min"
           icon={Wallet}
+          type="number"
           placeholder="Minimum price"
           error={getErrorMessage(errors.priceRange?.min)}
           {...register("priceRange.min", numberRules("Minimum price", { required: true, min: 1 }))}
@@ -226,6 +350,7 @@ export default function AddProjectPage() {
         <FormInput
           label="Price Max"
           icon={Wallet}
+          type="number"
           placeholder="Maximum price"
           error={getErrorMessage(errors.priceRange?.max)}
           {...register("priceRange.max", {
@@ -251,6 +376,7 @@ export default function AddProjectPage() {
 
         <FormInput
           label="Total Blocks"
+          type="number"
           placeholder="Enter number of blocks"
           error={getErrorMessage(errors.totalBlocks)}
           {...register("totalBlocks", numberRules("Total blocks", { required: true, min: 0, integer: true }))}
@@ -258,6 +384,7 @@ export default function AddProjectPage() {
 
         <FormInput
           label="Total Units"
+          type="number"
           placeholder="Enter total units"
           error={getErrorMessage(errors.totalUnits)}
           {...register("totalUnits", numberRules("Total units", { required: true, min: 1, integer: true }))}
@@ -265,6 +392,7 @@ export default function AddProjectPage() {
 
         <FormInput
           label="Available Units"
+          type="number"
           placeholder="Enter available units"
           error={getErrorMessage(errors.availableUnits)}
           {...register("availableUnits", {
@@ -295,7 +423,7 @@ export default function AddProjectPage() {
           error={getErrorMessage(errors.status)}
           {...register("status", selectRules("Status"))}
         />
-      
+
         <FormInput
           label="Amenities"
           className="lg:col-span-1"
@@ -307,7 +435,7 @@ export default function AddProjectPage() {
         <div className="flex flex-col gap-2 lg:col-span-1">
           <span className="text-md text-muted">Sample House Video</span>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="flex items-center gap-6 flex-wrap">
+            <div className="flex flex-wrap items-center gap-6">
               <label className="flex items-center gap-3 text-sm text-ivory">
                 <input
                   type="radio"
@@ -357,7 +485,7 @@ export default function AddProjectPage() {
           {...register("internalNotes", textRules("Internal notes", { min: 0, max: 500, required: false }))}
         />
 
-        <div className="lg:col-span-1 grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+        <div className="grid gap-4 md:grid-cols-2 lg:col-span-1 lg:grid-cols-1">
           <input type="hidden" {...register("brochure")} />
           <UploadBox
             label="Brochure Upload"
@@ -372,9 +500,14 @@ export default function AddProjectPage() {
 
         {formError ? <p className="lg:col-span-2 text-sm text-rose-300">{formError}</p> : null}
 
-        <div className="lg:col-span-2 justify-end text-right">
+        <div className="lg:col-span-2 flex justify-end gap-3 text-right">
+          {isEditMode ? (
+            <Button type="button" variant="secondary" onClick={() => navigate(`/projects/${id}`)}>
+              Cancel
+            </Button>
+          ) : null}
           <Button disabled={isSubmitting} icon={Save}>
-            {isSubmitting ? "Saving..." : "Save Project"}
+            {isSubmitting ? "Saving..." : isEditMode ? "Update Project" : "Save Project"}
           </Button>
         </div>
       </form>

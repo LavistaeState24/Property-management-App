@@ -17,7 +17,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = authStorage.getToken();
+  const token = authStorage.getRawToken() || authStorage.getToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

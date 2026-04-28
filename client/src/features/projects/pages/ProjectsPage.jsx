@@ -1,10 +1,11 @@
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Eye, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
 import DataTable from "../../../components/common/DataTable";
+import Modal from "../../../components/common/Modal";
 import SearchFilter from "../../../components/common/SearchFilter";
 import { propertyTypes } from "../../../constants/theme";
 import { projectService } from "../../../services/projectService";
@@ -18,15 +19,48 @@ export default function ProjectsPage() {
     minBudget: "",
     maxBudget: "",
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [listError, setListError] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadProjects = async (params = filters) => {
-    const data = await projectService.list(params);
-    setProjects(data.items);
+    setIsLoading(true);
+    setListError("");
+
+    try {
+      const data = await projectService.list(params);
+      setProjects(data.items);
+    } catch (requestError) {
+      setListError(requestError.response?.data?.message || "Unable to load projects");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     loadProjects();
   }, []);
+
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError("");
+
+    try {
+      await projectService.remove(projectToDelete._id);
+      setProjects((currentProjects) => currentProjects.filter((project) => project._id !== projectToDelete._id));
+      setProjectToDelete(null);
+    } catch (requestError) {
+      setDeleteError(requestError.response?.data?.message || "Unable to delete project");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const columns = [
     {
@@ -59,10 +93,29 @@ export default function ProjectsPage() {
       key: "actions",
       label: "Actions",
       render: (row) => (
-        <Link className="inline-flex items-center gap-2 text-gold-2" to={`/projects/${row._id}`}>
-          <Eye className="h-4 w-4" />
-          View
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link to={`/projects/${row._id}`}>
+            <Button variant="ghost" className="px-3 py-2 text-gold-2" icon={Eye}>
+              View
+            </Button>
+          </Link>
+          <Link to={`/projects/${row._id}/edit`}>
+            <Button variant="ghost" className="px-3 py-2 text-gold-2" icon={Pencil}>
+              Edit
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            className="px-3 py-2 text-rose-300 hover:text-rose-200"
+            icon={Trash2}
+            onClick={() => {
+              setDeleteError("");
+              setProjectToDelete(row);
+            }}
+          >
+            Delete
+          </Button>
+        </div>
       ),
     },
   ];
@@ -88,7 +141,44 @@ export default function ProjectsPage() {
         }}
       />
 
-      <DataTable columns={columns} rows={projects} />
+      {listError ? <p className="text-sm text-rose-300">{listError}</p> : null}
+      {isLoading ? (
+        <p className="text-sm text-muted">Loading projects...</p>
+      ) : (
+        <DataTable columns={columns} rows={projects} />
+      )}
+
+      <Modal
+        title="Delete Project"
+        isOpen={Boolean(projectToDelete)}
+        onClose={() => {
+          if (!isDeleting) {
+            setProjectToDelete(null);
+            setDeleteError("");
+          }
+        }}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted">Are you sure you want to delete this project?</p>
+          {deleteError ? <p className="text-sm text-rose-300">{deleteError}</p> : null}
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setProjectToDelete(null);
+                setDeleteError("");
+              }}
+              disabled={isDeleting}
+            >
+              No, Cancel
+            </Button>
+            <Button type="button" onClick={handleDeleteProject} disabled={isDeleting} className="bg-rose-500 text-white hover:opacity-90">
+              {isDeleting ? "Deleting..." : "Yes, Delete"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
