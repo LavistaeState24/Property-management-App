@@ -82,10 +82,9 @@ export default function ProjectsPage() {
       <SearchFilter
         {...filters}
         propertyTypeOptions={propertyTypes}
-        onChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
-        onSubmit={(event) => {
-          event.preventDefault();
-          loadProjects();
+        onSubmit={(formValues) => {
+          setFilters(formValues);
+          loadProjects(formValues);
         }}
       />
 

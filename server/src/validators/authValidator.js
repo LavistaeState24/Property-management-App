@@ -1,14 +1,44 @@
-import { ApiError } from "../utils/ApiError.js";
+import {
+  throwIfValidationFailed,
+  validateEmail,
+  validateEnum,
+  validatePassword,
+  validatePhone,
+  validateRequiredText,
+} from "./common.js";
+
+const roles = ["super-admin", "admin", "manager", "sales", "marketing"];
 
 export const validateRegisterInput = (payload) => {
-  if (!payload.name || !payload.email || !payload.password) {
-    throw new ApiError(400, "Name, email and password are required");
+  const errors = {};
+
+  const sanitized = {
+    name: validateRequiredText(errors, "name", payload.name, { label: "Name", min: 3, max: 60 }),
+    email: validateEmail(errors, "email", payload.email),
+    phone: validatePhone(errors, "phone", payload.phone),
+    password: validatePassword(errors, "password", payload.password),
+    role: validateEnum(errors, "role", payload.role || "sales", { label: "Role", values: roles }),
+  };
+
+  const confirmPassword = String(payload.confirmPassword || "");
+
+  if (!confirmPassword) {
+    errors.confirmPassword = "Confirm password is required";
+  } else if (confirmPassword !== sanitized.password) {
+    errors.confirmPassword = "Passwords do not match";
   }
+
+  throwIfValidationFailed(errors);
+  return sanitized;
 };
 
 export const validateLoginInput = (payload) => {
-  if (!payload.email || !payload.password) {
-    throw new ApiError(400, "Email and password are required");
-  }
-};
+  const errors = {};
+  const sanitized = {
+    email: validateEmail(errors, "email", payload.email),
+    password: validatePassword(errors, "password", payload.password),
+  };
 
+  throwIfValidationFailed(errors);
+  return sanitized;
+};

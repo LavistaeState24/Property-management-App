@@ -7,6 +7,11 @@ const normalizeApiBaseUrl = (url) => {
   return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
 };
 
+export const getApiOrigin = () => {
+  const baseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
+  return baseUrl.replace(/\/api$/, "");
+};
+
 export const api = axios.create({
   baseURL: normalizeApiBaseUrl(import.meta.env.VITE_API_URL),
 });

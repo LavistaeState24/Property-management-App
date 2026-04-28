@@ -7,10 +7,8 @@ import {
   updateProject,
 } from "../services/projectService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { validateProjectInput } from "../validators/projectValidator.js";
 
 export const createProjectHandler = asyncHandler(async (req, res) => {
-  validateProjectInput(req.body);
   const project = await createProject(req.body, req.user._id);
   res.status(201).json({ success: true, data: project });
 });
@@ -39,4 +37,3 @@ export const dashboardSummaryHandler = asyncHandler(async (_req, res) => {
   const summary = await getDashboardSummary();
   res.json({ success: true, data: summary });
 });
-

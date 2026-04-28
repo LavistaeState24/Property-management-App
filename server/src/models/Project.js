@@ -2,46 +2,76 @@ import mongoose from "mongoose";
 
 const assetSchema = new mongoose.Schema(
   {
-    name: String,
-    url: String,
+    name: { type: String, trim: true, maxlength: 120 },
+    url: { type: String, trim: true, maxlength: 300 },
   },
   { _id: false }
 );
 
 const projectSchema = new mongoose.Schema(
   {
-    projectName: { type: String, required: true, trim: true },
-    publicAlias: { type: String, required: true, trim: true },
-    location: { type: String, required: true, trim: true },
-    area: { type: String, trim: true },
+    projectName: { type: String, required: true, trim: true, minlength: 3, maxlength: 100 },
+    publicAlias: { type: String, required: true, trim: true, minlength: 3, maxlength: 100, unique: true },
+    location: { type: String, required: true, trim: true, minlength: 2, maxlength: 100 },
+    area: { type: String, required: true, trim: true, minlength: 2, maxlength: 80 },
     propertyType: {
       type: String,
       enum: ["2 BHK", "3 BHK", "4 BHK", "villa", "plot", "office", "showroom"],
       required: true,
     },
-    configuration: { type: String, trim: true },
+    configuration: { type: String, required: true, trim: true, minlength: 3, maxlength: 60 },
     sizeRange: {
-      min: Number,
-      max: Number,
+      min: { type: Number, required: true, min: 1 },
+      max: {
+        type: Number,
+        required: true,
+        min: 1,
+        validate: {
+          validator(value) {
+            return value >= this.sizeRange.min;
+          },
+          message: "Maximum size must be greater than or equal to minimum size",
+        },
+      },
       unit: { type: String, default: "sqft" },
     },
     priceRange: {
-      min: Number,
-      max: Number,
+      min: { type: Number, required: true, min: 1 },
+      max: {
+        type: Number,
+        required: true,
+        min: 1,
+        validate: {
+          validator(value) {
+            return value >= this.priceRange.min;
+          },
+          message: "Maximum price must be greater than or equal to minimum price",
+        },
+      },
       currencyLabel: { type: String, default: "INR" },
     },
-    totalPlotSize: String,
-    totalBlocks: Number,
-    totalUnits: Number,
-    availableUnits: Number,
-    possessionDate: Date,
-    amenities: [String],
+    totalPlotSize: { type: String, trim: true, maxlength: 50 },
+    totalBlocks: { type: Number, required: true, min: 0 },
+    totalUnits: { type: Number, required: true, min: 1 },
+    availableUnits: {
+      type: Number,
+      required: true,
+      min: 0,
+      validate: {
+        validator(value) {
+          return value <= this.totalUnits;
+        },
+        message: "Available units cannot exceed total units",
+      },
+    },
+    possessionDate: { type: Date, required: true },
+    amenities: [{ type: String, trim: true, minlength: 1, maxlength: 60 }],
     floorPlans: [assetSchema],
     brochure: assetSchema,
-    sampleHouseVideoUrl: String,
+    sampleHouseVideoUrl: { type: String, trim: true, maxlength: 300 },
     projectImages: [assetSchema],
-    internalNotes: String,
-    builderDetails: String,
+    internalNotes: { type: String, trim: true, maxlength: 500 },
+    builderDetails: { type: String, trim: true, maxlength: 300 },
     status: {
       type: String,
       enum: ["active", "sold out", "upcoming"],
@@ -57,4 +87,3 @@ const projectSchema = new mongoose.Schema(
 );
 
 export const Project = mongoose.model("Project", projectSchema);
-

@@ -1,18 +1,29 @@
 import { useState } from "react";
-import { BriefcaseBusiness, Building2, Eye, EyeOff, KeyRound, Mail, ShieldCheck, UserRound, Users } from "lucide-react";
+import { BriefcaseBusiness, Building2, Eye, EyeOff, KeyRound, Mail, Phone, ShieldCheck, UserRound, Users } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
-
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import { roles } from "../../../constants/theme";
 import { useAuth } from "../../../hooks/useAuth";
 import { authService } from "../../../services/authService";
+import {
+  applyServerErrors,
+  emailRules,
+  getErrorMessage,
+  passwordRules,
+  phoneRules,
+  selectRules,
+  textRules,
+} from "../../../utils/validation";
 
 const initialRegisterState = {
   name: "",
   email: "",
+  phone: "",
   password: "",
+  confirmPassword: "",
   role: "sales",
 };
 
@@ -21,43 +32,62 @@ export default function LoginPage() {
   const location = useLocation();
   const { login } = useAuth();
   const [mode, setMode] = useState("login");
-  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-  const [registerForm, setRegisterForm] = useState(initialRegisterState);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [registerError, setRegisterError] = useState("");
+
+  const {
+    register: registerLogin,
+    handleSubmit: handleLoginSubmit,
+    formState: { errors: loginErrors, isSubmitting: isLoginSubmitting },
+    setError: setLoginFieldError,
+  } = useForm({
+    mode: "onBlur",
+    defaultValues: { email: "", password: "" },
+  });
+
+  const {
+    register: registerRegister,
+    handleSubmit: handleRegisterSubmit,
+    watch,
+    formState: { errors: registerErrors, isSubmitting: isRegisterSubmitting },
+    setError: setRegisterFieldError,
+  } = useForm({
+    mode: "onBlur",
+    defaultValues: initialRegisterState,
+  });
 
   const destination = location.state?.from?.pathname || "/dashboard";
+  const registerPassword = watch("password");
 
-  const handleLogin = async (event) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError("");
-
+  const handleLogin = async (formValues) => {
+    setLoginError("");
     try {
-      await login(loginForm);
+      await login(formValues);
       navigate(destination, { replace: true });
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Unable to login");
-    } finally {
-      setSubmitting(false);
+      applyServerErrors(requestError, setLoginFieldError, setLoginError);
     }
   };
 
-  const handleRegister = async (event) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError("");
-
+  const handleRegister = async (formValues) => {
+    setRegisterError("");
     try {
-      await authService.register(registerForm);
-      await login({ email: registerForm.email, password: registerForm.password });
+      const payload = {
+        name: formValues.name,
+        email: formValues.email,
+        phone: formValues.phone,
+        password: formValues.password,
+        confirmPassword: formValues.confirmPassword,
+        role: formValues.role,
+      };
+
+      await authService.register(payload);
+      await login({ email: formValues.email, password: formValues.password });
       navigate(destination, { replace: true });
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Unable to register");
-    } finally {
-      setSubmitting(false);
+      applyServerErrors(requestError, setRegisterFieldError, setRegisterError);
     }
   };
 
@@ -98,22 +128,23 @@ export default function LoginPage() {
           </div>
 
           {mode === "login" ? (
-            <form className="space-y-4" onSubmit={handleLogin}>
+            <form className="space-y-4" onSubmit={handleLoginSubmit(handleLogin)}>
               <FormInput
                 label="Email"
+                // ref={ref}
                 type="email"
                 icon={Mail}
                 placeholder="Enter your email"
-                value={loginForm.email}
-                onChange={(event) => setLoginForm((prev) => ({ ...prev, email: event.target.value }))}
+                error={getErrorMessage(loginErrors.email)}
+                {...registerLogin("email", emailRules())}
               />
               <FormInput
                 label="Password"
+                // ref={ref}
                 type={showLoginPassword ? "text" : "password"}
                 icon={KeyRound}
                 placeholder="Enter your password"
-                value={loginForm.password}
-                onChange={(event) => setLoginForm((prev) => ({ ...prev, password: event.target.value }))}
+                error={getErrorMessage(loginErrors.password)}
                 rightElement={
                   <button
                     type="button"
@@ -124,36 +155,48 @@ export default function LoginPage() {
                     {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 }
+                {...registerLogin("password", passwordRules())}
               />
-              {error ? <p className="text-sm text-rose-300">{error}</p> : null}
-              <Button className="w-full" disabled={submitting} icon={ShieldCheck}>
-                {submitting ? "Authenticating..." : "Enter CRM"}
+              {loginError ? <p className="text-sm text-rose-300">{loginError}</p> : null}
+              <Button className="w-full" disabled={isLoginSubmitting} icon={ShieldCheck}>
+                {isLoginSubmitting ? "Authenticating..." : "Enter CRM"}
               </Button>
             </form>
           ) : (
-            <form className="space-y-4" onSubmit={handleRegister}>
+            <form className="space-y-4" onSubmit={handleRegisterSubmit(handleRegister)}>
               <FormInput
                 label="Full Name"
+                // ref={ref}
                 icon={UserRound}
                 placeholder="Enter your full name"
-                value={registerForm.name}
-                onChange={(event) => setRegisterForm((prev) => ({ ...prev, name: event.target.value }))}
+                error={getErrorMessage(registerErrors.name)}
+                {...registerRegister("name", textRules("Name", { min: 3, max: 60 }))}
               />
               <FormInput
                 label="Email"
+                // ref={ref}
                 type="email"
                 icon={Mail}
                 placeholder="Enter your email"
-                value={registerForm.email}
-                onChange={(event) => setRegisterForm((prev) => ({ ...prev, email: event.target.value }))}
+                error={getErrorMessage(registerErrors.email)}
+                {...registerRegister("email", emailRules())}
+              />
+              <FormInput
+                label="Phone"
+                // ref={ref}
+                type="tel"
+                icon={Phone}
+                placeholder="Enter your mobile number"
+                error={getErrorMessage(registerErrors.phone)}
+                {...registerRegister("phone", phoneRules())}
               />
               <FormInput
                 label="Password"
+                // ref={ref}
                 type={showRegisterPassword ? "text" : "password"}
                 icon={KeyRound}
-                 placeholder="Create a strong password"
-                value={registerForm.password}
-                onChange={(event) => setRegisterForm((prev) => ({ ...prev, password: event.target.value }))}
+                placeholder="Create a strong password"
+                error={getErrorMessage(registerErrors.password)}
                 rightElement={
                   <button
                     type="button"
@@ -164,17 +207,29 @@ export default function LoginPage() {
                     {showRegisterPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 }
+                {...registerRegister("password", passwordRules())}
+              />
+              <FormInput
+                label="Confirm Password"
+                type={showRegisterPassword ? "text" : "password"}
+                icon={KeyRound}
+                placeholder="Re-enter your password"
+                error={getErrorMessage(registerErrors.confirmPassword)}
+                {...registerRegister("confirmPassword", {
+                  required: "Confirm password is required",
+                  validate: (value) => value === registerPassword || "Passwords do not match",
+                })}
               />
               <SelectDropdown
                 label="Role"
                 icon={BriefcaseBusiness}
                 options={roles}
-                value={registerForm.role}
-                onChange={(event) => setRegisterForm((prev) => ({ ...prev, role: event.target.value }))}
+                error={getErrorMessage(registerErrors.role)}
+                {...registerRegister("role", selectRules("Role"))}
               />
-              {error ? <p className="text-sm text-rose-300">{error}</p> : null}
-              <Button className="w-full" disabled={submitting} icon={Users}>
-                {submitting ? "Creating..." : "Create account"}
+              {registerError ? <p className="text-sm text-rose-300">{registerError}</p> : null}
+              <Button className="w-full" disabled={isRegisterSubmitting} icon={Users}>
+                {isRegisterSubmitting ? "Creating..." : "Create account"}
               </Button>
             </form>
           )}

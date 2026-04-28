@@ -20,3 +20,4 @@ export const projectStatuses = ["active", "sold out", "upcoming"];
 
 export const clientStatuses = ["new", "interested", "site visit", "negotiation", "closed", "lost"];
 
+export const shareRecordStatuses = ["shared", "interested", "follow-up", "site-visit", "closed", "not-interested"];

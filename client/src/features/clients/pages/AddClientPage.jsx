@@ -1,5 +1,6 @@
+import { CalendarDays, Mail, MapPin, Phone, Save, Shapes, UserRound, Wallet } from "lucide-react";
 import { useState } from "react";
-import { CalendarDays, Mail, MapPin, Save, Shapes, UserRound, Wallet } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import Button from "../../../components/common/Button";
@@ -7,6 +8,17 @@ import FormInput from "../../../components/common/FormInput";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import { clientStatuses, propertyTypes } from "../../../constants/theme";
 import { clientService } from "../../../services/clientService";
+import {
+  applyServerErrors,
+  dateRules,
+  emailRules,
+  getErrorMessage,
+  numberRules,
+  phoneRules,
+  selectRules,
+  textRules,
+  toOptionalNumber,
+} from "../../../utils/validation";
 
 const initialState = {
   name: "",
@@ -24,26 +36,32 @@ const initialState = {
 
 export default function AddClientPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState(initialState);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm({
+    mode: "onBlur",
+    defaultValues: initialState,
+  });
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError("");
+  const budgetMin = watch("budgetMin");
+
+  const onSubmit = async (formValues) => {
+    setFormError("");
 
     try {
       await clientService.create({
-        ...form,
-        budgetMin: Number(form.budgetMin || 0),
-        budgetMax: Number(form.budgetMax || 0),
+        ...formValues,
+        budgetMin: toOptionalNumber(formValues.budgetMin) ?? 0,
+        budgetMax: toOptionalNumber(formValues.budgetMax) ?? 0,
       });
       navigate("/clients");
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Unable to create client");
-    } finally {
-      setSubmitting(false);
+      applyServerErrors(requestError, setError, setFormError);
     }
   };
 
@@ -54,22 +72,22 @@ export default function AddClientPage() {
         <h2 className="mt-2 font-display text-3xl">Add a qualified client profile</h2>
       </div>
 
-      <form className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2" onSubmit={handleSubmit}>
-
+      <form className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
         <FormInput
           label="Client Name"
           icon={UserRound}
           placeholder="Enter client name"
-          value={form.name}
-          onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+          error={getErrorMessage(errors.name)}
+          {...register("name", textRules("Client name", { min: 3, max: 60 }))}
         />
 
         <FormInput
           label="Phone"
-          icon={UserRound}
+          type="tel"
+          icon={Phone}
           placeholder="Enter phone number"
-          value={form.phone}
-          onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
+          error={getErrorMessage(errors.phone)}
+          {...register("phone", phoneRules())}
         />
 
         <FormInput
@@ -77,80 +95,94 @@ export default function AddClientPage() {
           icon={Mail}
           type="email"
           placeholder="Enter email address"
-          value={form.email}
-          onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
+          error={getErrorMessage(errors.email)}
+          {...register("email", emailRules({ required: false }))}
         />
 
         <FormInput
           label="Requirement"
           placeholder="e.g. 3 BHK in 1 Cr budget"
-          value={form.requirement}
-          onChange={(event) => setForm((prev) => ({ ...prev, requirement: event.target.value }))}
+          error={getErrorMessage(errors.requirement)}
+          {...register("requirement", textRules("Requirement", { min: 5, max: 160, required: true }))}
         />
 
         <FormInput
           label="Budget Min"
           icon={Wallet}
           placeholder="Minimum budget"
-          value={form.budgetMin}
-          onChange={(event) => setForm((prev) => ({ ...prev, budgetMin: event.target.value }))}
+          error={getErrorMessage(errors.budgetMin)}
+          {...register("budgetMin", numberRules("Minimum budget", { required: false, min: 0 }))}
         />
 
         <FormInput
           label="Budget Max"
           icon={Wallet}
           placeholder="Maximum budget"
-          value={form.budgetMax}
-          onChange={(event) => setForm((prev) => ({ ...prev, budgetMax: event.target.value }))}
+          error={getErrorMessage(errors.budgetMax)}
+          {...register("budgetMax", {
+            ...numberRules("Maximum budget", { required: false, min: 0 }),
+            validate: (value) => {
+              const baseValidation = numberRules("Maximum budget", { required: false, min: 0 }).validate(value);
+
+              if (baseValidation !== true) {
+                return baseValidation;
+              }
+
+              if (value === "" || budgetMin === "") {
+                return true;
+              }
+
+              return Number(value) >= Number(budgetMin) || "Maximum budget must be greater than or equal to minimum budget";
+            },
+          })}
         />
 
         <FormInput
           label="Preferred Area"
           icon={MapPin}
           placeholder="e.g. Gota, Chandkheda, Science City"
-          value={form.preferredArea}
-          onChange={(event) => setForm((prev) => ({ ...prev, preferredArea: event.target.value }))}
+          error={getErrorMessage(errors.preferredArea)}
+          {...register("preferredArea", textRules("Preferred area", { min: 2, max: 80, required: true }))}
         />
 
         <SelectDropdown
           label="Property Type"
           icon={Shapes}
-          value={form.propertyType}
           options={propertyTypes}
-          onChange={(event) => setForm((prev) => ({ ...prev, propertyType: event.target.value }))}
+          error={getErrorMessage(errors.propertyType)}
+          {...register("propertyType", selectRules("Property type"))}
         />
 
         <FormInput
           label="Follow-up Date"
           icon={CalendarDays}
           type="date"
-          value={form.followUpDate}
-          onChange={(event) => setForm((prev) => ({ ...prev, followUpDate: event.target.value }))}
+          error={getErrorMessage(errors.followUpDate)}
+          {...register("followUpDate", dateRules("Follow-up date"))}
         />
 
         <SelectDropdown
           label="Status"
-          value={form.status}
           options={clientStatuses}
-          onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
+          error={getErrorMessage(errors.status)}
+          {...register("status", selectRules("Status"))}
         />
 
         <FormInput
           label="Notes"
           className="lg:col-span-2"
           placeholder="Add client notes, preferences, follow-up details"
-          value={form.notes}
-          onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))}
+          error={getErrorMessage(errors.notes)}
+          {...register("notes", textRules("Notes", { min: 0, max: 500, required: false }))}
         />
 
-        {error ? <p className="lg:col-span-2 text-sm text-rose-300">{error}</p> : null}
+        {formError ? <p className="lg:col-span-2 text-sm text-rose-300">{formError}</p> : null}
 
         <div className="lg:col-span-2">
-          <Button disabled={submitting} icon={Save}>
-            {submitting ? "Saving..." : "Save Client"}
+          <Button disabled={isSubmitting} icon={Save}>
+            {isSubmitting ? "Saving..." : "Save Client"}
           </Button>
         </div>
-
       </form>
     </div>
   );
