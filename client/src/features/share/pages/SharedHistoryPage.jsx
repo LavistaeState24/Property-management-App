@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Copy, MessageSquareShare, Save, Send } from "lucide-react";
+import { Copy, Eye, MessageSquareShare, PencilLine, Save, Send } from "lucide-react";
 
 import Button from "../../../components/common/Button";
 import DataTable from "../../../components/common/DataTable";
@@ -97,6 +97,9 @@ export default function SharedHistoryPage() {
     }
   };
 
+  const actionButtonClassName =
+    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2";
+
   const columns = [
     { key: "clientName", label: "Client Name" },
     { key: "clientPhone", label: "Client Phone" },
@@ -117,22 +120,52 @@ export default function SharedHistoryPage() {
       key: "actions",
       label: "Actions",
       render: (row) => (
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => openActionModal(row, "view")}>
-            View Message
-          </Button>
-          <Button variant="secondary" icon={Copy} onClick={() => handleCopyMessage(row.whatsappMessage)}>
-            Copy
-          </Button>
-          <Button variant="secondary" icon={Send} onClick={() => handleReshare(row)}>
-            Re-share
-          </Button>
-          <Button variant="secondary" onClick={() => openActionModal(row, "status")}>
-            Update Status
-          </Button>
-          <Button variant="secondary" onClick={() => openActionModal(row, "notes")}>
-            Add Notes
-          </Button>
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <button
+            type="button"
+            className={actionButtonClassName}
+            onClick={() => openActionModal(row, "view")}
+            title="View shared message"
+            aria-label="View shared message"
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={actionButtonClassName}
+            onClick={() => handleCopyMessage(row.whatsappMessage)}
+            title="Copy WhatsApp message"
+            aria-label="Copy WhatsApp message"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={actionButtonClassName}
+            onClick={() => handleReshare(row)}
+            title="Re-share on WhatsApp"
+            aria-label="Re-share on WhatsApp"
+          >
+            <Send className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={actionButtonClassName}
+            onClick={() => openActionModal(row, "status")}
+            title="Update status"
+            aria-label="Update status"
+          >
+            <MessageSquareShare className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={actionButtonClassName}
+            onClick={() => openActionModal(row, "notes")}
+            title="Add notes"
+            aria-label="Add notes"
+          >
+            <PencilLine className="h-3.5 w-3.5" />
+          </button>
         </div>
       ),
     },
