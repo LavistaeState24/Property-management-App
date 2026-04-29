@@ -2,9 +2,9 @@ import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import AdvancedDataTable from "../../../components/common/AdvancedDataTable";
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
-import DataTable from "../../../components/common/DataTable";
 import Modal from "../../../components/common/Modal";
 import SearchFilter from "../../../components/common/SearchFilter";
 import { propertyTypes } from "../../../constants/theme";
@@ -62,6 +62,11 @@ export default function ProjectsPage() {
     }
   };
 
+  const actionButtonClassName =
+    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2";
+  const deleteActionButtonClassName =
+    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-300";
+
   const columns = [
     {
       key: "projectName",
@@ -72,16 +77,19 @@ export default function ProjectsPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-muted">{row.publicAlias}</p>
         </div>
       ),
+      searchValue: (row) => `${row.projectName} ${row.publicAlias}`,
     },
     { key: "location", label: "Location" },
     {
       key: "configuration",
       label: "Config",
+      searchValue: (row) => `${row.configuration || ""} ${row.propertyType || ""}`,
       render: (row) => row.configuration || row.propertyType,
     },
     {
       key: "priceRange",
       label: "Price",
+      searchValue: (row) => `${row.priceRange?.min || ""} ${row.priceRange?.max || ""}`,
       render: (row) => `${row.priceRange?.min?.toLocaleString("en-IN")} - ${row.priceRange?.max?.toLocaleString("en-IN")}`,
     },
     {
@@ -93,30 +101,32 @@ export default function ProjectsPage() {
       key: "actions",
       label: "Actions",
       render: (row) => (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <Link to={`/projects/${row._id}`}>
-            <Button variant="ghost" className="px-3 py-2 text-gold-2" icon={Eye}>
-              View
-            </Button>
+            <button type="button" className={actionButtonClassName} title="View project" aria-label="View project">
+              <Eye className="h-3.5 w-3.5" />
+            </button>
           </Link>
           <Link to={`/projects/${row._id}/edit`}>
-            <Button variant="ghost" className="px-3 py-2 text-gold-2" icon={Pencil}>
-              Edit
-            </Button>
+            <button type="button" className={actionButtonClassName} title="Edit project" aria-label="Edit project">
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
           </Link>
-          <Button
-            variant="ghost"
-            className="px-3 py-2 text-rose-300 hover:text-rose-200"
-            icon={Trash2}
+          <button
+            type="button"
+            className={deleteActionButtonClassName}
             onClick={() => {
               setDeleteError("");
               setProjectToDelete(row);
             }}
+            title="Delete project"
+            aria-label="Delete project"
           >
-            Delete
-          </Button>
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
       ),
+      searchable: false,
     },
   ];
 
@@ -142,11 +152,15 @@ export default function ProjectsPage() {
       />
 
       {listError ? <p className="text-sm text-rose-300">{listError}</p> : null}
-      {isLoading ? (
-        <p className="text-sm text-muted">Loading projects...</p>
-      ) : (
-        <DataTable columns={columns} rows={projects} />
-      )}
+      <AdvancedDataTable
+        columns={columns}
+        rows={projects}
+        loading={isLoading}
+        loadingMessage="Loading projects..."
+        emptyMessage="No projects found."
+        searchPlaceholder="Search projects..."
+        defaultRowsPerPage={10}
+      />
 
       <Modal
         title="Delete Project"
