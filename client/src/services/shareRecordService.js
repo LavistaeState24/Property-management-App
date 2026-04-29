@@ -6,7 +6,7 @@ export const shareRecordService = {
     return data.data;
   },
   list: async () => {
-    const { data } = await api.get("/share-records");
+    const { data } = await api.get("/share-records",);
     return data.data;
   },
   listByClientPhone: async (clientPhone) => {

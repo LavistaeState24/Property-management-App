@@ -100,51 +100,59 @@ export default function ProjectDetailsPage() {
   }, [id]);
 
   const handleWhatsAppShare = async (formValues) => {
-    setShareError("");
+  setShareError("");
 
-    if (!authStorage.getRawToken()) {
-      setShareError("Your session has expired. Please log in again before sharing.");
-      return;
-    }
+  if (!authStorage.getRawToken()) {
+    setShareError("Your session has expired. Please log in again before sharing.");
+    return;
+  }
 
-    try {
-      const safeProject = await projectService.getClientShare(id);
-      const whatsappMessage = buildWhatsAppMessage(safeProject);
+  if (!user?.id || !user?.name || !user?.phone) {
+    setShareError("Your account details are incomplete. Please log in again before sharing.");
+    return;
+  }
 
-      await shareRecordService.create({
-        clientName: formValues.clientName,
-        clientPhone: formValues.clientPhone,
-        clientEmail: formValues.clientEmail || undefined,
-        clientRequirement: formValues.clientRequirement || undefined,
-        projectId: id,
-        projectPublicAlias: safeProject.publicAlias,
-        sharedBy: user.id,
-        sharedByName: user.name,
-        sharedByPhone: user.phone,
-        sharedFields: {
-          area: safeProject.area,
-          configuration: safeProject.configuration,
-          size: safeProject.size,
-          priceRange: safeProject.priceRange,
-          possession: safeProject.possession,
-          amenities: safeProject.amenities,
-          brochureUrl: safeProject.brochureUrl,
-          sampleVideoUrl: safeProject.sampleVideoUrl,
-          photos: safeProject.photos,
-        },
-        shareChannel: "WhatsApp",
-        whatsappMessage,
-        status: "shared",
-      });
+  try {
+    const safeProject = await projectService.getClientShare(id);
+    const whatsappMessage = buildWhatsAppMessage(safeProject);
 
-      const whatsappUrl = `https://wa.me/${formatWhatsAppPhone(formValues.clientPhone)}?text=${encodeURIComponent(whatsappMessage)}`;
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      setIsShareOpen(false);
-      reset();
-    } catch (requestError) {
-      applyServerErrors(requestError, setError, setShareError);
-    }
-  };
+    await shareRecordService.create({
+      clientName: formValues.clientName,
+      clientPhone: formValues.clientPhone,
+      clientEmail: formValues.clientEmail || undefined,
+      clientRequirement: formValues.clientRequirement || undefined,
+      projectId: id,
+      projectPublicAlias: safeProject.publicAlias,
+      sharedBy: user.id,
+      sharedByName: user.name,
+      sharedByPhone: user.phone,
+      sharedFields: {
+        area: safeProject.area,
+        configuration: safeProject.configuration,
+        size: safeProject.size,
+        priceRange: safeProject.priceRange,
+        possession: safeProject.possession,
+        amenities: safeProject.amenities,
+        brochureUrl: safeProject.brochureUrl,
+        sampleVideoUrl: safeProject.sampleVideoUrl,
+        photos: safeProject.photos,
+      },
+      shareChannel: "WhatsApp",
+      whatsappMessage,
+      status: "shared",
+    });
+
+    const whatsappUrl = `https://wa.me/${formatWhatsAppPhone(formValues.clientPhone)}?text=${encodeURIComponent(whatsappMessage)}`;
+
+    // ✅ Direct open (no blank tab)
+    window.open(whatsappUrl, "_blank");
+
+    setIsShareOpen(false);
+    reset();
+  } catch (requestError) {
+    applyServerErrors(requestError, setError, setShareError);
+  }
+};
 
   if (!project) {
     return null;
