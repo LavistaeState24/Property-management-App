@@ -2,8 +2,8 @@ import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import AdvancedDataTable from "../../../components/common/AdvancedDataTable";
 import Button from "../../../components/common/Button";
-import DataTable from "../../../components/common/DataTable";
 import Modal from "../../../components/common/Modal";
 import { clientService } from "../../../services/clientService";
 
@@ -52,6 +52,11 @@ export default function ClientsPage() {
     }
   };
 
+  const actionButtonClassName =
+    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2";
+  const deleteActionButtonClassName =
+    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-300";
+
   const columns = [
     { key: "name", label: "Client" },
     { key: "phone", label: "Phone" },
@@ -67,30 +72,32 @@ export default function ClientsPage() {
       key: "actions",
       label: "Actions",
       render: (row) => (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <Link to={`/clients/${row._id}`}>
-            <Button variant="ghost" className="px-3 py-2 text-gold-2" icon={Eye}>
-              View
-            </Button>
+            <button type="button" className={actionButtonClassName} title="View client" aria-label="View client">
+              <Eye className="h-3.5 w-3.5" />
+            </button>
           </Link>
           <Link to={`/clients/${row._id}/edit`}>
-            <Button variant="ghost" className="px-3 py-2 text-gold-2" icon={Pencil}>
-              Edit
-            </Button>
+            <button type="button" className={actionButtonClassName} title="Edit client" aria-label="Edit client">
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
           </Link>
-          <Button
-            variant="ghost"
-            className="px-3 py-2 text-rose-300 hover:text-rose-200"
-            icon={Trash2}
+          <button
+            type="button"
+            className={deleteActionButtonClassName}
             onClick={() => {
               setDeleteError("");
               setClientToDelete(row);
             }}
+            title="Delete client"
+            aria-label="Delete client"
           >
-            Delete
-          </Button>
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
       ),
+      searchable: false,
     },
   ];
 
@@ -107,11 +114,15 @@ export default function ClientsPage() {
       </div>
 
       {listError ? <p className="text-sm text-rose-300">{listError}</p> : null}
-      {isLoading ? (
-        <p className="text-sm text-muted">Loading clients...</p>
-      ) : (
-        <DataTable columns={columns} rows={clients} />
-      )}
+      <AdvancedDataTable
+        columns={columns}
+        rows={clients}
+        loading={isLoading}
+        loadingMessage="Loading clients..."
+        emptyMessage="No clients found."
+        searchPlaceholder="Search clients..."
+        defaultRowsPerPage={10}
+      />
 
       <Modal
         title="Delete Client"

@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Copy, Eye, MessageSquareShare, PencilLine, Save, Send } from "lucide-react";
 
+import AdvancedDataTable from "../../../components/common/AdvancedDataTable";
 import Button from "../../../components/common/Button";
-import DataTable from "../../../components/common/DataTable";
 import FormInput from "../../../components/common/FormInput";
 import Modal from "../../../components/common/Modal";
 import SelectDropdown from "../../../components/common/SelectDropdown";
@@ -21,6 +21,7 @@ export default function SharedHistoryPage() {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [actionType, setActionType] = useState("");
   const [actionError, setActionError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const {
     register,
     handleSubmit,
@@ -36,8 +37,14 @@ export default function SharedHistoryPage() {
   });
 
   const loadRecords = async () => {
-    const data = await shareRecordService.list();
-    setRecords(data);
+    setIsLoading(true);
+
+    try {
+      const data = await shareRecordService.list();
+      setRecords(data);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -108,12 +115,14 @@ export default function SharedHistoryPage() {
     {
       key: "createdAt",
       label: "Shared Date",
+      searchValue: (row) => new Date(row.createdAt).toLocaleString("en-IN"),
       render: (row) => new Date(row.createdAt).toLocaleString("en-IN"),
     },
     { key: "status", label: "Status" },
     {
       key: "followUpDate",
       label: "Follow-up Date",
+      searchValue: (row) => (row.followUpDate ? new Date(row.followUpDate).toLocaleDateString("en-IN") : ""),
       render: (row) => (row.followUpDate ? new Date(row.followUpDate).toLocaleDateString("en-IN") : "-"),
     },
     {
@@ -168,6 +177,7 @@ export default function SharedHistoryPage() {
           </button>
         </div>
       ),
+      searchable: false,
     },
   ];
 
@@ -178,7 +188,15 @@ export default function SharedHistoryPage() {
         <h2 className="mt-2 font-display text-3xl">Client-safe project sharing history</h2>
       </div>
 
-      <DataTable columns={columns} rows={records} />
+      <AdvancedDataTable
+        columns={columns}
+        rows={records}
+        loading={isLoading}
+        loadingMessage="Loading shared records..."
+        emptyMessage="No shared records found."
+        searchPlaceholder="Search shared history..."
+        defaultRowsPerPage={10}
+      />
 
       <Modal
         title={

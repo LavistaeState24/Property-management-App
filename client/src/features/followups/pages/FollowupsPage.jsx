@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
 
+import AdvancedDataTable from "../../../components/common/AdvancedDataTable";
 import Badge from "../../../components/common/Badge";
-import DataTable from "../../../components/common/DataTable";
 import { followupService } from "../../../services/followupService";
 
 export default function FollowupsPage() {
   const [followups, setFollowups] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadFollowups = async () => {
-      const data = await followupService.list();
-      setFollowups(data);
+      setIsLoading(true);
+
+      try {
+        const data = await followupService.list();
+        setFollowups(data);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadFollowups();
@@ -22,6 +29,7 @@ export default function FollowupsPage() {
     {
       key: "client",
       label: "Client",
+      searchValue: (row) => row.client?.name || "",
       render: (row) => row.client?.name || "-",
     },
     {
@@ -42,8 +50,15 @@ export default function FollowupsPage() {
         <p className="text-xs uppercase tracking-[0.3em] text-gold">Execution Tracker</p>
         <h2 className="mt-2 font-display text-3xl">Follow-up command center</h2>
       </div>
-      <DataTable columns={columns} rows={followups} />
+      <AdvancedDataTable
+        columns={columns}
+        rows={followups}
+        loading={isLoading}
+        loadingMessage="Loading follow-ups..."
+        emptyMessage="No follow-ups found."
+        searchPlaceholder="Search follow-ups..."
+        defaultRowsPerPage={10}
+      />
     </div>
   );
 }
-
