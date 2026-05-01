@@ -3,8 +3,8 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import App from "./App";
 import DashboardLayout from "../components/layout/DashboardLayout";
+import PermissionRoute from "../components/common/PermissionRoute";
 import ProtectedRoute from "../components/common/ProtectedRoute";
-import RoleBasedRoute from "../components/common/RoleBasedRoute";
 import LoaderScreen from "../components/common/LoaderScreen";
 
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
@@ -38,39 +38,102 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [
-          { path: "dashboard", element: withSuspense(<DashboardPage />) },
-          { path: "projects", element: withSuspense(<ProjectsPage />) },
+          {
+            path: "dashboard",
+            element: withSuspense(
+              <PermissionRoute moduleKey="dashboard">
+                <DashboardPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "projects",
+            element: withSuspense(
+              <PermissionRoute moduleKey="projects">
+                <ProjectsPage />
+              </PermissionRoute>
+            ),
+          },
           {
             path: "projects/new",
             element: withSuspense(
-              <RoleBasedRoute allowedRoles={["super-admin", "admin", "manager", "marketing"]}>
+              <PermissionRoute moduleKey="projects" actionKey="create">
                 <AddProjectPage />
-              </RoleBasedRoute>
+              </PermissionRoute>
             ),
           },
           {
             path: "projects/:id/edit",
             element: withSuspense(
-              <RoleBasedRoute allowedRoles={["super-admin", "admin", "manager", "marketing"]}>
+              <PermissionRoute moduleKey="projects" actionKey="update">
                 <AddProjectPage />
-              </RoleBasedRoute>
+              </PermissionRoute>
             ),
           },
-          { path: "projects/:id", element: withSuspense(<ProjectDetailsPage />) },
-          { path: "clients", element: withSuspense(<ClientsPage />) },
-          { path: "clients/new", element: withSuspense(<AddClientPage />) },
+          {
+            path: "projects/:id",
+            element: withSuspense(
+              <PermissionRoute moduleKey="projects">
+                <ProjectDetailsPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "clients",
+            element: withSuspense(
+              <PermissionRoute moduleKey="clients">
+                <ClientsPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "clients/new",
+            element: withSuspense(
+              <PermissionRoute moduleKey="clients" actionKey="create">
+                <AddClientPage />
+              </PermissionRoute>
+            ),
+          },
           {
             path: "clients/:id/edit",
             element: withSuspense(
-              <RoleBasedRoute allowedRoles={["super-admin", "admin", "manager", "sales"]}>
+              <PermissionRoute moduleKey="clients" actionKey="update">
                 <AddClientPage />
-              </RoleBasedRoute>
+              </PermissionRoute>
             ),
           },
-          { path: "clients/:id", element: withSuspense(<ClientDetailsPage />) },
-          { path: "followups", element: withSuspense(<FollowupsPage />) },
-          { path: "shared-history", element: withSuspense(<SharedHistoryPage />) },
-          { path: "settings", element: withSuspense(<SettingsPage />) },
+          {
+            path: "clients/:id",
+            element: withSuspense(
+              <PermissionRoute moduleKey="clients">
+                <ClientDetailsPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "followups",
+            element: withSuspense(
+              <PermissionRoute moduleKey="followups">
+                <FollowupsPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "shared-history",
+            element: withSuspense(
+              <PermissionRoute moduleKey="shareRecords">
+                <SharedHistoryPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "settings",
+            element: withSuspense(
+              <PermissionRoute moduleKey="settings">
+                <SettingsPage />
+              </PermissionRoute>
+            ),
+          },
         ],
       },
     ],

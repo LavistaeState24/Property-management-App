@@ -1,6 +1,7 @@
 import { Project } from "../models/Project.js";
 import { ApiError } from "../utils/ApiError.js";
 import { buildPagination, buildProjectFilters } from "../utils/query.js";
+import { applyScopedFilter, assertDocumentScope, getModuleScope } from "../utils/accessControl.js";
 
 const formatAssetUrl = (origin, assetUrl) => {
   if (!assetUrl) {
@@ -41,17 +42,21 @@ export const createProject = async (payload, userId) =>
     createdBy: userId,
   });
 
-export const getProjects = async (query) => {
+export const getProjects = async (query, currentUser) => {
   const filters = buildProjectFilters(query);
   const { page, limit, skip } = buildPagination(query);
+  const scopedFilters = applyScopedFilter(filters, getModuleScope(currentUser, "projects"), currentUser, {
+    assigned: ["createdBy"],
+    own: ["createdBy"],
+  });
 
   const [items, total] = await Promise.all([
-    Project.find(filters)
+    Project.find(scopedFilters)
       .populate("createdBy", "name role")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
-    Project.countDocuments(filters),
+    Project.countDocuments(scopedFilters),
   ]);
 
   return {
@@ -65,12 +70,17 @@ export const getProjects = async (query) => {
   };
 };
 
-export const getProjectById = async (projectId) => {
+export const getProjectById = async (projectId, currentUser) => {
   const project = await Project.findById(projectId).populate("createdBy", "name role");
 
   if (!project) {
     throw new ApiError(404, "Project not found");
   }
+
+  assertDocumentScope(project, getModuleScope(currentUser, "projects"), currentUser, {
+    assigned: ["createdBy"],
+    own: ["createdBy"],
+  });
 
   return project;
 };
@@ -81,6 +91,11 @@ export const getClientSafeProjectShare = async (projectId, user, origin) => {
   if (!project) {
     throw new ApiError(404, "Project not found");
   }
+
+  assertDocumentScope(project, getModuleScope(user, "projects"), user, {
+    assigned: ["createdBy"],
+    own: ["createdBy"],
+  });
 
   const brochureUrl = formatAssetUrl(origin, project.brochure?.url);
   const photos = (project.projectImages || [])
@@ -111,12 +126,17 @@ export const getClientSafeProjectShare = async (projectId, user, origin) => {
   };
 };
 
-export const updateProject = async (projectId, payload) => {
+export const updateProject = async (projectId, payload, currentUser) => {
   const project = await Project.findById(projectId);
 
   if (!project) {
     throw new ApiError(404, "Project not found");
   }
+
+  assertDocumentScope(project, getModuleScope(currentUser, "projects"), currentUser, {
+    assigned: ["createdBy"],
+    own: ["createdBy"],
+  });
 
   project.set(payload);
   await project.save();
@@ -124,19 +144,41 @@ export const updateProject = async (projectId, payload) => {
   return project;
 };
 
-export const deleteProject = async (projectId) => {
-  const project = await Project.findByIdAndDelete(projectId);
+export const deleteProject = async (projectId, currentUser) => {
+  const project = await Project.findById(projectId);
 
   if (!project) {
     throw new ApiError(404, "Project not found");
   }
+
+  assertDocumentScope(project, getModuleScope(currentUser, "projects"), currentUser, {
+    assigned: ["createdBy"],
+    own: ["createdBy"],
+  });
+
+  await project.deleteOne();
 };
 
-export const getDashboardSummary = async () => {
+export const getDashboardSummary = async (currentUser) => {
+  const projectsScope = getModuleScope(currentUser, "projects");
+
+  if (projectsScope === "none") {
+    return {
+      totalProjects: 0,
+      activeProjects: 0,
+      upcomingProjects: 0,
+    };
+  }
+
+  const projectFilters = applyScopedFilter({}, projectsScope, currentUser, {
+    assigned: ["createdBy"],
+    own: ["createdBy"],
+  });
+
   const [totalProjects, activeProjects, upcomingProjects] = await Promise.all([
-    Project.countDocuments(),
-    Project.countDocuments({ status: "active" }),
-    Project.countDocuments({ status: "upcoming" }),
+    Project.countDocuments(projectFilters),
+    Project.countDocuments({ ...projectFilters, status: "active" }),
+    Project.countDocuments({ ...projectFilters, status: "upcoming" }),
   ]);
 
   return {

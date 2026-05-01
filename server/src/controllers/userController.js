@@ -1,8 +1,12 @@
-import { listUsers } from "../services/authService.js";
+import { createManagedUser, listManagedUsers } from "../services/userService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-export const listUsersHandler = asyncHandler(async (_req, res) => {
-  const users = await listUsers();
+export const listUsersHandler = asyncHandler(async (req, res) => {
+  const users = await listManagedUsers(req.user);
   res.json({ success: true, data: users });
 });
 
+export const createUserHandler = asyncHandler(async (req, res) => {
+  const user = await createManagedUser(req.body, req.user);
+  res.status(201).json({ success: true, data: user });
+});

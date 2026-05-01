@@ -15,12 +15,12 @@ import { validateProjectInput } from "../validators/projectValidator.js";
 
 const router = Router();
 
-router.get("/", protect, listProjectsHandler);
-router.get("/dashboard-summary", protect, dashboardSummaryHandler);
-router.get("/:id/client-share", protect, getClientSafeProjectShareHandler);
-router.get("/:id", protect, getProjectHandler);
-router.post("/", protect, authorize("super-admin", "admin", "manager", "marketing"), validateBody(validateProjectInput), createProjectHandler);
-router.put("/:id", protect, authorize("super-admin", "admin", "manager", "marketing"), validateBody(validateProjectInput), updateProjectHandler);
-router.delete("/:id", protect, authorize("super-admin", "admin"), deleteProjectHandler);
+router.get("/", protect, authorize("projects", "view"), listProjectsHandler);
+router.get("/dashboard-summary", protect, authorize("dashboard", "view"), dashboardSummaryHandler);
+router.get("/:id/client-share", protect, authorize("projects", "view"), getClientSafeProjectShareHandler);
+router.get("/:id", protect, authorize("projects", "view"), getProjectHandler);
+router.post("/", protect, authorize("projects", "create"), validateBody(validateProjectInput), createProjectHandler);
+router.put("/:id", protect, authorize("projects", "update"), validateBody(validateProjectInput), updateProjectHandler);
+router.delete("/:id", protect, authorize("projects", "delete"), deleteProjectHandler);
 
 export default router;

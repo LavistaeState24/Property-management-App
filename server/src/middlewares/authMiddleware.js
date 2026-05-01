@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 
 import { env } from "../config/env.js";
 import { User } from "../models/User.js";
+import { getResolvedPermissionsForRole, hasPermission } from "../services/permissionService.js";
 import { ApiError } from "../utils/ApiError.js";
 
 export const protect = async (req, _res, next) => {
@@ -21,6 +22,7 @@ export const protect = async (req, _res, next) => {
       return next(new ApiError(401, "User not found"));
     }
 
+    user.permissions = await getResolvedPermissionsForRole(user.role);
     req.user = user;
     next();
   } catch (_error) {
@@ -29,11 +31,15 @@ export const protect = async (req, _res, next) => {
 };
 
 export const authorize =
-  (...roles) =>
+  (moduleKey, actionKey) =>
   (req, _res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!req.user) {
+      return next(new ApiError(401, "Authentication required"));
+    }
+
+    if (!hasPermission(req.user.permissions, moduleKey, actionKey)) {
       return next(new ApiError(403, "You do not have access to this resource"));
     }
+
     next();
   };
-

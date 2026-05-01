@@ -14,4 +14,3 @@ export const authService = {
     return data.data;
   },
 };
-

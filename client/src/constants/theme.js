@@ -3,7 +3,6 @@ export const roles = [
   { value: "admin", label: "Admin" },
   { value: "manager", label: "Manager" },
   { value: "sales", label: "Sales Executive" },
-  { value: "marketing", label: "Marketing Team" },
 ];
 
 export const propertyTypes = [

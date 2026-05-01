@@ -1,14 +1,16 @@
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { signToken } from "../utils/token.js";
+import { getResolvedPermissionsForRole } from "./permissionService.js";
 
-const sanitizeUser = (user) => ({
+const sanitizeUser = async (user) => ({
   id: user._id,
   name: user.name,
   email: user.email,
   role: user.role,
   phone: user.phone,
   isActive: user.isActive,
+  permissions: await getResolvedPermissionsForRole(user.role),
 });
 
 export const registerUser = async (payload) => {
@@ -18,10 +20,13 @@ export const registerUser = async (payload) => {
     throw new ApiError(409, "User already exists");
   }
 
-  const user = await User.create(payload);
+  const user = await User.create({
+    ...payload,
+    role: "sales",
+  });
   const token = signToken({ id: user._id, role: user.role });
 
-  return { user: sanitizeUser(user), token };
+  return { user: await sanitizeUser(user), token };
 };
 
 export const loginUser = async ({ email, password }) => {
@@ -33,7 +38,7 @@ export const loginUser = async ({ email, password }) => {
 
   const token = signToken({ id: user._id, role: user.role });
 
-  return { user: sanitizeUser(user), token };
+  return { user: await sanitizeUser(user), token };
 };
 
 export const getCurrentUser = async (userId) => {

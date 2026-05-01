@@ -6,38 +6,10 @@ import { User } from "../models/User.js";
 const seedUsers = [
   {
     name: "Super Admin",
-    email: "superadmin@lavistaestates.com",
-    password: "SuperAdmin@123",
+    email: "deepthakkar@gmail.com",
+    password: "Lavista@4249",
     role: "super-admin",
-    phone: "9000000001",
-  },
-  {
-    name: "Admin Manager",
-    email: "admin@lavistaestates.com",
-    password: "Admin@123",
-    role: "admin",
-    phone: "9000000002",
-  },
-  {
-    name: "Sales Manager",
-    email: "manager@lavistaestates.com",
-    password: "Manager@123",
-    role: "manager",
-    phone: "9000000003",
-  },
-  {
-    name: "Sales Executive",
-    email: "sales@lavistaestates.com",
-    password: "Sales@123",
-    role: "sales",
-    phone: "9000000004",
-  },
-  {
-    name: "Marketing Team",
-    email: "marketing@lavistaestates.com",
-    password: "Marketing@123",
-    role: "marketing",
-    phone: "9000000005",
+    phone: "7778910804",
   },
 ];
 
