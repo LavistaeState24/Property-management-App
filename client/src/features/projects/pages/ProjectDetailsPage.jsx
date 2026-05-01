@@ -7,6 +7,7 @@ import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
 import Modal from "../../../components/common/Modal";
 import { useAuth } from "../../../hooks/useAuth";
+import { useCan } from "../../../hooks/useCan";
 import { projectService } from "../../../services/projectService";
 import { shareRecordService } from "../../../services/shareRecordService";
 import { authStorage } from "../../../utils/storage";
@@ -71,6 +72,7 @@ const buildWhatsAppMessage = (safeProject) => {
 export default function ProjectDetailsPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const canCreateShareRecords = useCan("shareRecords", "create");
   const [project, setProject] = useState(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [shareError, setShareError] = useState("");
@@ -167,9 +169,11 @@ export default function ProjectDetailsPage() {
         </div>
         <div className="flex items-center gap-3">
           <Badge tone="green">{project.status}</Badge>
-          <Button onClick={() => setIsShareOpen(true)} icon={Link2}>
-            Share Client
-          </Button>
+          {canCreateShareRecords ? (
+            <Button onClick={() => setIsShareOpen(true)} icon={Link2}>
+              Share Client
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -244,7 +248,7 @@ export default function ProjectDetailsPage() {
         </div>
       </div>
 
-      <Modal title="Share Client-Safe Details" isOpen={isShareOpen} onClose={() => setIsShareOpen(false)}>
+      <Modal title="Share Client-Safe Details" isOpen={canCreateShareRecords && isShareOpen} onClose={() => setIsShareOpen(false)}>
         <form className="space-y-4" onSubmit={handleSubmit(handleWhatsAppShare)}>
           <FormInput
             label="Client Name"

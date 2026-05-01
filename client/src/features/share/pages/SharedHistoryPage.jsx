@@ -8,6 +8,7 @@ import FormInput from "../../../components/common/FormInput";
 import Modal from "../../../components/common/Modal";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import { shareRecordStatuses } from "../../../constants/theme";
+import { useCan } from "../../../hooks/useCan";
 import { shareRecordService } from "../../../services/shareRecordService";
 import { dateRules, getErrorMessage, textRules } from "../../../utils/validation";
 
@@ -17,6 +18,8 @@ const formatWhatsAppPhone = (phone) => {
 };
 
 export default function SharedHistoryPage() {
+  const canUpdateShareRecords = useCan("shareRecords", "update");
+  const canDeleteShareRecords = useCan("shareRecords", "delete");
   const [records, setRecords] = useState([]);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [actionType, setActionType] = useState("");
@@ -180,36 +183,42 @@ export default function SharedHistoryPage() {
           >
             <Send className="h-3.5 w-3.5" />
           </button>
-          <button
-            type="button"
-            className={actionButtonClassName}
-            onClick={() => openActionModal(row, "status")}
-            title="Update status"
-            aria-label="Update status"
-          >
-            <MessageSquareShare className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            className={actionButtonClassName}
-            onClick={() => openActionModal(row, "notes")}
-            title="Add notes"
-            aria-label="Add notes"
-          >
-            <PencilLine className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            className={deleteActionButtonClassName}
-            onClick={() => {
-              setActionError("");
-              setRecordToDelete(row);
-            }}
-            title="Delete shared record"
-            aria-label="Delete shared record"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          {canUpdateShareRecords ? (
+            <button
+              type="button"
+              className={actionButtonClassName}
+              onClick={() => openActionModal(row, "status")}
+              title="Update status"
+              aria-label="Update status"
+            >
+              <MessageSquareShare className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+          {canUpdateShareRecords ? (
+            <button
+              type="button"
+              className={actionButtonClassName}
+              onClick={() => openActionModal(row, "notes")}
+              title="Add notes"
+              aria-label="Add notes"
+            >
+              <PencilLine className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+          {canDeleteShareRecords ? (
+            <button
+              type="button"
+              className={deleteActionButtonClassName}
+              onClick={() => {
+                setActionError("");
+                setRecordToDelete(row);
+              }}
+              title="Delete shared record"
+              aria-label="Delete shared record"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
         </div>
       ),
       searchable: false,
@@ -257,7 +266,7 @@ export default function SharedHistoryPage() {
           </div>
         ) : null}
 
-        {selectedRecord && actionType !== "view" ? (
+        {selectedRecord && actionType !== "view" && canUpdateShareRecords ? (
           <form className="space-y-4" onSubmit={handleSubmit(submitAction)}>
             {actionType === "status" ? (
               <SelectDropdown
@@ -295,7 +304,7 @@ export default function SharedHistoryPage() {
 
       <Modal
         title="Delete Shared Record"
-        isOpen={Boolean(recordToDelete)}
+        isOpen={canDeleteShareRecords && Boolean(recordToDelete)}
         onClose={() => {
           if (!isDeleting) {
             setRecordToDelete(null);

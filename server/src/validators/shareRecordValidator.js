@@ -29,9 +29,6 @@ export const validateShareRecordCreateInput = (payload) => {
     clientRequirement: validateOptionalText(errors, "clientRequirement", payload.clientRequirement, { label: "Client requirement", max: 200 }) || undefined,
     projectId: validateObjectId(errors, "projectId", payload.projectId, { label: "Project" }),
     projectPublicAlias: validateRequiredText(errors, "projectPublicAlias", payload.projectPublicAlias, { label: "Project alias", min: 3, max: 100 }),
-    sharedBy: validateObjectId(errors, "sharedBy", payload.sharedBy, { label: "Shared by" }),
-    sharedByName: validateRequiredText(errors, "sharedByName", payload.sharedByName, { label: "Shared by name", min: 3, max: 60 }),
-    sharedByPhone: validatePhone(errors, "sharedByPhone", payload.sharedByPhone),
     sharedFields: {
       area: validateOptionalText(errors, "sharedFields.area", payload.sharedFields?.area, { label: "Area", max: 120 }) || undefined,
       configuration: validateOptionalText(errors, "sharedFields.configuration", payload.sharedFields?.configuration, { label: "Configuration", max: 80 }) || undefined,

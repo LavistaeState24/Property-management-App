@@ -9,7 +9,7 @@ import {
   updateShareRecordNotesHandler,
   updateShareRecordStatusHandler,
 } from "../controllers/shareRecordController.js";
-import { protect } from "../middlewares/authMiddleware.js";
+import { authorize, protect } from "../middlewares/authMiddleware.js";
 import { validateBody } from "../middlewares/validationMiddleware.js";
 import {
   validateShareRecordCreateInput,
@@ -19,12 +19,12 @@ import {
 
 const router = Router();
 
-router.get("/", protect, listShareRecordsHandler);
-router.get("/client/:clientPhone", protect, getShareRecordsByClientPhoneHandler);
-router.get("/project/:projectId", protect, getShareRecordsByProjectIdHandler);
-router.post("/", protect, validateBody(validateShareRecordCreateInput), createShareRecordHandler);
-router.patch("/:id/status", protect, validateBody(validateShareRecordStatusInput), updateShareRecordStatusHandler);
-router.patch("/:id/notes", protect, validateBody(validateShareRecordNotesInput), updateShareRecordNotesHandler);
-router.delete("/:id", protect, deleteShareRecordHandler);
+router.get("/", protect, authorize("shareRecords", "view"), listShareRecordsHandler);
+router.get("/client/:clientPhone", protect, authorize("shareRecords", "view"), getShareRecordsByClientPhoneHandler);
+router.get("/project/:projectId", protect, authorize("shareRecords", "view"), getShareRecordsByProjectIdHandler);
+router.post("/", protect, authorize("shareRecords", "create"), validateBody(validateShareRecordCreateInput), createShareRecordHandler);
+router.patch("/:id/status", protect, authorize("shareRecords", "update"), validateBody(validateShareRecordStatusInput), updateShareRecordStatusHandler);
+router.patch("/:id/notes", protect, authorize("shareRecords", "update"), validateBody(validateShareRecordNotesInput), updateShareRecordNotesHandler);
+router.delete("/:id", protect, authorize("shareRecords", "delete"), deleteShareRecordHandler);
 
 export default router;

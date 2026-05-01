@@ -1,13 +1,10 @@
 import {
   throwIfValidationFailed,
   validateEmail,
-  validateEnum,
   validatePassword,
   validatePhone,
   validateRequiredText,
 } from "./common.js";
-
-const roles = ["super-admin", "admin", "manager", "sales", "marketing"];
 
 export const validateRegisterInput = (payload) => {
   const errors = {};
@@ -17,7 +14,6 @@ export const validateRegisterInput = (payload) => {
     email: validateEmail(errors, "email", payload.email),
     phone: validatePhone(errors, "phone", payload.phone),
     password: validatePassword(errors, "password", payload.password),
-    role: validateEnum(errors, "role", payload.role || "sales", { label: "Role", values: roles }),
   };
 
   const confirmPassword = String(payload.confirmPassword || "");

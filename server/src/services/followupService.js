@@ -1,17 +1,59 @@
+import { Client } from "../models/Client.js";
 import { Followup } from "../models/Followup.js";
+import { Project } from "../models/Project.js";
 import { ShareRecord } from "../models/ShareRecord.js";
+import { applyScopedFilter, assertDocumentScope, getModuleScope } from "../utils/accessControl.js";
+import { ApiError } from "../utils/ApiError.js";
 
-export const createFollowup = async (payload, userId) =>
-  Followup.create({
+export const createFollowup = async (payload, userId, currentUser) => {
+  const client = await Client.findById(payload.client);
+
+  if (!client) {
+    throw new ApiError(404, "Client not found");
+  }
+
+  assertDocumentScope(client, getModuleScope(currentUser, "clients"), currentUser, {
+    assigned: ["assignedTo", "createdBy"],
+    own: ["createdBy"],
+  });
+
+  if (payload.project) {
+    const project = await Project.findById(payload.project);
+
+    if (!project) {
+      throw new ApiError(404, "Project not found");
+    }
+
+    assertDocumentScope(project, getModuleScope(currentUser, "projects"), currentUser, {
+      assigned: ["createdBy"],
+      own: ["createdBy"],
+    });
+  }
+
+  return Followup.create({
     ...payload,
     createdBy: userId,
   });
+};
 
-export const listFollowups = async (query = {}) => {
-  const followupFilters = {};
-  const shareRecordFilters = {
-    followUpDate: { $ne: null },
-  };
+export const listFollowups = async (query = {}, currentUser) => {
+  const followupFilters = applyScopedFilter({}, getModuleScope(currentUser, "followups"), currentUser, {
+    assigned: ["createdBy"],
+    own: ["createdBy"],
+  });
+  const shareRecordsScope = getModuleScope(currentUser, "shareRecords");
+  const shareRecordFilters =
+    shareRecordsScope === "none"
+      ? null
+      : applyScopedFilter(
+          { followUpDate: { $ne: null } },
+          shareRecordsScope,
+          currentUser,
+          {
+            assigned: ["sharedBy"],
+            own: ["sharedBy"],
+          }
+        );
 
   if (query.today === "true") {
     const start = new Date();
@@ -40,10 +82,12 @@ export const listFollowups = async (query = {}) => {
       .populate("project", "projectName publicAlias")
       .populate("createdBy", "name role")
       .lean(),
-    ShareRecord.find(shareRecordFilters)
-      .populate("projectId", "projectName publicAlias")
-      .populate("sharedBy", "name role")
-      .lean(),
+    shareRecordFilters
+      ? ShareRecord.find(shareRecordFilters)
+          .populate("projectId", "projectName publicAlias")
+          .populate("sharedBy", "name role")
+          .lean()
+      : Promise.resolve([]),
   ]);
 
   const mappedShareRecords = shareRecords.map((record) => ({

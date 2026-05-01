@@ -6,11 +6,15 @@ import AdvancedDataTable from "../../../components/common/AdvancedDataTable";
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
 import Modal from "../../../components/common/Modal";
+import { useCan } from "../../../hooks/useCan";
 import SearchFilter from "../../../components/common/SearchFilter";
 import { propertyTypes } from "../../../constants/theme";
 import { projectService } from "../../../services/projectService";
 
 export default function ProjectsPage() {
+  const canCreateProjects = useCan("projects", "create");
+  const canUpdateProjects = useCan("projects", "update");
+  const canDeleteProjects = useCan("projects", "delete");
   const [projects, setProjects] = useState([]);
   const [filters, setFilters] = useState({
     area: "",
@@ -107,23 +111,27 @@ export default function ProjectsPage() {
               <Eye className="h-3.5 w-3.5" />
             </button>
           </Link>
-          <Link to={`/projects/${row._id}/edit`}>
-            <button type="button" className={actionButtonClassName} title="Edit project" aria-label="Edit project">
-              <Pencil className="h-3.5 w-3.5" />
+          {canUpdateProjects ? (
+            <Link to={`/projects/${row._id}/edit`}>
+              <button type="button" className={actionButtonClassName} title="Edit project" aria-label="Edit project">
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </Link>
+          ) : null}
+          {canDeleteProjects ? (
+            <button
+              type="button"
+              className={deleteActionButtonClassName}
+              onClick={() => {
+                setDeleteError("");
+                setProjectToDelete(row);
+              }}
+              title="Delete project"
+              aria-label="Delete project"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
             </button>
-          </Link>
-          <button
-            type="button"
-            className={deleteActionButtonClassName}
-            onClick={() => {
-              setDeleteError("");
-              setProjectToDelete(row);
-            }}
-            title="Delete project"
-            aria-label="Delete project"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          ) : null}
         </div>
       ),
       searchable: false,
@@ -137,9 +145,11 @@ export default function ProjectsPage() {
           <p className="text-xs uppercase tracking-[0.3em] text-gold">Inventory Library</p>
           <h2 className="mt-2 font-display text-3xl">Search by requirement, not guesswork</h2>
         </div>
-        <Link to="/projects/new">
-          <Button icon={Plus}>Add Project</Button>
-        </Link>
+        {canCreateProjects ? (
+          <Link to="/projects/new">
+            <Button icon={Plus}>Add Project</Button>
+          </Link>
+        ) : null}
       </div>
 
       <SearchFilter
@@ -164,7 +174,7 @@ export default function ProjectsPage() {
 
       <Modal
         title="Delete Project"
-        isOpen={Boolean(projectToDelete)}
+        isOpen={canDeleteProjects && Boolean(projectToDelete)}
         onClose={() => {
           if (!isDeleting) {
             setProjectToDelete(null);

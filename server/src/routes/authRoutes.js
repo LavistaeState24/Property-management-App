@@ -10,6 +10,6 @@ const router = Router();
 router.post("/register", validateBody(validateRegisterInput), register);
 router.post("/login", validateBody(validateLoginInput), login);
 router.get("/me", protect, me);
-router.get("/users", protect, authorize("super-admin", "admin"), getUsers);
+router.get("/users", protect, authorize("users", "view"), getUsers);
 
 export default router;

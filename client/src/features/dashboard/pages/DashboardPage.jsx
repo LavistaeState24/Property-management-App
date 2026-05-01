@@ -7,11 +7,15 @@ import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
 import StatCard from "../../../components/common/StatCard";
 import ClientCard from "../../../components/cards/ClientCard";
+import { useCan } from "../../../hooks/useCan";
 import { projectService } from "../../../services/projectService";
 import { clientService } from "../../../services/clientService";
 import { followupService } from "../../../services/followupService";
 
 export default function DashboardPage() {
+  const canViewProjects = useCan("projects", "view");
+  const canViewClients = useCan("clients", "view");
+  const canViewFollowups = useCan("followups", "view");
   const [summary, setSummary] = useState(null);
   const [projects, setProjects] = useState([]);
   const [clients, setClients] = useState([]);
@@ -25,9 +29,9 @@ export default function DashboardPage() {
       try {
         const [summaryData, projectData, clientData, followupData] = await Promise.all([
           projectService.dashboardSummary(),
-          projectService.list({ limit: 3 }),
-          clientService.list({ limit: 3 }),
-          followupService.list({ today: true }),
+          canViewProjects ? projectService.list({ limit: 3 }) : Promise.resolve({ items: [] }),
+          canViewClients ? clientService.list({ limit: 3 }) : Promise.resolve({ items: [] }),
+          canViewFollowups ? followupService.list({ today: true }) : Promise.resolve([]),
         ]);
 
         setSummary(summaryData);
@@ -41,7 +45,7 @@ export default function DashboardPage() {
     };
 
     loadDashboard();
-  }, []);
+  }, [canViewClients, canViewFollowups, canViewProjects]);
 
   const projectColumns = [
     {
@@ -87,77 +91,60 @@ export default function DashboardPage() {
           meta="Pipeline"
           icon={CalendarClock}
         />
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-glass backdrop-blur-xl">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-2 text-gold-2">
-                <CalendarClock className="h-4 w-4" />
-              </div>
-              <p className="text-sm text-muted">Follow-up radar</p>
-            </div>
-            <Badge tone="gold">Today</Badge>
-          </div>
-          <div className="mt-4 space-y-3">
-            {followups.length ? (
-              followups.map((followup) => (
-                <div key={followup._id} className="rounded-3xl border border-white/10 bg-black/20 p-4">
-                  <p className="mt-1 text-sm text-muted">{followup.no}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted">No follow-ups due today.</p>
-            )}
-          </div>
-        </div>
-
+        <StatCard label="Today's Follow-ups" value={canViewFollowups ? followups.length : "--"} accent="gold" meta="Due today" icon={CalendarClock} />
       </section>
 
       <section className="grid gap-6 grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1">
-        <div className="space-y-6">
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <Users className="h-5 w-5 text-gold-2" />
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-gold">Leads</p>
-                  <h3 className="mt-2 font-display text-2xl">Priority clients</h3>
+      
+        {canViewClients ? (
+          <div className="space-y-6">
+            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Users className="h-5 w-5 text-gold-2" />
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-gold">Leads</p>
+                    <h3 className="mt-2 font-display text-2xl">Priority clients</h3>
+                  </div>
                 </div>
+                <Link to="/clients">
+                  <Button variant="secondary" icon={Users} iconRight={ArrowRight}>
+                    View all
+                  </Button>
+                </Link>
               </div>
-              <Link to="/clients">
-                <Button variant="secondary" icon={Users} iconRight={ArrowRight}>
+              <div className="mt-5 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
+                {clients.map((client) => (
+                  <ClientCard key={client._id} client={client} />
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
+        {canViewProjects ? (
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-gold">Inventory Picks</p>
+                <h3 className="mt-2 font-display text-2xl">Fresh project additions</h3>
+              </div>
+              <Link to="/projects">
+                <Button variant="secondary" icon={Building2} iconRight={ArrowRight}>
                   View all
                 </Button>
               </Link>
             </div>
-            <div className="mt-5 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
-              {clients.map((client) => (
-                <ClientCard key={client._id} client={client} />
-              ))}
-            </div>
+            <AdvancedDataTable
+              columns={projectColumns}
+              rows={projects}
+              loading={isLoading}
+              loadingMessage="Loading fresh projects..."
+              emptyMessage="No recent projects found."
+              searchPlaceholder="Search fresh project additions..."
+              defaultRowsPerPage={5}
+            />
           </div>
-        </div>
-        <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-gold">Inventory Picks</p>
-              <h3 className="mt-2 font-display text-2xl">Fresh project additions</h3>
-            </div>
-            <Link to="/projects">
-              <Button variant="secondary" icon={Building2} iconRight={ArrowRight}>
-                View all
-              </Button>
-            </Link>
-          </div>
-          <AdvancedDataTable
-            columns={projectColumns}
-            rows={projects}
-            loading={isLoading}
-            loadingMessage="Loading fresh projects..."
-            emptyMessage="No recent projects found."
-            searchPlaceholder="Search fresh project additions..."
-            defaultRowsPerPage={5}
-          />
-        </div>
+        ) : null}
 
 
       </section>

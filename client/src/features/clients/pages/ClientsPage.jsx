@@ -5,9 +5,13 @@ import { Link } from "react-router-dom";
 import AdvancedDataTable from "../../../components/common/AdvancedDataTable";
 import Button from "../../../components/common/Button";
 import Modal from "../../../components/common/Modal";
+import { useCan } from "../../../hooks/useCan";
 import { clientService } from "../../../services/clientService";
 
 export default function ClientsPage() {
+  const canCreateClients = useCan("clients", "create");
+  const canUpdateClients = useCan("clients", "update");
+  const canDeleteClients = useCan("clients", "delete");
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState("");
@@ -78,23 +82,27 @@ export default function ClientsPage() {
               <Eye className="h-3.5 w-3.5" />
             </button>
           </Link>
-          <Link to={`/clients/${row._id}/edit`}>
-            <button type="button" className={actionButtonClassName} title="Edit client" aria-label="Edit client">
-              <Pencil className="h-3.5 w-3.5" />
+          {canUpdateClients ? (
+            <Link to={`/clients/${row._id}/edit`}>
+              <button type="button" className={actionButtonClassName} title="Edit client" aria-label="Edit client">
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </Link>
+          ) : null}
+          {canDeleteClients ? (
+            <button
+              type="button"
+              className={deleteActionButtonClassName}
+              onClick={() => {
+                setDeleteError("");
+                setClientToDelete(row);
+              }}
+              title="Delete client"
+              aria-label="Delete client"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
             </button>
-          </Link>
-          <button
-            type="button"
-            className={deleteActionButtonClassName}
-            onClick={() => {
-              setDeleteError("");
-              setClientToDelete(row);
-            }}
-            title="Delete client"
-            aria-label="Delete client"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          ) : null}
         </div>
       ),
       searchable: false,
@@ -108,9 +116,11 @@ export default function ClientsPage() {
           <p className="text-xs uppercase tracking-[0.3em] text-gold">Lead Desk</p>
           <h2 className="mt-2 font-display text-3xl">Client and pipeline management</h2>
         </div>
-        <Link to="/clients/new">
-          <Button icon={Plus}>Add Client</Button>
-        </Link>
+        {canCreateClients ? (
+          <Link to="/clients/new">
+            <Button icon={Plus}>Add Client</Button>
+          </Link>
+        ) : null}
       </div>
 
       {listError ? <p className="text-sm text-rose-300">{listError}</p> : null}
@@ -126,7 +136,7 @@ export default function ClientsPage() {
 
       <Modal
         title="Delete Client"
-        isOpen={Boolean(clientToDelete)}
+        isOpen={canDeleteClients && Boolean(clientToDelete)}
         onClose={() => {
           if (!isDeleting) {
             setClientToDelete(null);

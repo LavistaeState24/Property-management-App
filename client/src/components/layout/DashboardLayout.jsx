@@ -28,7 +28,7 @@ export default function DashboardLayout() {
     return () => mediaQuery.removeListener(handleBreakpointChange);
   }, []);
 
-  const closeSidebar = () => setIsSidebarOpen(false);
+  const closeSidebar = () => setIsSidebarOpen(true);
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   return (

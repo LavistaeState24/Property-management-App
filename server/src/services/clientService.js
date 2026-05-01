@@ -1,6 +1,7 @@
 import { Client } from "../models/Client.js";
 import { ApiError } from "../utils/ApiError.js";
 import { buildPagination } from "../utils/query.js";
+import { applyScopedFilter, assertDocumentScope, getModuleScope } from "../utils/accessControl.js";
 
 export const createClient = async (payload, userId) =>
   Client.create({
@@ -8,7 +9,7 @@ export const createClient = async (payload, userId) =>
     createdBy: userId,
   });
 
-export const getClients = async (query) => {
+export const getClients = async (query, currentUser) => {
   const filters = {};
   const { page, limit, skip } = buildPagination(query);
 
@@ -24,14 +25,19 @@ export const getClients = async (query) => {
     filters.propertyType = query.propertyType;
   }
 
+  const scopedFilters = applyScopedFilter(filters, getModuleScope(currentUser, "clients"), currentUser, {
+    assigned: ["assignedTo", "createdBy"],
+    own: ["createdBy"],
+  });
+
   const [items, total] = await Promise.all([
-    Client.find(filters)
+    Client.find(scopedFilters)
       .populate("assignedTo", "name role")
       .populate("createdBy", "name role")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
-    Client.countDocuments(filters),
+    Client.countDocuments(scopedFilters),
   ]);
 
   return {
@@ -45,7 +51,7 @@ export const getClients = async (query) => {
   };
 };
 
-export const getClientById = async (clientId) => {
+export const getClientById = async (clientId, currentUser) => {
   const client = await Client.findById(clientId)
     .populate("assignedTo", "name role")
     .populate("createdBy", "name role");
@@ -54,27 +60,43 @@ export const getClientById = async (clientId) => {
     throw new ApiError(404, "Client not found");
   }
 
-  return client;
-};
-
-export const updateClient = async (clientId, payload) => {
-  const client = await Client.findByIdAndUpdate(clientId, payload, {
-    new: true,
-    runValidators: true,
+  assertDocumentScope(client, getModuleScope(currentUser, "clients"), currentUser, {
+    assigned: ["assignedTo", "createdBy"],
+    own: ["createdBy"],
   });
 
+  return client;
+};
+
+export const updateClient = async (clientId, payload, currentUser) => {
+  const client = await Client.findById(clientId);
+
   if (!client) {
     throw new ApiError(404, "Client not found");
   }
+
+  assertDocumentScope(client, getModuleScope(currentUser, "clients"), currentUser, {
+    assigned: ["assignedTo", "createdBy"],
+    own: ["createdBy"],
+  });
+
+  client.set(payload);
+  await client.save();
 
   return client;
 };
 
-export const deleteClient = async (clientId) => {
-  const client = await Client.findByIdAndDelete(clientId);
+export const deleteClient = async (clientId, currentUser) => {
+  const client = await Client.findById(clientId);
 
   if (!client) {
     throw new ApiError(404, "Client not found");
   }
-};
 
+  assertDocumentScope(client, getModuleScope(currentUser, "clients"), currentUser, {
+    assigned: ["assignedTo", "createdBy"],
+    own: ["createdBy"],
+  });
+
+  await client.deleteOne();
+};

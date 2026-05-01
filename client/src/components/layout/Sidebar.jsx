@@ -1,11 +1,20 @@
 import { useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { navigationItems } from "./navigation";
+import { usePermissions } from "../../hooks/usePermissions";
 
 export const SIDEBAR_WIDTH = "18rem";
 
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
+  const permissions = usePermissions();
+  const visibleItems = navigationItems.filter((link) => {
+    if (!link.moduleKey || !link.actionKey) {
+      return true;
+    }
+
+    return Boolean(permissions?.[link.moduleKey]?.[link.actionKey]);
+  });
 
   useEffect(() => {
     if (window.innerWidth < 1024) {
@@ -30,14 +39,14 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-2">
-        {navigationItems.map((link) => {
+        {visibleItems.map((link) => {
           const Icon = link.icon;
 
           return (
             <NavLink
               key={link.to}
               to={link.to}
-              onClick={() => setIsOpen(false)}
+              onClick={() => onClose()}
               className={({ isActive }) =>
                 `group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200
             ${isActive

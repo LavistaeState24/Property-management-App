@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { BriefcaseBusiness, Building2, Eye, EyeOff, KeyRound, Mail, Phone, ShieldCheck, UserRound, Users } from "lucide-react";
+import { Building2, Eye, EyeOff, KeyRound, Mail, Phone, ShieldCheck, UserRound, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
-import SelectDropdown from "../../../components/common/SelectDropdown";
-import { roles } from "../../../constants/theme";
 import { useAuth } from "../../../hooks/useAuth";
 import { authService } from "../../../services/authService";
 import {
@@ -14,7 +12,6 @@ import {
   getErrorMessage,
   passwordRules,
   phoneRules,
-  selectRules,
   textRules,
 } from "../../../utils/validation";
 
@@ -24,7 +21,6 @@ const initialRegisterState = {
   phone: "",
   password: "",
   confirmPassword: "",
-  role: "sales",
 };
 
 export default function LoginPage() {
@@ -80,7 +76,6 @@ export default function LoginPage() {
         phone: formValues.phone,
         password: formValues.password,
         confirmPassword: formValues.confirmPassword,
-        role: formValues.role,
       };
 
       await authService.register(payload);
@@ -102,7 +97,7 @@ export default function LoginPage() {
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             {[
               { label: "Inventory intelligence", icon: Building2 },
-              { label: "Role-based operations", icon: BriefcaseBusiness },
+              { label: "Role-based operations", icon: Users },
               { label: "Client-safe sharing", icon: ShieldCheck },
             ].map((item) => {
               const Icon = item.icon;
@@ -220,13 +215,10 @@ export default function LoginPage() {
                   validate: (value) => value === registerPassword || "Passwords do not match",
                 })}
               />
-              <SelectDropdown
-                label="Role"
-                icon={BriefcaseBusiness}
-                options={roles}
-                error={getErrorMessage(registerErrors.role)}
-                {...registerRegister("role", selectRules("Role"))}
-              />
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-muted">
+                Public registration creates a <span className="text-ivory">Sales Executive</span> account only.
+                Admin and Super Admin accounts must be created from the secured team access settings.
+              </div>
               {registerError ? <p className="text-sm text-rose-300">{registerError}</p> : null}
               <Button className="w-full" disabled={isRegisterSubmitting} icon={Users}>
                 {isRegisterSubmitting ? "Creating..." : "Create account"}
