@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   createShareRecordHandler,
+  deleteShareRecordHandler,
   getShareRecordsByClientPhoneHandler,
   getShareRecordsByProjectIdHandler,
   listShareRecordsHandler,
@@ -24,5 +25,6 @@ router.get("/project/:projectId", protect, getShareRecordsByProjectIdHandler);
 router.post("/", protect, validateBody(validateShareRecordCreateInput), createShareRecordHandler);
 router.patch("/:id/status", protect, validateBody(validateShareRecordStatusInput), updateShareRecordStatusHandler);
 router.patch("/:id/notes", protect, validateBody(validateShareRecordNotesInput), updateShareRecordNotesHandler);
+router.delete("/:id", protect, deleteShareRecordHandler);
 
 export default router;

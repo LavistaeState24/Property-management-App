@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Copy, Eye, MessageSquareShare, PencilLine, Save, Send } from "lucide-react";
+import { Copy, Eye, MessageSquareShare, PencilLine, Save, Send, Trash2 } from "lucide-react";
 
 import AdvancedDataTable from "../../../components/common/AdvancedDataTable";
 import Button from "../../../components/common/Button";
@@ -21,6 +21,8 @@ export default function SharedHistoryPage() {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [actionType, setActionType] = useState("");
   const [actionError, setActionError] = useState("");
+  const [recordToDelete, setRecordToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const {
     register,
@@ -68,6 +70,25 @@ export default function SharedHistoryPage() {
     setActionError("");
   };
 
+  const handleDeleteRecord = async () => {
+    if (!recordToDelete) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setActionError("");
+
+    try {
+      await shareRecordService.remove(recordToDelete._id);
+      setRecords((currentRecords) => currentRecords.filter((record) => record._id !== recordToDelete._id));
+      setRecordToDelete(null);
+    } catch (requestError) {
+      setActionError(requestError.response?.data?.message || "Unable to delete share record");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleCopyMessage = async (message) => {
     await navigator.clipboard.writeText(message);
   };
@@ -106,6 +127,8 @@ export default function SharedHistoryPage() {
 
   const actionButtonClassName =
     "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2";
+  const deleteActionButtonClassName =
+    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-300";
 
   const columns = [
     { key: "clientName", label: "Client Name" },
@@ -174,6 +197,18 @@ export default function SharedHistoryPage() {
             aria-label="Add notes"
           >
             <PencilLine className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={deleteActionButtonClassName}
+            onClick={() => {
+              setActionError("");
+              setRecordToDelete(row);
+            }}
+            title="Delete shared record"
+            aria-label="Delete shared record"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       ),
@@ -256,6 +291,38 @@ export default function SharedHistoryPage() {
             </div>
           </form>
         ) : null}
+      </Modal>
+
+      <Modal
+        title="Delete Shared Record"
+        isOpen={Boolean(recordToDelete)}
+        onClose={() => {
+          if (!isDeleting) {
+            setRecordToDelete(null);
+            setActionError("");
+          }
+        }}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted">Are you sure you want to delete this shared history record?</p>
+          {actionError ? <p className="text-sm text-rose-300">{actionError}</p> : null}
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setRecordToDelete(null);
+                setActionError("");
+              }}
+              disabled={isDeleting}
+            >
+              No, Cancel
+            </Button>
+            <Button type="button" onClick={handleDeleteRecord} disabled={isDeleting} className="bg-rose-500 text-white hover:opacity-90">
+              {isDeleting ? "Deleting..." : "Yes, Delete"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

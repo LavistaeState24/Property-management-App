@@ -15,7 +15,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <aside
-      className={`fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] w-64 flex-col border-r border-white/10 bg-[#0d0c0a]/95 px-4 py-5 shadow-glass backdrop-blur-xl transition-transform duration-300 ease-out
+      className={`fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] w-64 flex-col border-r border-white/10 bg-[#0d0c0a]/95 px-4 py-5 shadow-glass backdrop-blur-xl transition-transform duration-300 ease-out overflow-y-auto
   ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
     >
       {/* Brand */}

@@ -25,4 +25,8 @@ export const shareRecordService = {
     const { data } = await api.patch(`/share-records/${id}/notes`, payload);
     return data.data;
   },
+  remove: async (id) => {
+    const { data } = await api.delete(`/share-records/${id}`);
+    return data;
+  },
 };

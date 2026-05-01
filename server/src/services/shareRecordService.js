@@ -58,3 +58,13 @@ export const updateShareRecordNotes = async (id, payload) => {
 
   return shareRecord;
 };
+
+export const deleteShareRecord = async (id) => {
+  const shareRecord = await ShareRecord.findByIdAndDelete(id);
+
+  if (!shareRecord) {
+    throw new ApiError(404, "Share record not found");
+  }
+
+  return shareRecord;
+};

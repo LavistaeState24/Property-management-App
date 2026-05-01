@@ -1,5 +1,6 @@
 import {
   createShareRecord,
+  deleteShareRecord,
   getShareRecordsByClientPhone,
   getShareRecordsByProjectId,
   listShareRecords,
@@ -36,4 +37,9 @@ export const updateShareRecordStatusHandler = asyncHandler(async (req, res) => {
 export const updateShareRecordNotesHandler = asyncHandler(async (req, res) => {
   const shareRecord = await updateShareRecordNotes(req.params.id, req.body);
   res.json({ success: true, data: shareRecord });
+});
+
+export const deleteShareRecordHandler = asyncHandler(async (req, res) => {
+  await deleteShareRecord(req.params.id);
+  res.json({ success: true, message: "Share record deleted successfully" });
 });

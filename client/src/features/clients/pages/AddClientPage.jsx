@@ -132,7 +132,7 @@ export default function AddClientPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-gold">
+        <p className="text-md tracking-[0.1em] text-gold">
           {isEditMode ? "Lead Editing" : "Lead Intake"}
         </p>
         <h2 className="mt-2 font-display text-3xl">

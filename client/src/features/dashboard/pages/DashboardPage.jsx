@@ -34,6 +34,7 @@ export default function DashboardPage() {
         setProjects(projectData.items);
         setClients(clientData.items);
         setFollowups(followupData);
+        
       } finally {
         setIsLoading(false);
       }
@@ -100,8 +101,7 @@ export default function DashboardPage() {
             {followups.length ? (
               followups.map((followup) => (
                 <div key={followup._id} className="rounded-3xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-sm font-medium text-ivory">{followup.client?.name}</p>
-                  <p className="mt-1 text-sm text-muted">{followup.note}</p>
+                  <p className="mt-1 text-sm text-muted">{followup.no}</p>
                 </div>
               ))
             ) : (
