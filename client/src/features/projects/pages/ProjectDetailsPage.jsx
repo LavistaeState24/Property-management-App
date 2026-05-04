@@ -10,6 +10,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useCan } from "../../../hooks/useCan";
 import { projectService } from "../../../services/projectService";
 import { shareRecordService } from "../../../services/shareRecordService";
+import { resolveAssetUrl } from "../../../services/uploadService";
 import { authStorage } from "../../../utils/storage";
 import {
   applyServerErrors,
@@ -160,6 +161,9 @@ export default function ProjectDetailsPage() {
     return null;
   }
 
+  const brochureUrl = resolveAssetUrl(project.brochure?.url);
+  const sampleVideoUrl = resolveAssetUrl(project.sampleVideoUrl);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -201,7 +205,7 @@ export default function ProjectDetailsPage() {
               ["Possession Date", project.possessionDate ? new Date(project.possessionDate).toLocaleDateString("en-IN") : "Not added"],
               ["Status", project.status],
               ["Amenities", Array.isArray(project.amenities) ? project.amenities.join(", ") : project.amenities],
-              ["Sample House Video", project.sampleVideoUrl],
+              ["Sample House Video", sampleVideoUrl],
             ].map(([label, value]) => (
               <div
                 key={label}
@@ -228,7 +232,6 @@ export default function ProjectDetailsPage() {
             {[
               ["Builder Details", project.builderDetails],
               ["Internal Notes", project.internalNotes],
-              ["Brochure", project.brochure?.url],
               ["Floor Plans", project.floorPlans?.length ? `${project.floorPlans.length} file(s) added` : ""],
               ["Project Images", project.projectImages?.length ? `${project.projectImages.length} image(s) added` : ""],
             ].map(([label, value]) => (
@@ -244,6 +247,25 @@ export default function ProjectDetailsPage() {
                 </p>
               </div>
             ))}
+            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+                Brochure
+              </p>
+              {brochureUrl ? (
+                <a
+                  href={brochureUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex break-all text-base font-medium text-gold-2 hover:text-gold"
+                >
+                  Open brochure PDF
+                </a>
+              ) : (
+                <p className="mt-2 break-words text-base font-medium text-ivory">
+                  Not added
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

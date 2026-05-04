@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
+import { env } from "./src/config/env.js";
 
-dotenv.config();
-
-mongoose.connect(process.env.MONGODB_URI);
+mongoose.connect(env.mongoUri);

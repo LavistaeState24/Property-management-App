@@ -1,10 +1,18 @@
 import app from "./app.js";
 import { connectDatabase } from "./config/db.js";
-import { env } from "./config/env.js";
+import { env, getMissingCloudinaryEnvVars } from "./config/env.js";
 import { ensureSystemRoles } from "./services/permissionService.js";
 
 const bootstrap = async () => {
   try {
+    const missingCloudinaryEnvVars = getMissingCloudinaryEnvVars();
+
+    if (missingCloudinaryEnvVars.length) {
+      console.warn(
+        `Cloudinary config incomplete. Missing: ${missingCloudinaryEnvVars.join(", ")}`
+      );
+    }
+
     await connectDatabase();
     await ensureSystemRoles();
     app.listen(env.port, () => {
