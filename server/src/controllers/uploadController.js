@@ -1,9 +1,22 @@
 import path from "path";
 import { Readable } from "stream";
 import cloudinary from "../config/cloudinary.js";
+import { getMissingCloudinaryEnvVars, isCloudinaryConfigured } from "../config/env.js";
+import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const uploadFilesHandler = asyncHandler(async (req, res) => {
+  if (!isCloudinaryConfigured()) {
+    throw new ApiError(
+      500,
+      "Cloudinary is not configured correctly",
+      null,
+      {
+        missingEnvVars: getMissingCloudinaryEnvVars(),
+      }
+    );
+  }
+
   if (!req.files || !req.files.length) {
     return res.status(400).json({
       success: false,
@@ -15,17 +28,21 @@ export const uploadFilesHandler = asyncHandler(async (req, res) => {
     req.files.map(
       (file) =>
         new Promise((resolve, reject) => {
-          const resourceType =
-            file.mimetype === "application/pdf" ? "raw" : "auto";
+          const safeFileName = file.originalname
+            .replace(/\.[^/.]+$/, "")
+            .replace(/\s+/g, "-")
+            .replace(/[^a-zA-Z0-9-_]/g, "");
+
+          const ext = path.extname(file.originalname).toLowerCase();
+          const isPDF = file.mimetype === "application/pdf";
 
           const uploadStream = cloudinary.uploader.upload_stream(
             {
               folder: "property-management-crm",
-              resource_type: resourceType,
-              type: "upload",
-              access_mode: "public",
+              resource_type: isPDF ? "raw" : "image",
+              public_id: `${Date.now()}-${safeFileName}${isPDF ? ".pdf" : ext}`,
               use_filename: true,
-              unique_filename: true,
+              unique_filename: false,
             },
             (error, result) => {
               if (error) return reject(error);
@@ -37,9 +54,10 @@ export const uploadFilesHandler = asyncHandler(async (req, res) => {
               resolve({
                 name: file.originalname,
                 filename: path.basename(result.public_id),
-                url: result.secure_url, // ✅ save this in MongoDB
+                url: result.secure_url,
                 publicId: result.public_id,
                 resourceType: result.resource_type,
+                format: result.format,
                 size: result.bytes,
               });
             }
