@@ -97,7 +97,7 @@ export const getClientSafeProjectShare = async (projectId, user, origin) => {
     own: ["createdBy"],
   });
 
-  const brochureUrl = formatAssetUrl(origin, project.brochure?.url);
+ const brochureUrl = formatAssetUrl(origin, project.brochure?.url);
   const photos = (project.projectImages || [])
     .map((image) => formatAssetUrl(origin, image?.url))
     .filter(Boolean);

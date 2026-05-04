@@ -10,14 +10,17 @@ const allowedMimeTypes = [
 ];
 
 export const upload = multer({
-  storage: multer.memoryStorage(), 
+  storage: multer.memoryStorage(),
   limits: {
-    fileSize: 50 * 1024 * 1024,
+    fileSize: 50 * 1024 * 1024, // 50MB
   },
   fileFilter: (_req, file, callback) => {
     if (!allowedMimeTypes.includes(file.mimetype)) {
       return callback(
-        new Error("Only PDF, JPG, PNG, WEBP, and MP4/MOV files are allowed")
+        new Error(
+          "Invalid file type. Only PDF, JPG, PNG, WEBP, MP4, and MOV are allowed."
+        ),
+        false
       );
     }
 
