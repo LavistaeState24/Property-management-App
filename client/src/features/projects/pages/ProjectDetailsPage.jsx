@@ -177,7 +177,7 @@ export default function ProjectDetailsPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-2">
         <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
           <div className="flex items-center gap-3">
             <Sparkles className="h-5 w-5 text-gold-2" />

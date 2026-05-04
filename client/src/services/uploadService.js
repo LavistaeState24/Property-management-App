@@ -1,15 +1,7 @@
-import { api, getApiOrigin } from "./api";
+import { api } from "./api";
 
 export const resolveAssetUrl = (url) => {
-  if (!url) {
-    return "";
-  }
-
-  if (/^https?:\/\//i.test(url)) {
-    return url;
-  }
-
-  return `${getApiOrigin()}${url.startsWith("/") ? url : `/${url}`}`;
+  return url || "";
 };
 
 export const uploadService = {

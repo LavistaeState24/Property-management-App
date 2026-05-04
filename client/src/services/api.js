@@ -1,5 +1,4 @@
 import axios from "axios";
-
 import { authStorage } from "../utils/storage";
 
 const normalizeApiBaseUrl = (url) => {
@@ -18,7 +17,6 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = authStorage.getRawToken() || authStorage.getToken();
-  console.log("🔥 TOKEN:", token);
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

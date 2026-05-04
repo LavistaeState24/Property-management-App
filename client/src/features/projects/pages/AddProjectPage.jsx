@@ -87,6 +87,7 @@ const normalizeBrochureAsset = (brochure) => {
       brochure.filename ||
       brochure.url.split("/").pop()?.replace(/^\d+-/, "") ||
       "Brochure.pdf",
+    downloadUrl: brochure.downloadUrl || brochure.url,
   };
 };
 

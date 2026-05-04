@@ -76,7 +76,7 @@ export default function UploadBox({
       {asset ? (
         <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
           <a
-            href={resolveAssetUrl(asset.url)}
+            href={resolveAssetUrl(asset.downloadUrl || asset.url)}
             target="_blank"
             rel="noreferrer"
             className="flex min-w-0 items-center gap-3 text-sm text-ivory hover:text-gold-2"
