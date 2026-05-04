@@ -2,7 +2,14 @@ import axios from "axios";
 import { authStorage } from "../utils/storage";
 
 const normalizeApiBaseUrl = (url) => {
-  const trimmed = (url || "http://localhost:5000").replace(/\/+$/, "");
+  const fallbackUrl = import.meta.env.DEV ? "http://localhost:5000" : "";
+  const resolvedUrl = url || fallbackUrl;
+
+  if (!resolvedUrl) {
+    throw new Error("VITE_API_URL is not configured for this environment");
+  }
+
+  const trimmed = resolvedUrl.replace(/\/+$/, "");
   return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
 };
 
