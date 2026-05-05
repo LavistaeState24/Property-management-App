@@ -2,6 +2,19 @@ import { Building2, MapPin, Wallet } from "lucide-react";
 
 import Badge from "../common/Badge";
 
+const formatPropertyTypes = (value) => (Array.isArray(value) ? value.join(", ") : value || "-");
+const formatPrice = (value) => {
+  if (!value?.min) {
+    return "-";
+  }
+
+  if (!value.max || value.min === value.max) {
+    return value.min.toLocaleString("en-IN");
+  }
+
+  return `${value.min.toLocaleString("en-IN")} - ${value.max.toLocaleString("en-IN")}`;
+};
+
 export default function ProjectCard({ project }) {
   return (
     <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-glass">
@@ -17,16 +30,14 @@ export default function ProjectCard({ project }) {
           <p className="text-xs uppercase tracking-[0.2em]">Type</p>
           <div className="mt-1 flex items-center gap-2 text-ivory">
             <Building2 className="h-4 w-4 text-gold-2" />
-            <p>{project.configuration || project.propertyType}</p>
+            <p>{project.configuration || formatPropertyTypes(project.propertyType)}</p>
           </div>
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.2em]">Budget</p>
           <div className="mt-1 flex items-center gap-2 text-ivory">
             <Wallet className="h-4 w-4 text-gold-2" />
-            <p>
-              {project.priceRange?.min?.toLocaleString("en-IN")} - {project.priceRange?.max?.toLocaleString("en-IN")}
-            </p>
+            <p>{formatPrice(project.priceRange)}</p>
           </div>
         </div>
       </div>

@@ -22,7 +22,7 @@ const clientSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      enum: ["2 BHK", "3 BHK", "4 BHK", "villa", "plot", "office", "showroom"],
+      enum: ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "villa", "plot", "office", "showroom"],
     },
     followUpDate: Date,
     status: {

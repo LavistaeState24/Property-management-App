@@ -5,6 +5,10 @@ import { getMissingCloudinaryEnvVars, isCloudinaryConfigured } from "../config/e
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+const MAX_UPLOAD_SIZE_BYTES = 100 * 1024 * 1024;
+const CHUNKED_UPLOAD_THRESHOLD_BYTES = 20 * 1024 * 1024;
+const CHUNK_SIZE_BYTES = 6 * 1024 * 1024;
+
 export const uploadFilesHandler = asyncHandler(async (req, res) => {
   if (!isCloudinaryConfigured()) {
     throw new ApiError(
@@ -35,14 +39,23 @@ export const uploadFilesHandler = asyncHandler(async (req, res) => {
 
           const ext = path.extname(file.originalname).toLowerCase();
           const isPDF = file.mimetype === "application/pdf";
+          const uploadOptions = {
+            folder: "property-management-crm",
+            resource_type: isPDF ? "raw" : "image",
+            public_id: `${Date.now()}-${safeFileName}${isPDF ? ".pdf" : ext}`,
+            use_filename: true,
+            unique_filename: false,
+          };
 
-          const uploadStream = cloudinary.uploader.upload_stream(
+          const uploader =
+            file.size > CHUNKED_UPLOAD_THRESHOLD_BYTES
+              ? cloudinary.uploader.upload_chunked_stream
+              : cloudinary.uploader.upload_stream;
+
+          const uploadStream = uploader(
             {
-              folder: "property-management-crm",
-              resource_type: isPDF ? "raw" : "image",
-              public_id: `${Date.now()}-${safeFileName}${isPDF ? ".pdf" : ext}`,
-              use_filename: true,
-              unique_filename: false,
+              ...uploadOptions,
+              chunk_size: CHUNK_SIZE_BYTES,
             },
             (error, result) => {
               if (error) return reject(error);

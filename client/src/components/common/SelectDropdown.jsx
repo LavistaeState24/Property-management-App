@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 
 const SelectDropdown = forwardRef(function SelectDropdown(
-  { label, options = [], className = "", icon: Icon, error, ...props },
+  { label, options = [], className = "", icon: Icon, error, placeholder = "Select", ...props },
   ref
 ) {
   return (
@@ -17,11 +17,11 @@ const SelectDropdown = forwardRef(function SelectDropdown(
           className={`w-full rounded-2xl border py-3 text-sm text-ivory outline-none transition ${
             error ? "border-rose-400/70 focus:border-rose-400" : "border-white/10 bg-ink-2 focus:border-gold/50"
           } ${
-            Icon ? "pl-11 pr-4" : "px-4"
+            Icon ? "pl-8 pr-4" : "px-4"
           }`}
           {...props}
         >
-          <option value="">Select</option>
+          <option value="">{placeholder}</option>
           {options.map((option) => {
             const value = typeof option === "string" ? option : option.value;
             const labelText = typeof option === "string" ? option : option.label;

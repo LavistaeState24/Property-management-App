@@ -1,13 +1,14 @@
 import { Building2, CalendarDays, MapPin, Save, Shapes, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
+import MultiSelectDropdown from "../../../components/common/MultiSelectDropdown";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import UploadBox from "../../../components/common/UploadBox";
-import { projectStatuses, propertyTypes } from "../../../constants/theme";
+import { projectPropertyTypes, projectStatuses } from "../../../constants/theme";
 import { projectService } from "../../../services/projectService";
 import { uploadService } from "../../../services/uploadService";
 import {
@@ -26,9 +27,9 @@ const initialState = {
   publicAlias: "",
   location: "",
   area: "",
-  propertyType: "",
+  propertyType: [],
   configuration: "",
-  sizeRange: { min: "", max: "", unit: "sqft" },
+  sizeRange: { label: "", min: "", max: "", unit: "sqft" },
   priceRange: { min: "", max: "", currencyLabel: "INR" },
   totalPlotSize: "",
   totalBlocks: "",
@@ -44,14 +45,80 @@ const initialState = {
   brochure: null,
 };
 
+const MAX_BROCHURE_SIZE_BYTES = 100 * 1024 * 1024;
+
+const legacyPropertyTypeMap = {
+  "1 BHK": "1BHK",
+  "2 BHK": "2BHK",
+  "3 BHK": "3BHK",
+  "4 BHK": "4BHK",
+};
+
+const normalizePropertyTypeValue = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => legacyPropertyTypeMap[item] || item).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .map((item) => legacyPropertyTypeMap[item] || item)
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const parseSizeRange = (value) => {
+  const normalized = String(value || "")
+    .trim()
+    .replace(/[–—]/g, "-")
+    .replace(/\bto\b/gi, "-");
+  const matches = normalized.match(/\d+(\.\d+)?/g) || [];
+
+  if (!matches.length) {
+    return { min: undefined, max: undefined };
+  }
+
+  const numbers = matches.map(Number).filter((item) => !Number.isNaN(item));
+  return {
+    min: numbers[0],
+    max: numbers[1] ?? numbers[0],
+  };
+};
+
+const formatCompactPrice = (value) => {
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return "";
+  }
+
+  if (amount >= 10000000) {
+    return `${(amount / 10000000).toFixed(amount % 10000000 === 0 ? 0 : 1)} Cr`;
+  }
+
+  if (amount >= 100000) {
+    return `${(amount / 100000).toFixed(amount % 100000 === 0 ? 0 : 1)} Lac`;
+  }
+
+  if (amount >= 1000) {
+    return `${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}K`;
+  }
+
+  return amount.toString();
+};
+
 const mapProjectToForm = (project) => ({
   projectName: project.projectName || "",
   publicAlias: project.publicAlias || "",
   location: project.location || "",
   area: project.area || "",
-  propertyType: project.propertyType || "",
+  propertyType: normalizePropertyTypeValue(project.propertyType),
   configuration: project.configuration || "",
   sizeRange: {
+    label: project.sizeRange?.label || "",
     min: project.sizeRange?.min?.toString() || "",
     max: project.sizeRange?.max?.toString() || "",
     unit: project.sizeRange?.unit || "sqft",
@@ -102,6 +169,7 @@ export default function AddProjectPage() {
   const [brochureError, setBrochureError] = useState("");
   const [isUploadingBrochure, setIsUploadingBrochure] = useState(false);
   const {
+    control,
     register,
     handleSubmit,
     watch,
@@ -139,24 +207,11 @@ export default function AddProjectPage() {
     };
 
     loadProject();
-  }, [id, isEditMode, reset]);
+  }, [id, isEditMode, reset, setValue]);
 
-  const sizeMin = watch("sizeRange.min");
-  const priceMin = watch("priceRange.min");
   const totalUnits = watch("totalUnits");
   const hasSampleVideo = watch("hasSampleVideo");
-
-  useEffect(() => {
-    if (sizeMin !== undefined) {
-      trigger("sizeRange.max");
-    }
-  }, [sizeMin, trigger]);
-
-  useEffect(() => {
-    if (priceMin !== undefined) {
-      trigger("priceRange.max");
-    }
-  }, [priceMin, trigger]);
+  const priceValue = watch("priceRange.min");
 
   useEffect(() => {
     if (totalUnits !== undefined) {
@@ -172,8 +227,8 @@ export default function AddProjectPage() {
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      setBrochureError("Brochure PDF must be 50MB or smaller");
+    if (file.size > MAX_BROCHURE_SIZE_BYTES) {
+      setBrochureError("Brochure PDF must be 100MB or smaller");
       return;
     }
 
@@ -200,20 +255,25 @@ export default function AddProjectPage() {
     setFormError("");
 
     try {
+      const parsedSizeRange = parseSizeRange(formValues.sizeRange.label);
+      const normalizedPrice = toOptionalNumber(formValues.priceRange.min);
+
       const payload = {
         ...formValues,
+        propertyType: normalizePropertyTypeValue(formValues.propertyType),
         totalBlocks: toOptionalNumber(formValues.totalBlocks) ?? 0,
         totalUnits: toOptionalNumber(formValues.totalUnits) ?? 0,
-        availableUnits: toOptionalNumber(formValues.availableUnits) ?? 0,
+        availableUnits: toOptionalNumber(formValues.availableUnits),
         sizeRange: {
-          ...formValues.sizeRange,
-          min: toOptionalNumber(formValues.sizeRange.min) ?? 0,
-          max: toOptionalNumber(formValues.sizeRange.max) ?? 0,
+          label: formValues.sizeRange.label,
+          min: parsedSizeRange.min,
+          max: parsedSizeRange.max,
+          unit: "sqft",
         },
         priceRange: {
-          ...formValues.priceRange,
-          min: toOptionalNumber(formValues.priceRange.min) ?? 0,
-          max: toOptionalNumber(formValues.priceRange.max) ?? 0,
+          min: normalizedPrice,
+          max: normalizedPrice,
+          currencyLabel: "INR",
         },
         amenities: formValues.amenities
           .split(",")
@@ -296,77 +356,51 @@ export default function AddProjectPage() {
           {...register("area", textRules("Area", { min: 2, max: 80 }))}
         />
 
-        <SelectDropdown
-          label="Property Type"
-          icon={Shapes}
-          options={propertyTypes}
-          error={getErrorMessage(errors.propertyType)}
-          {...register("propertyType", selectRules("Property type"))}
+        <Controller
+          control={control}
+          name="propertyType"
+          render={({ field }) => (
+            <MultiSelectDropdown
+              label="Property Type"
+              icon={Shapes}
+              options={projectPropertyTypes}
+              placeholder="Select property types"
+              error={getErrorMessage(errors.propertyType)}
+              {...field}
+            />
+          )}
         />
 
         <FormInput
           label="Configuration"
           icon={Shapes}
-          placeholder="3 BHK / 4 BHK"
+          placeholder="Villa / Apartemnt"
           error={getErrorMessage(errors.configuration)}
           {...register("configuration", textRules("Configuration", { min: 3, max: 60 }))}
         />
 
         <FormInput
-          label="Size Min"
-          type="number"
-          placeholder="Minimum size (sq ft)"
-          error={getErrorMessage(errors.sizeRange?.min)}
-          {...register("sizeRange.min", numberRules("Minimum size", { required: true, min: 1 }))}
+          label="Size"
+          placeholder="2400 to 3900 / 1200-1800 / 800 - 1200"
+          error={getErrorMessage(errors.sizeRange?.label)}
+          {...register("sizeRange.label", textRules("Size", { min: 1, max: 50 }))}
         />
 
-        <FormInput
-          label="Size Max"
-          type="number"
-          placeholder="Maximum size (sq ft)"
-          error={getErrorMessage(errors.sizeRange?.max)}
-          {...register("sizeRange.max", {
-            ...numberRules("Maximum size", { required: true, min: 1 }),
-            validate: (value) => {
-              const baseValidation = numberRules("Maximum size", { required: true, min: 1 }).validate(value);
-
-              if (baseValidation !== true) {
-                return baseValidation;
-              }
-
-              return Number(value) >= Number(sizeMin) || "Maximum size must be greater than or equal to minimum size";
-            },
-          })}
-        />
-
-        <FormInput
-          label="Price Min"
-          icon={Wallet}
-          type="number"
-          placeholder="Minimum price"
-          error={getErrorMessage(errors.priceRange?.min)}
-          {...register("priceRange.min", numberRules("Minimum price", { required: true, min: 1 }))}
-        />
-
-        <FormInput
-          label="Price Max"
-          icon={Wallet}
-          type="number"
-          placeholder="Maximum price"
-          error={getErrorMessage(errors.priceRange?.max)}
-          {...register("priceRange.max", {
-            ...numberRules("Maximum price", { required: true, min: 1 }),
-            validate: (value) => {
-              const baseValidation = numberRules("Maximum price", { required: true, min: 1 }).validate(value);
-
-              if (baseValidation !== true) {
-                return baseValidation;
-              }
-
-              return Number(value) >= Number(priceMin) || "Maximum price must be greater than or equal to minimum price";
-            },
-          })}
-        />
+        <div className="space-y-2">
+          <FormInput
+            label="Price"
+            icon={Wallet}
+            type="number"
+            placeholder="Enter price"
+            error={getErrorMessage(errors.priceRange?.min)}
+            {...register("priceRange.min", numberRules("Price", { required: true, min: 1 }))}
+          />
+          {formatCompactPrice(priceValue) ? (
+            <div className="inline-flex rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-medium text-gold-2">
+              {formatCompactPrice(priceValue)}
+            </div>
+          ) : null}
+        </div>
 
         <FormInput
           label="Total Plot Size"
@@ -394,15 +428,19 @@ export default function AddProjectPage() {
         <FormInput
           label="Available Units"
           type="number"
-          placeholder="Enter available units"
+          placeholder="Optional available units"
           error={getErrorMessage(errors.availableUnits)}
           {...register("availableUnits", {
-            ...numberRules("Available units", { required: true, min: 0, integer: true }),
+            ...numberRules("Available units", { required: false, min: 0, integer: true }),
             validate: (value) => {
-              const baseValidation = numberRules("Available units", { required: true, min: 0, integer: true }).validate(value);
+              const baseValidation = numberRules("Available units", { required: false, min: 0, integer: true }).validate(value);
 
               if (baseValidation !== true) {
                 return baseValidation;
+              }
+
+              if (value === "" || value === null || value === undefined) {
+                return true;
               }
 
               return Number(value) <= Number(totalUnits || 0) || "Available units cannot exceed total units";
@@ -490,7 +528,7 @@ export default function AddProjectPage() {
           <input type="hidden" {...register("brochure")} />
           <UploadBox
             label="Brochure Upload"
-            helpText="Click to upload or drag and drop a PDF brochure up to 50MB"
+            helpText="Click to upload or drag and drop a PDF brochure up to 100MB"
             asset={brochureAsset}
             uploading={isUploadingBrochure}
             error={brochureError || getErrorMessage(errors.brochure)}
@@ -499,9 +537,9 @@ export default function AddProjectPage() {
           />
         </div>
 
-        {formError ? <p className="lg:col-span-2 text-sm text-rose-300">{formError}</p> : null}
+        {formError ? <p className="text-sm text-rose-300 lg:col-span-2">{formError}</p> : null}
 
-        <div className="lg:col-span-2 flex justify-end gap-3 text-right">
+        <div className="flex justify-end gap-3 text-right lg:col-span-2">
           {isEditMode ? (
             <Button type="button" variant="secondary" onClick={() => navigate(`/projects/${id}`)}>
               Cancel

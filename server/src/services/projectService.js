@@ -18,6 +18,9 @@ const formatAssetUrl = (origin, assetUrl) => {
 const formatIndianCurrency = (value) =>
   typeof value === "number" ? value.toLocaleString("en-IN") : null;
 
+const formatPropertyTypes = (value) =>
+  Array.isArray(value) ? value.join(", ") : value || null;
+
 const formatDate = (value) => {
   if (!value) {
     return null;
@@ -106,14 +109,17 @@ export const getClientSafeProjectShare = async (projectId, user, origin) => {
     publicAlias: project.publicAlias,
     location: project.location,
     area: project.area,
-    configuration: project.configuration || project.propertyType,
-    size: project.sizeRange?.min && project.sizeRange?.max
+    configuration: project.configuration || formatPropertyTypes(project.propertyType),
+    size: project.sizeRange?.label
+      ? project.sizeRange.label
+      : project.sizeRange?.min && project.sizeRange?.max
       ? `${project.sizeRange.min} - ${project.sizeRange.max} ${project.sizeRange.unit || "sqft"}`
       : null,
-    priceRange:
-      project.priceRange?.min && project.priceRange?.max
-        ? `₹${formatIndianCurrency(project.priceRange.min)} - ₹${formatIndianCurrency(project.priceRange.max)}`
-        : null,
+    priceRange: project.priceRange?.min
+      ? project.priceRange.min === project.priceRange.max || !project.priceRange?.max
+        ? `₹${formatIndianCurrency(project.priceRange.min)}`
+        : `₹${formatIndianCurrency(project.priceRange.min)} - ₹${formatIndianCurrency(project.priceRange.max)}`
+      : null,
     possession: formatDate(project.possessionDate),
     amenities: project.amenities || [],
     brochureUrl,

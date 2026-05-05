@@ -1,14 +1,58 @@
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const normalizePropertyTypeToken = (value) => {
+  const normalized = String(value || "").trim();
+
+  switch (normalized.toLowerCase()) {
+    case "1 bhk":
+    case "1bhk":
+      return "1BHK";
+    case "2 bhk":
+    case "2bhk":
+      return "2BHK";
+    case "3 bhk":
+    case "3bhk":
+      return "3BHK";
+    case "4 bhk":
+    case "4bhk":
+      return "4BHK";
+    case "plot":
+      return "Plot";
+    default:
+      return normalized;
+  }
+};
+
+const expandPropertyTypeCategory = (value) => {
+  const normalized = normalizePropertyTypeToken(value);
+
+  switch (normalized.toLowerCase()) {
+    case "apartment":
+      return ["1BHK", "2BHK", "3BHK", "4BHK", "1 BHK", "2 BHK", "3 BHK", "4 BHK"];
+    case "villa":
+      return ["Duplex", "villa"];
+    case "plot":
+      return ["Plot", "plot"];
+    case "commercial":
+      return ["office", "showroom", "Commercial"];
+    default:
+      return [normalized];
+  }
+};
+
 export const buildProjectFilters = (query) => {
   const filters = {};
 
   if (query.area) {
-    filters.location = { $regex: query.area, $options: "i" };
+    const areaRegex = { $regex: escapeRegex(query.area), $options: "i" };
+    filters.$or = [{ area: areaRegex }, { location: areaRegex }];
   }
 
   if (query.propertyType) {
     const types = String(query.propertyType)
       .split(",")
       .map((item) => item.trim())
+      .flatMap(expandPropertyTypeCategory)
       .filter(Boolean);
     if (types.length) {
       filters.propertyType = { $in: types };
@@ -19,9 +63,19 @@ export const buildProjectFilters = (query) => {
     const bhkValues = String(query.bhk)
       .split(",")
       .map((item) => item.trim())
+      .map(normalizePropertyTypeToken)
       .filter(Boolean);
     if (bhkValues.length) {
-      filters.configuration = { $in: bhkValues };
+      const bhkPattern = bhkValues.map((item) => escapeRegex(item).replace("BHK", "\\s*BHK")).join("|");
+      filters.$and = [
+        ...(filters.$and || []),
+        {
+          $or: [
+            { configuration: { $regex: bhkPattern, $options: "i" } },
+            { propertyType: { $in: bhkValues } },
+          ],
+        },
+      ];
     }
   }
 
@@ -75,4 +129,3 @@ export const buildPagination = (query) => {
   const limit = Math.min(Math.max(Number(query.limit || 10), 1), 100);
   return { page, limit, skip: (page - 1) * limit };
 };
-

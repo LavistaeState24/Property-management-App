@@ -8,8 +8,21 @@ import Button from "../../../components/common/Button";
 import Modal from "../../../components/common/Modal";
 import { useCan } from "../../../hooks/useCan";
 import SearchFilter from "../../../components/common/SearchFilter";
-import { propertyTypes } from "../../../constants/theme";
+import { projectSearchTypeOptions } from "../../../constants/theme";
 import { projectService } from "../../../services/projectService";
+
+const formatPropertyTypes = (value) => (Array.isArray(value) ? value.join(", ") : value || "");
+const formatPrice = (value) => {
+  if (!value?.min) {
+    return "-";
+  }
+
+  if (!value.max || value.min === value.max) {
+    return value.min.toLocaleString("en-IN");
+  }
+
+  return `${value.min.toLocaleString("en-IN")} - ${value.max.toLocaleString("en-IN")}`;
+};
 
 export default function ProjectsPage() {
   const canCreateProjects = useCan("projects", "create");
@@ -87,14 +100,14 @@ export default function ProjectsPage() {
     {
       key: "configuration",
       label: "Config",
-      searchValue: (row) => `${row.configuration || ""} ${row.propertyType || ""}`,
-      render: (row) => row.configuration || row.propertyType,
+      searchValue: (row) => `${row.configuration || ""} ${formatPropertyTypes(row.propertyType)}`,
+      render: (row) => row.configuration || formatPropertyTypes(row.propertyType),
     },
     {
       key: "priceRange",
       label: "Price",
       searchValue: (row) => `${row.priceRange?.min || ""} ${row.priceRange?.max || ""}`,
-      render: (row) => `${row.priceRange?.min?.toLocaleString("en-IN")} - ${row.priceRange?.max?.toLocaleString("en-IN")}`,
+      render: (row) => formatPrice(row.priceRange),
     },
     {
       key: "status",
@@ -154,7 +167,7 @@ export default function ProjectsPage() {
 
       <SearchFilter
         {...filters}
-        propertyTypeOptions={propertyTypes}
+        propertyTypeOptions={projectSearchTypeOptions}
         onSubmit={(formValues) => {
           setFilters(formValues);
           loadProjects(formValues);

@@ -70,6 +70,19 @@ const buildWhatsAppMessage = (safeProject) => {
   return lines.filter(Boolean).join("\n");
 };
 
+const formatPropertyTypes = (value) => (Array.isArray(value) ? value.join(", ") : value || "Not added");
+const formatPrice = (value) => {
+  if (!value?.min) {
+    return "Not added";
+  }
+
+  if (!value.max || value.min === value.max) {
+    return value.min.toLocaleString("en-IN");
+  }
+
+  return `${value.min.toLocaleString("en-IN")} - ${value.max.toLocaleString("en-IN")}`;
+};
+
 export default function ProjectDetailsPage() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -194,10 +207,10 @@ export default function ProjectDetailsPage() {
               ["Client-safe Alias", project.publicAlias],
               ["Location", project.location],
               ["Area", project.area],
-              ["Property Type", project.propertyType],
+              ["Property Type", formatPropertyTypes(project.propertyType)],
               ["Configuration", project.configuration],
-              ["Size Range", `${project.sizeRange?.min || "-"} - ${project.sizeRange?.max || "-"}`],
-              ["Price Range", `${project.priceRange?.min?.toLocaleString("en-IN") || "-"} - ${project.priceRange?.max?.toLocaleString("en-IN") || "-"}`],
+              ["Size Range", project.sizeRange?.label || `${project.sizeRange?.min || "-"} - ${project.sizeRange?.max || "-"}`],
+              ["Price Range", formatPrice(project.priceRange)],
               ["Total Plot Size", project.totalPlotSize],
               ["Total Blocks", project.totalBlocks],
               ["Total Units", project.totalUnits],

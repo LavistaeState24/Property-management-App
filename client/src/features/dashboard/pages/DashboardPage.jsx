@@ -12,6 +12,19 @@ import { projectService } from "../../../services/projectService";
 import { clientService } from "../../../services/clientService";
 import { followupService } from "../../../services/followupService";
 
+const formatPropertyTypes = (value) => (Array.isArray(value) ? value.join(", ") : value || "-");
+const formatPrice = (value) => {
+  if (!value?.min) {
+    return "-";
+  }
+
+  if (!value.max || value.min === value.max) {
+    return value.min.toLocaleString("en-IN");
+  }
+
+  return `${value.min.toLocaleString("en-IN")} - ${value.max.toLocaleString("en-IN")}`;
+};
+
 export default function DashboardPage() {
   const canViewProjects = useCan("projects", "view");
   const canViewClients = useCan("clients", "view");
@@ -63,14 +76,14 @@ export default function DashboardPage() {
     {
       key: "configuration",
       label: "Config",
-      searchValue: (row) => `${row.configuration || ""} ${row.propertyType || ""}`,
-      render: (row) => row.configuration || row.propertyType || "-",
+      searchValue: (row) => `${row.configuration || ""} ${formatPropertyTypes(row.propertyType)}`,
+      render: (row) => row.configuration || formatPropertyTypes(row.propertyType),
     },
     {
       key: "priceRange",
       label: "Budget",
       searchValue: (row) => `${row.priceRange?.min || ""} ${row.priceRange?.max || ""}`,
-      render: (row) => `${row.priceRange?.min?.toLocaleString("en-IN")} - ${row.priceRange?.max?.toLocaleString("en-IN")}`,
+      render: (row) => formatPrice(row.priceRange),
     },
     {
       key: "status",
