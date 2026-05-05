@@ -5,6 +5,19 @@ import Badge from "../../../components/common/Badge";
 import LoaderScreen from "../../../components/common/LoaderScreen";
 import { shareService } from "../../../services/shareService";
 
+const formatPropertyTypes = (value) => (Array.isArray(value) ? value.join(", ") : value || "-");
+const formatPrice = (value) => {
+  if (!value?.min) {
+    return "-";
+  }
+
+  if (!value.max || value.min === value.max) {
+    return value.min.toLocaleString("en-IN");
+  }
+
+  return `${value.min.toLocaleString("en-IN")} - ${value.max.toLocaleString("en-IN")}`;
+};
+
 export default function SharePreviewPage() {
   const { token } = useParams();
   const [preview, setPreview] = useState(null);
@@ -42,13 +55,11 @@ export default function SharePreviewPage() {
           </div>
           <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted">Configuration</p>
-            <p className="mt-2 text-xl text-ivory">{project.configuration || project.propertyType}</p>
+            <p className="mt-2 text-xl text-ivory">{project.configuration || formatPropertyTypes(project.propertyType)}</p>
           </div>
           <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted">Price</p>
-            <p className="mt-2 text-xl text-ivory">
-              {project.priceRange?.min?.toLocaleString("en-IN")} - {project.priceRange?.max?.toLocaleString("en-IN")}
-            </p>
+            <p className="mt-2 text-xl text-ivory">{formatPrice(project.priceRange)}</p>
           </div>
           <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted">Possession</p>
@@ -71,4 +82,3 @@ export default function SharePreviewPage() {
     </div>
   );
 }
-

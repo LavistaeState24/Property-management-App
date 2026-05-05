@@ -15,12 +15,12 @@ const projectSchema = new mongoose.Schema(
     location: { type: String, required: true, trim: true, minlength: 2, maxlength: 100 },
     area: { type: String, required: true, trim: true, minlength: 2, maxlength: 80 },
     propertyType: {
-      type: String,
-      enum: ["2 BHK", "3 BHK", "4 BHK", "villa", "plot", "office", "showroom"],
-      required: true,
+      type: [{ type: String, enum: [ "1BHK", "2BHK", "3BHK", "4BHK", "5BHK", "1 BHK", "2 BHK", "3 BHK", "4 BHK", "office", "showroom"] }],
+      default: [],
     },
     configuration: { type: String, required: true, trim: true, minlength: 3, maxlength: 60 },
     sizeRange: {
+      label: { type: String, required: true, trim: true, maxlength: 50 },
       min: { type: Number, required: true, min: 1 },
       max: {
         type: Number,
@@ -55,10 +55,14 @@ const projectSchema = new mongoose.Schema(
     totalUnits: { type: Number, required: true, min: 1 },
     availableUnits: {
       type: Number,
-      required: true,
+      required: false,
       min: 0,
       validate: {
         validator(value) {
+          if (value === undefined || value === null) {
+            return true;
+          }
+
           return value <= this.totalUnits;
         },
         message: "Available units cannot exceed total units",

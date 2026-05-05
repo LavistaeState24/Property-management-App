@@ -154,8 +154,15 @@ export default function AddClientPage() {
           type="tel"
           icon={Phone}
           placeholder="Enter phone number"
+          inputMode="numeric"
+          maxLength={10}
           error={getErrorMessage(errors.phone)}
-          {...register("phone", phoneRules())}
+          {...register("phone", {
+            ...phoneRules(),
+            onChange: (event) => {
+              event.target.value = event.target.value.replace(/\D/g, "").slice(0, 10);
+            },
+          })}
         />
 
         <FormInput
@@ -175,14 +182,14 @@ export default function AddClientPage() {
         />
 
         <FormInput
-          label="Budget Min"
+          label="Budget"
           icon={Wallet}
           placeholder="Minimum budget"
           error={getErrorMessage(errors.budgetMin)}
           {...register("budgetMin", numberRules("Minimum budget", { required: false, min: 0 }))}
         />
 
-        <FormInput
+        {/* <FormInput
           label="Budget Max"
           icon={Wallet}
           placeholder="Maximum budget"
@@ -203,7 +210,7 @@ export default function AddClientPage() {
               return Number(value) >= Number(budgetMin) || "Maximum budget must be greater than or equal to minimum budget";
             },
           })}
-        />
+        /> */}
 
         <FormInput
           label="Preferred Area"
@@ -222,11 +229,11 @@ export default function AddClientPage() {
         />
 
         <FormInput
-          label="Follow-up Date"
+          label="Client Details Added"
           icon={CalendarDays}
           type="date"
           error={getErrorMessage(errors.followUpDate)}
-          {...register("followUpDate", dateRules("Follow-up date"))}
+          {...register("followUpDate", dateRules("Client details added"))}
         />
 
         <SelectDropdown

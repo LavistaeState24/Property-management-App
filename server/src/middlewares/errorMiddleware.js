@@ -6,6 +6,17 @@ export const notFoundHandler = (req, res) => {
 };
 
 export const errorHandler = (error, _req, res, _next) => {
+  if (error.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({
+      success: false,
+      message: `File size too large. Maximum allowed is ${Math.floor((100 * 1024 * 1024) / (1024 * 1024))}MB`,
+      errors: {
+        file: "Uploaded file exceeds the 100MB limit",
+      },
+      stack: process.env.NODE_ENV === "production" ? undefined : error.stack,
+    });
+  }
+
   if (error.name === "ValidationError") {
     const errors = Object.fromEntries(
       Object.entries(error.errors).map(([field, value]) => [field, value.message])

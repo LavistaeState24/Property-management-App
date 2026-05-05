@@ -6,6 +6,7 @@ export const roles = [
 ];
 
 export const propertyTypes = [
+  "1 BHK",
   "2 BHK",
   "3 BHK",
   "4 BHK",
@@ -13,6 +14,24 @@ export const propertyTypes = [
   "plot",
   "office",
   "showroom",
+];
+
+export const projectPropertyTypes = [
+  "1BHK",
+  "2BHK",
+  "3BHK",
+  "4BHK",
+  "5BHK",
+];
+
+export const projectSearchTypeOptions = [
+  "Apartment",
+  "Villa",
+  "Plot",
+  "Commercial",
+  "Duplex",
+  "Penthouse",
+  "Plot",
 ];
 
 export const projectStatuses = ["active", "sold out", "upcoming"];

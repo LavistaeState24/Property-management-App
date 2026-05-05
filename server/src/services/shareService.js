@@ -1,6 +1,21 @@
 import { ShareLink } from "../models/ShareLink.js";
 import { ApiError } from "../utils/ApiError.js";
 
+const formatPropertyTypes = (value) =>
+  Array.isArray(value) ? value.join(", ") : value || "-";
+
+const formatPriceRange = (value) => {
+  if (!value?.min) {
+    return "-";
+  }
+
+  if (!value.max || value.min === value.max) {
+    return value.min;
+  }
+
+  return `${value.min} - ${value.max}`;
+};
+
 const defaultClientFields = [
   "publicAlias",
   "location",
@@ -46,8 +61,8 @@ export const getShareLinkPreview = async (token) => {
   safePayload.whatsAppMessage = [
     `Property Match: ${shareLink.project.publicAlias}`,
     `Area: ${shareLink.project.location}`,
-    `Type: ${shareLink.project.configuration || shareLink.project.propertyType}`,
-    `Budget: ${shareLink.project.priceRange?.min || "-"} - ${shareLink.project.priceRange?.max || "-"}`,
+    `Type: ${shareLink.project.configuration || formatPropertyTypes(shareLink.project.propertyType)}`,
+    `Budget: ${formatPriceRange(shareLink.project.priceRange)}`,
     `Possession: ${shareLink.project.possessionDate ? new Date(shareLink.project.possessionDate).toLocaleDateString("en-IN") : "On request"}`,
   ].join("\n");
 

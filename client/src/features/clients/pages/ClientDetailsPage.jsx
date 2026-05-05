@@ -73,7 +73,7 @@ export default function ClientDetailsPage() {
               ["Preferred Area", client.preferredArea, MapPin],
               ["Property Type", client.propertyType, Sparkles],
               ["Budget", `${client.budgetMin || "-"} - ${client.budgetMax || "-"}`, Wallet],
-              ["Follow-up Date", client.followUpDate ? new Date(client.followUpDate).toLocaleDateString("en-IN") : "Not added", ScrollText],
+              ["Client Details Added", client.followUpDate ? new Date(client.followUpDate).toLocaleDateString("en-IN") : "Not added", ScrollText],
             ].map(([label, value, Icon]) => (
               <div key={label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
                 <div className="flex items-center gap-2">

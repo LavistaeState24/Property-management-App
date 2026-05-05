@@ -17,9 +17,9 @@ const FormInput = forwardRef(function FormInput(
           className={`w-full rounded-2xl border py-3 text-sm text-ivory outline-none transition placeholder:text-muted/60 focus:bg-white/10 ${
             error ? "border-rose-400/70 focus:border-rose-400" : "border-white/10 bg-white/5 focus:border-gold/50"
           } ${
-            Icon ? "pl-11" : "pl-4"
+            Icon ? "pl-10" : "pl-4"
           } ${
-            rightElement ? "pr-12" : "pr-4"
+            rightElement ? "pr-10" : "pr-4"
           }`}
           {...props}
         />

@@ -9,7 +9,7 @@ import {
   validateRequiredText,
 } from "./common.js";
 
-const propertyTypes = ["2 BHK", "3 BHK", "4 BHK", "villa", "plot", "office", "showroom"];
+const propertyTypes = ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "villa", "plot", "office", "showroom"];
 const clientStatuses = ["new", "interested", "site visit", "negotiation", "closed", "lost"];
 
 export const validateClientInput = (payload) => {
@@ -24,7 +24,7 @@ export const validateClientInput = (payload) => {
     budgetMax: validateNumber(errors, "budgetMax", payload.budgetMax, { label: "Maximum budget", min: 0 }),
     preferredArea: validateRequiredText(errors, "preferredArea", payload.preferredArea, { label: "Preferred area", min: 2, max: 80 }),
     propertyType: validateEnum(errors, "propertyType", payload.propertyType, { label: "Property type", values: propertyTypes }),
-    followUpDate: validateDate(errors, "followUpDate", payload.followUpDate, { label: "Follow-up date" }),
+    followUpDate: validateDate(errors, "followUpDate", payload.followUpDate, { label: "Client details added" }),
     status: validateEnum(errors, "status", payload.status || "new", { label: "Status", values: clientStatuses }),
     notes: validateOptionalText(errors, "notes", payload.notes, { label: "Notes", max: 500 }) || undefined,
   };
