@@ -63,10 +63,11 @@ export const validateProjectInput = (payload) => {
   const parsedSizeRange = parseSizeRange(sizeLabel);
   const sizeMin = validateNumber(errors, "sizeRange.min", parsedSizeRange.min, { label: "Minimum size", required: true, min: 1 });
   const sizeMax = validateNumber(errors, "sizeRange.max", parsedSizeRange.max, { label: "Maximum size", required: true, min: 1 });
-  const priceMin = validateNumber(errors, "priceRange.min", payload.priceRange?.min, { label: "Minimum price", required: true, min: 1 });
-  const priceMax = validateNumber(errors, "priceRange.max", payload.priceRange?.max ?? payload.priceRange?.min, {
+  const priceMin = validateNumber(errors, "priceRange.min", payload.priceRange?.min, { label: "Minimum price", required: false, min: 1 });
+  const priceMaxInput = payload.priceRange?.max ?? payload.priceRange?.min;
+  const priceMax = validateNumber(errors, "priceRange.max", priceMaxInput, {
     label: "Maximum price",
-    required: true,
+    required: false,
     min: 1,
   });
   const totalUnits = validateNumber(errors, "totalUnits", payload.totalUnits, { label: "Total units", required: true, min: 1, integer: true });
@@ -143,7 +144,7 @@ export const validateProjectInput = (payload) => {
     },
     priceRange: {
       min: priceMin,
-      max: priceMax,
+      max: priceMin !== undefined && priceMax === undefined ? priceMin : priceMax,
       currencyLabel: "INR",
     },
     totalPlotSize: validateOptionalText(errors, "totalPlotSize", payload.totalPlotSize, { label: "Total plot size", max: 50 }) || undefined,
