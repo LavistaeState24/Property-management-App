@@ -1,7 +1,5 @@
-import multer from "multer";
+import { createUploadMiddleware } from "./upload.js";
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-});
+const upload = createUploadMiddleware();
 
 export default upload;

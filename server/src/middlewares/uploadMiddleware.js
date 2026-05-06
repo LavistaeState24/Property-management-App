@@ -1,21 +1,8 @@
-import multer from "multer";
+import { allowedUploadMimeTypes, createUploadMiddleware } from "../config/upload.js";
 
-const allowedMimeTypes = [
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "video/mp4",
-  "video/quicktime",
-];
-
-export const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 100 * 1024 * 1024, 
-  },
+export const upload = createUploadMiddleware({
   fileFilter: (_req, file, callback) => {
-    if (!allowedMimeTypes.includes(file.mimetype)) {
+    if (!allowedUploadMimeTypes.includes(file.mimetype)) {
       return callback(
         new Error("Invalid file type. Only PDF, JPG, PNG, WEBP, MP4, and MOV are allowed."),
         false

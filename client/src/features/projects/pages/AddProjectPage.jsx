@@ -211,7 +211,8 @@ export default function AddProjectPage() {
 
   const totalUnits = watch("totalUnits");
   const hasSampleVideo = watch("hasSampleVideo");
-  const priceValue = watch("priceRange.min");
+  const priceMinValue = watch("priceRange.min");
+  const priceMaxValue = watch("priceRange.max");
 
   useEffect(() => {
     if (totalUnits !== undefined) {
@@ -256,7 +257,8 @@ export default function AddProjectPage() {
 
     try {
       const parsedSizeRange = parseSizeRange(formValues.sizeRange.label);
-      const normalizedPrice = toOptionalNumber(formValues.priceRange.min);
+      const normalizedPriceMin = toOptionalNumber(formValues.priceRange.min);
+      const normalizedPriceMax = toOptionalNumber(formValues.priceRange.max);
 
       const payload = {
         ...formValues,
@@ -271,8 +273,8 @@ export default function AddProjectPage() {
           unit: "sqft",
         },
         priceRange: {
-          min: normalizedPrice,
-          max: normalizedPrice,
+          min: normalizedPriceMin,
+          max: normalizedPriceMax,
           currencyLabel: "INR",
         },
         amenities: formValues.amenities
@@ -381,23 +383,57 @@ export default function AddProjectPage() {
 
         <FormInput
           label="Size"
-          placeholder="2400 to 3900 / 1200-1800 / 800 - 1200"
+          placeholder="2400 to 3900 / 1200-1800 "
           error={getErrorMessage(errors.sizeRange?.label)}
           {...register("sizeRange.label", textRules("Size", { min: 1, max: 50 }))}
         />
 
         <div className="space-y-2">
-          <FormInput
-            label="Price"
-            icon={Wallet}
-            type="number"
-            placeholder="Enter price"
-            error={getErrorMessage(errors.priceRange?.min)}
-            {...register("priceRange.min", numberRules("Price", { required: true, min: 1 }))}
-          />
-          {formatCompactPrice(priceValue) ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormInput
+              label="Min Price"
+              icon={Wallet}
+              type="number"
+              placeholder="Optional minimum price"
+              error={getErrorMessage(errors.priceRange?.min)}
+              {...register("priceRange.min", numberRules("Minimum price", { required: false, min: 1 }))}
+            />
+            <FormInput
+              label="Max Price"
+              icon={Wallet}
+              type="number"
+              placeholder="Optional maximum price"
+              error={getErrorMessage(errors.priceRange?.max)}
+              {...register("priceRange.max", {
+                ...numberRules("Maximum price", { required: false, min: 1 }),
+                validate: (value) => {
+                  const baseValidation = numberRules("Maximum price", { required: false, min: 1 }).validate(value);
+
+                  if (baseValidation !== true) {
+                    return baseValidation;
+                  }
+
+                  if (value === "" || value === null || value === undefined) {
+                    return true;
+                  }
+
+                  const minValue = toOptionalNumber(priceMinValue);
+                  const maxValue = toOptionalNumber(value);
+
+                  if (minValue === undefined || maxValue === undefined) {
+                    return true;
+                  }
+
+                  return maxValue >= minValue || "Maximum price must be greater than or equal to minimum price";
+                },
+              })}
+            />
+          </div>
+          {formatCompactPrice(priceMinValue) || formatCompactPrice(priceMaxValue) ? (
             <div className="inline-flex rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-medium text-gold-2">
-              {formatCompactPrice(priceValue)}
+              {formatCompactPrice(priceMinValue) && formatCompactPrice(priceMaxValue)
+                ? `${formatCompactPrice(priceMinValue)} - ${formatCompactPrice(priceMaxValue)}`
+                : formatCompactPrice(priceMinValue) || formatCompactPrice(priceMaxValue)}
             </div>
           ) : null}
         </div>

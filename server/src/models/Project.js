@@ -36,13 +36,16 @@ const projectSchema = new mongoose.Schema(
       unit: { type: String, default: "sqft" },
     },
     priceRange: {
-      min: { type: Number, required: true, min: 1 },
+      min: { type: Number, required: false, min: 1 },
       max: {
         type: Number,
-        required: true,
+        required: false,
         min: 1,
         validate: {
           validator(value) {
+            if (value === undefined || value === null || this.priceRange?.min === undefined || this.priceRange?.min === null) {
+              return true;
+            }
             return value >= this.priceRange.min;
           },
           message: "Maximum price must be greater than or equal to minimum price",
