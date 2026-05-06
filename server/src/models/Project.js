@@ -72,7 +72,7 @@ const projectSchema = new mongoose.Schema(
       },
     },
     possessionDate: { type: Date, required: true },
-    amenities: [{ type: String, trim: true, minlength: 1, maxlength: 60 }],
+    amenities: [{ type: String, trim: true, minlength: 1, maxlength: 600 }],
     floorPlans: [assetSchema],
     brochure: assetSchema,
     hasSampleVideo: { type: Boolean, default: false },
