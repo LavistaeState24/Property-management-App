@@ -43,6 +43,15 @@ export const errorHandler = (error, _req, res, _next) => {
     });
   }
 
+  if (error.name === "S3ServiceException" || error.$metadata?.httpStatusCode) {
+    return res.status(error.$metadata?.httpStatusCode || 502).json({
+      success: false,
+      message: error.message || "File upload failed",
+      errors: error.errors || null,
+      stack: process.env.NODE_ENV === "production" ? undefined : error.stack,
+    });
+  }
+
   if (error.name === "ValidationError") {
     const errors = Object.fromEntries(
       Object.entries(error.errors).map(([field, value]) => [field, value.message])

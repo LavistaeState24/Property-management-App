@@ -3,7 +3,7 @@ import authRoutes from "./routes/authRoutes.js";
 import express from "express";
 import morgan from "morgan";
 
-import { env, getMissingCloudinaryEnvVars, isCloudinaryConfigured } from "./config/env.js";
+import { env, getMissingAwsS3EnvVars, isAwsS3Configured } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware.js";
 import apiRoutes from "./routes/index.js";
 
@@ -34,8 +34,8 @@ app.get("/api/health", (_req, res) => {
     message: "Server is healthy",
     config: {
       nodeEnv: env.nodeEnv,
-      cloudinaryConfigured: isCloudinaryConfigured(),
-      missingCloudinaryEnvVars: getMissingCloudinaryEnvVars(),
+      awsS3Configured: isAwsS3Configured(),
+      missingAwsS3EnvVars: getMissingAwsS3EnvVars(),
     },
   });
 });

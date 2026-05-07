@@ -2,7 +2,8 @@ node_modules/
 dist/
 build/
 .env
-.env*
+.env.*
+!.env.example
 uploads/
 coverage/
 .DS_Store

@@ -1,15 +1,15 @@
 import app from "./app.js";
 import { connectDatabase } from "./config/db.js";
-import { env, getMissingCloudinaryEnvVars } from "./config/env.js";
+import { env, getMissingAwsS3EnvVars } from "./config/env.js";
 import { ensureSystemRoles } from "./services/permissionService.js";
 
 const bootstrap = async () => {
   try {
-    const missingCloudinaryEnvVars = getMissingCloudinaryEnvVars();
+    const missingAwsS3EnvVars = getMissingAwsS3EnvVars();
 
-    if (missingCloudinaryEnvVars.length) {
+    if (missingAwsS3EnvVars.length) {
       console.warn(
-        `Cloudinary config incomplete. Missing: ${missingCloudinaryEnvVars.join(", ")}`
+        `AWS S3 config incomplete. Missing: ${missingAwsS3EnvVars.join(", ")}`
       );
     }
 

@@ -1,32 +1,26 @@
-import fs from "fs";
 import path from "path";
 import { promises as fsPromises } from "fs";
-import cloudinary from "../config/cloudinary.js";
-import { CHUNK_SIZE_BYTES, CHUNKED_UPLOAD_THRESHOLD_BYTES, MAX_UPLOAD_SIZE_BYTES } from "../config/upload.js";
-import { getMissingCloudinaryEnvVars, isCloudinaryConfigured } from "../config/env.js";
+import fs from "fs";
+import crypto from "crypto";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { env, getMissingAwsS3EnvVars, isAwsS3Configured } from "../config/env.js";
+import { buildS3ObjectUrl, s3Client } from "../config/s3.js";
+import { MAX_UPLOAD_SIZE_BYTES } from "../config/upload.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-const normalizeCloudinaryBaseName = (filename) =>
+const normalizeUploadBaseName = (filename) =>
   filename
     .replace(/\.[^/.]+$/, "")
     .replace(/\s+/g, "-")
     .replace(/[^a-zA-Z0-9-_]/g, "") || "upload";
 
-const resolveCloudinaryResourceType = (mimetype) => {
-  if (mimetype === "application/pdf") {
-    return "raw";
-  }
+const createS3ObjectKey = (filename) => {
+  const ext = path.extname(filename).toLowerCase();
+  const baseName = normalizeUploadBaseName(filename);
+  const datePrefix = new Date().toISOString().slice(0, 10);
 
-  if (mimetype?.startsWith("video/")) {
-    return "video";
-  }
-
-  if (mimetype?.startsWith("image/")) {
-    return "image";
-  }
-
-  return "raw";
+  return `uploads/${datePrefix}/${Date.now()}-${baseName}-${crypto.randomUUID()}${ext}`;
 };
 
 const cleanupTempFile = async (filePath) => {
@@ -44,13 +38,13 @@ const cleanupTempFile = async (filePath) => {
 };
 
 export const uploadFilesHandler = asyncHandler(async (req, res) => {
-  if (!isCloudinaryConfigured()) {
+  if (!isAwsS3Configured()) {
     throw new ApiError(
       500,
-      "Cloudinary is not configured correctly",
+      "AWS S3 is not configured correctly",
       null,
       {
-        missingEnvVars: getMissingCloudinaryEnvVars(),
+        missingEnvVars: getMissingAwsS3EnvVars(),
       }
     );
   }
@@ -64,63 +58,40 @@ export const uploadFilesHandler = asyncHandler(async (req, res) => {
 
   try {
     const files = await Promise.all(
-      req.files.map(
-        (file) =>
-          new Promise((resolve, reject) => {
-            if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-              return reject(
-                new ApiError(
-                  400,
-                  `File size too large. Got ${file.size}. Maximum is ${MAX_UPLOAD_SIZE_BYTES}.`
-                )
-              );
-            }
-            const safeFileName = normalizeCloudinaryBaseName(file.originalname);
-            const ext = path.extname(file.originalname).toLowerCase();
-            const isPDF = file.mimetype === "application/pdf";
-            const resourceType = resolveCloudinaryResourceType(file.mimetype);
-            const uploadOptions = {
-              folder: "property-management-crm",
-              resource_type: resourceType,
-              public_id: `${Date.now()}-${safeFileName}${isPDF ? ".pdf" : ext}`,
-              use_filename: true,
-              unique_filename: false,
-            };
+      req.files.map(async (file) => {
+        if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+          throw new ApiError(
+            400,
+            `File size too large. Got ${file.size}. Maximum is ${MAX_UPLOAD_SIZE_BYTES}.`
+          );
+        }
 
-            const uploader =
-              file.size > CHUNKED_UPLOAD_THRESHOLD_BYTES
-                ? cloudinary.uploader.upload_chunked_stream
-                : cloudinary.uploader.upload_stream;
+        const key = createS3ObjectKey(file.originalname);
 
-            const uploadStream = uploader(
-              {
-                ...uploadOptions,
-                chunk_size: CHUNK_SIZE_BYTES,
-              },
-              (error, result) => {
-                if (error) return reject(error);
-
-                if (!result?.secure_url) {
-                  return reject(new Error("Cloudinary upload failed"));
-                }
-
-                resolve({
-                  name: file.originalname,
-                  filename: path.basename(result.public_id),
-                  url: result.secure_url,
-                  publicId: result.public_id,
-                  resourceType: result.resource_type,
-                  format: result.format,
-                  size: result.bytes,
-                });
-              }
-            );
-
-            fs.createReadStream(file.path)
-              .on("error", reject)
-              .pipe(uploadStream);
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: env.awsS3Bucket,
+            Key: key,
+            Body: fs.createReadStream(file.path),
+            ContentType: file.mimetype,
+            ContentLength: file.size,
+            Metadata: {
+              originalname: file.originalname,
+            },
           })
-      )
+        );
+
+        const url = buildS3ObjectUrl(env.awsS3Bucket, env.awsRegion, key);
+
+        return {
+          name: file.originalname,
+          filename: path.basename(key),
+          url,
+          key,
+          mimetype: file.mimetype,
+          size: file.size,
+        };
+      })
     );
 
     res.status(201).json({
