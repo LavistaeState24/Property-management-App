@@ -42,7 +42,7 @@ export default function DashboardPage() {
       try {
         const [summaryData, projectData, clientData, followupData] = await Promise.all([
           projectService.dashboardSummary(),
-          canViewProjects ? projectService.list({ limit: 3 }) : Promise.resolve({ items: [] }),
+          canViewProjects ? projectService.list({ limit: 5 }) : Promise.resolve({ items: [] }),
           canViewClients ? clientService.list({ limit: 3 }) : Promise.resolve({ items: [] }),
           canViewFollowups ? followupService.list({ today: true }) : Promise.resolve([]),
         ]);

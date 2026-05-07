@@ -42,22 +42,24 @@ export const env = {
 
   clientUrls: parseClientUrls(process.env.CLIENT_URL),
 
-  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
-  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || "",
-  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || "",
+  awsRegion: process.env.AWS_REGION || "",
+  awsS3Bucket: process.env.AWS_S3_BUCKET || "",
+  awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+  awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
 };
 
-export const getMissingCloudinaryEnvVars = () => {
+export const getMissingAwsS3EnvVars = () => {
   const missing = [];
 
-  if (!env.cloudinaryCloudName) missing.push("CLOUDINARY_CLOUD_NAME");
-  if (!env.cloudinaryApiKey) missing.push("CLOUDINARY_API_KEY");
-  if (!env.cloudinaryApiSecret) missing.push("CLOUDINARY_API_SECRET");
+  if (!env.awsRegion) missing.push("AWS_REGION");
+  if (!env.awsS3Bucket) missing.push("AWS_S3_BUCKET");
+  if (!env.awsAccessKeyId) missing.push("AWS_ACCESS_KEY_ID");
+  if (!env.awsSecretAccessKey) missing.push("AWS_SECRET_ACCESS_KEY");
 
   return missing;
 };
 
-export const isCloudinaryConfigured = () => getMissingCloudinaryEnvVars().length === 0;
+export const isAwsS3Configured = () => getMissingAwsS3EnvVars().length === 0;
 
 if (!env.mongoUri) {
   throw new Error("MONGODB_URI is not defined");

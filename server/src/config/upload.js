@@ -5,17 +5,30 @@ import os from "os";
 import path from "path";
 
 export const MAX_UPLOAD_SIZE_BYTES = 100 * 1024 * 1024;
-export const CHUNKED_UPLOAD_THRESHOLD_BYTES = 20 * 1024 * 1024;
-export const CHUNK_SIZE_BYTES = 6 * 1024 * 1024;
 export const UPLOAD_TMP_DIR = path.join(os.tmpdir(), "property-management-crm", "uploads");
 
 export const allowedUploadMimeTypes = [
   "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/rtf",
+  "text/plain",
+  "text/csv",
   "image/jpeg",
+  "image/jpg",
   "image/png",
   "image/webp",
+  "image/gif",
+  "image/heic",
+  "image/heif",
   "video/mp4",
   "video/quicktime",
+  "video/x-msvideo",
+  "video/x-matroska",
 ];
 
 const normalizeUploadBaseName = (filename) =>
