@@ -7,7 +7,7 @@ const sharedFieldsSchema = new mongoose.Schema(
     size: { type: String, trim: true, maxlength: 80 },
     priceRange: { type: String, trim: true, maxlength: 120 },
     possession: { type: String, trim: true, maxlength: 80 },
-    amenities: [{ type: String, trim: true, maxlength: 80 }],
+    amenities: [{ type: String, trim: true, maxlength: 500 }],
     brochureUrl: { type: String, trim: true, maxlength: 500, default: null },
     sampleVideoUrl: { type: String, trim: true, maxlength: 500, default: null },
     photos: [{ type: String, trim: true, maxlength: 500 }],

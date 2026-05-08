@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link2, ScrollText, Send, Sparkles } from "lucide-react";
 import { useParams } from "react-router-dom";
+
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
@@ -25,30 +26,15 @@ const formatWhatsAppPhone = (phone) => {
   return digits.length === 10 ? `91${digits}` : digits;
 };
 
-const formatMessageSection = (emoji, label, value) => {
-  if (!value) {
-    return null;
-  }
-
-  return `${emoji} *${label}:* ${value}`;
-};
-
 const buildWhatsAppMessage = (safeProject) => {
-  const amenitiesValue = safeProject.amenities?.length
-    ? safeProject.amenities.join(", ")
-    : null;
+  const amenitiesValue = safeProject.amenities?.length ? safeProject.amenities.join(", ") : null;
+  const photosValue = safeProject.photos?.length ? safeProject.photos.join(", ") : null;
 
-  const photosValue = safeProject.photos?.length
-    ? safeProject.photos.join(", ")
-    : null;
-
-  const format = (label, value) =>
-    value ? `• *${label}:* ${value}` : null;
+  const format = (label, value) => (value ? `• *${label}:* ${value}` : null);
 
   const lines = [
     "*Premium Property Details by Lavista Estate*",
     "",
-
     format("Area", safeProject.area),
     format("Configuration", safeProject.configuration),
     format("Size", safeProject.size),
@@ -58,7 +44,6 @@ const buildWhatsAppMessage = (safeProject) => {
     format("Brochure", safeProject.brochureUrl),
     format("Sample House Video", safeProject.sampleVideoUrl),
     format("Photos", photosValue),
-
     "",
     "*For more details, contact:*",
     safeProject.contact?.name ? `*${safeProject.contact.name}*` : null,
@@ -71,6 +56,7 @@ const buildWhatsAppMessage = (safeProject) => {
 };
 
 const formatPropertyTypes = (value) => (Array.isArray(value) ? value.join(", ") : value || "Not added");
+
 const formatPrice = (value) => {
   if (!value?.min) {
     return "Not added";
@@ -116,59 +102,77 @@ export default function ProjectDetailsPage() {
   }, [id]);
 
   const handleWhatsAppShare = async (formValues) => {
-  setShareError("");
+    setShareError("");
 
-  if (!authStorage.getRawToken()) {
-    setShareError("Your session has expired. Please log in again before sharing.");
-    return;
-  }
+    if (!authStorage.getRawToken()) {
+      setShareError("Your session has expired. Please log in again before sharing.");
+      return;
+    }
 
-  if (!user?.id || !user?.name || !user?.phone) {
-    setShareError("Your account details are incomplete. Please log in again before sharing.");
-    return;
-  }
+    if (!user?.id || !user?.name || !user?.phone) {
+      setShareError("Your account details are incomplete. Please log in again before sharing.");
+      return;
+    }
 
-  try {
-    const safeProject = await projectService.getClientShare(id);
-    const whatsappMessage = buildWhatsAppMessage(safeProject);
+    const formattedPhone = formatWhatsAppPhone(formValues.clientPhone);
 
-    await shareRecordService.create({
-      clientName: formValues.clientName,
-      clientPhone: formValues.clientPhone,
-      clientEmail: formValues.clientEmail || undefined,
-      clientRequirement: formValues.clientRequirement || undefined,
-      projectId: id,
-      projectPublicAlias: safeProject.publicAlias,
-      sharedBy: user.id,
-      sharedByName: user.name,
-      sharedByPhone: user.phone,
-      sharedFields: {
-        area: safeProject.area,
-        configuration: safeProject.configuration,
-        size: safeProject.size,
-        priceRange: safeProject.priceRange,
-        possession: safeProject.possession,
-        amenities: safeProject.amenities,
-        brochureUrl: safeProject.brochureUrl,
-        sampleVideoUrl: safeProject.sampleVideoUrl,
-        photos: safeProject.photos,
-      },
-      shareChannel: "WhatsApp",
-      whatsappMessage,
-      status: "shared",
-    });
+    if (!formattedPhone) {
+      setShareError("Enter a valid WhatsApp number before sharing.");
+      return;
+    }
 
-    const whatsappUrl = `https://wa.me/${formatWhatsAppPhone(formValues.clientPhone)}?text=${encodeURIComponent(whatsappMessage)}`;
+    const popupWindow = window.open("", "_blank");
 
-    // ✅ Direct open (no blank tab)
-    window.open(whatsappUrl, "_blank");
+    try {
+      const safeProject = await projectService.getClientShare(id);
+      const whatsappMessage = buildWhatsAppMessage(safeProject);
 
-    setIsShareOpen(false);
-    reset();
-  } catch (requestError) {
-    applyServerErrors(requestError, setError, setShareError);
-  }
-};
+      await shareRecordService.create({
+        clientName: formValues.clientName,
+        clientPhone: formValues.clientPhone,
+        clientEmail: formValues.clientEmail || undefined,
+        clientRequirement: formValues.clientRequirement || undefined,
+        projectId: id,
+        projectPublicAlias: safeProject.publicAlias,
+        sharedBy: user.id,
+        sharedByName: user.name,
+        sharedByPhone: user.phone,
+        sharedFields: {
+          area: safeProject.area,
+          configuration: safeProject.configuration,
+          size: safeProject.size,
+          priceRange: safeProject.priceRange,
+          possession: safeProject.possession,
+          amenities: safeProject.amenities?.map((item) =>
+            item.length > 100 ? item.slice(0, 90) + "..." : item
+          ),
+          brochureUrl: safeProject.brochureUrl,
+          sampleVideoUrl: safeProject.sampleVideoUrl,
+          photos: safeProject.photos,
+        },
+        shareChannel: "WhatsApp",
+        whatsappMessage,
+        status: "shared",
+      });
+
+      const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(whatsappMessage)}`;
+
+      if (popupWindow) {
+        popupWindow.location.href = whatsappUrl;
+      } else {
+        window.location.assign(whatsappUrl);
+      }
+
+      setIsShareOpen(false);
+      reset();
+    } catch (requestError) {
+      if (popupWindow) {
+        popupWindow.close();
+      }
+
+      applyServerErrors(requestError, setError, setShareError);
+    }
+  };
 
   if (!project) {
     return null;
@@ -220,16 +224,9 @@ export default function ProjectDetailsPage() {
               ["Amenities", Array.isArray(project.amenities) ? project.amenities.join(", ") : project.amenities],
               ["Sample House Video", sampleVideoUrl],
             ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-3xl border border-white/10 bg-black/20 p-4"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-                  {label}
-                </p>
-                <p className="mt-2 break-words text-base font-medium text-ivory">
-                  {value || "Not added"}
-                </p>
+              <div key={label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{label}</p>
+                <p className="mt-2 break-words text-base font-medium text-ivory">{value || "Not added"}</p>
               </div>
             ))}
           </div>
@@ -248,22 +245,13 @@ export default function ProjectDetailsPage() {
               ["Floor Plans", project.floorPlans?.length ? `${project.floorPlans.length} file(s) added` : ""],
               ["Project Images", project.projectImages?.length ? `${project.projectImages.length} image(s) added` : ""],
             ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-3xl border border-white/10 bg-black/20 p-4"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-                  {label}
-                </p>
-                <p className="mt-2 break-words text-base font-medium text-ivory">
-                  {value || "Not added"}
-                </p>
+              <div key={label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{label}</p>
+                <p className="mt-2 break-words text-base font-medium text-ivory">{value || "Not added"}</p>
               </div>
             ))}
             <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-                Brochure
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Brochure</p>
               {brochureUrl ? (
                 <a
                   href={brochureUrl}
@@ -274,9 +262,7 @@ export default function ProjectDetailsPage() {
                   Open brochure PDF
                 </a>
               ) : (
-                <p className="mt-2 break-words text-base font-medium text-ivory">
-                  Not added
-                </p>
+                <p className="mt-2 break-words text-base font-medium text-ivory">Not added</p>
               )}
             </div>
           </div>

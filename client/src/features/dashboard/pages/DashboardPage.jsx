@@ -31,6 +31,7 @@ export default function DashboardPage() {
   const canViewFollowups = useCan("followups", "view");
   const [summary, setSummary] = useState(null);
   const [projects, setProjects] = useState([]);
+  const [totalProjects, setTotalProjects] = useState(0);
   const [clients, setClients] = useState([]);
   const [followups, setFollowups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,13 +43,14 @@ export default function DashboardPage() {
       try {
         const [summaryData, projectData, clientData, followupData] = await Promise.all([
           projectService.dashboardSummary(),
-          canViewProjects ? projectService.list({ limit: 5 }) : Promise.resolve({ items: [] }),
+          canViewProjects ? projectService.listAll() : Promise.resolve({ items: [], meta: { total: 0 } }),
           canViewClients ? clientService.list({ limit: 3 }) : Promise.resolve({ items: [] }),
           canViewFollowups ? followupService.list({ today: true }) : Promise.resolve([]),
         ]);
 
         setSummary(summaryData);
         setProjects(projectData.items);
+        setTotalProjects(projectData.meta?.total ?? projectData.items.length);
         setClients(clientData.items);
         setFollowups(followupData);
         
@@ -150,6 +152,7 @@ export default function DashboardPage() {
             <AdvancedDataTable
               columns={projectColumns}
               rows={projects}
+              totalRecords={totalProjects}
               loading={isLoading}
               loadingMessage="Loading fresh projects..."
               emptyMessage="No recent projects found."
