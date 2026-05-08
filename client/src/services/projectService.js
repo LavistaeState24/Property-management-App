@@ -1,10 +1,12 @@
 import { api } from "./api";
+import { fetchAllPaginated } from "./paginatedList";
 
 export const projectService = {
   list: async (params) => {
     const { data } = await api.get("/projects", { params });
     return data.data;
   },
+  listAll: async (params) => fetchAllPaginated((requestParams) => projectService.list(requestParams), params),
   create: async (payload) => {
     const { data } = await api.post("/projects", payload);
     return data.data;

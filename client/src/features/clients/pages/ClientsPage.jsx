@@ -13,6 +13,7 @@ export default function ClientsPage() {
   const canUpdateClients = useCan("clients", "update");
   const canDeleteClients = useCan("clients", "delete");
   const [clients, setClients] = useState([]);
+  const [totalClients, setTotalClients] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -24,8 +25,9 @@ export default function ClientsPage() {
     setListError("");
 
     try {
-      const data = await clientService.list();
+      const data = await clientService.listAll();
       setClients(data.items);
+      setTotalClients(data.meta?.total ?? data.items.length);
     } catch (requestError) {
       setListError(requestError.response?.data?.message || "Unable to load clients");
     } finally {
@@ -48,6 +50,7 @@ export default function ClientsPage() {
     try {
       await clientService.remove(clientToDelete._id);
       setClients((currentClients) => currentClients.filter((client) => client._id !== clientToDelete._id));
+      setTotalClients((currentTotalClients) => Math.max(0, currentTotalClients - 1));
       setClientToDelete(null);
     } catch (requestError) {
       setDeleteError(requestError.response?.data?.message || "Unable to delete client");
@@ -127,6 +130,7 @@ export default function ClientsPage() {
       <AdvancedDataTable
         columns={columns}
         rows={clients}
+        totalRecords={totalClients}
         loading={isLoading}
         loadingMessage="Loading clients..."
         emptyMessage="No clients found."
