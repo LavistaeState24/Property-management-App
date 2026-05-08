@@ -13,12 +13,12 @@ export const getClients = async (query, currentUser) => {
   const filters = {};
   const { page, limit, skip } = buildPagination(query);
 
-  if (query.status) {
-    filters.status = query.status;
+  if (query.sourceOfProperty) {
+    filters.sourceOfProperty = query.sourceOfProperty;
   }
 
-  if (query.preferredArea) {
-    filters.preferredArea = { $regex: query.preferredArea, $options: "i" };
+  if (query.premiseArea) {
+    filters.premiseArea = { $regex: query.premiseArea, $options: "i" };
   }
 
   if (query.propertyType) {

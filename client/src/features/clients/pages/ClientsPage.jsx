@@ -65,15 +65,20 @@ export default function ClientsPage() {
     "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-300";
 
   const columns = [
-    { key: "name", label: "Client" },
-    { key: "phone", label: "Phone" },
-    { key: "preferredArea", label: "Preferred Area" },
+    { key: "ownerName", label: "Owner" },
+    { key: "premiseName", label: "Premise" },
+    { key: "premiseArea", label: "Area" },
+    { key: "sourceOfProperty", label: "Source" },
     { key: "propertyType", label: "Type" },
-    { key: "status", label: "Status" },
     {
-      key: "budget",
-      label: "Budget",
-      render: (row) => `${row.budgetMin || "-"} - ${row.budgetMax || "-"}`,
+      key: "ownerPrice",
+      label: "Owner Price",
+      searchValue: (row) => `${row.ownerPrice || ""}`,
+      render: (row) => (row.ownerPrice ? row.ownerPrice.toLocaleString("en-IN") : "-"),
+    },
+    {
+      key: "propertyCondition",
+      label: "Condition",
     },
     {
       key: "actions",
@@ -116,12 +121,12 @@ export default function ClientsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-gold">Lead Desk</p>
-          <h2 className="mt-2 font-display text-3xl">Client and pipeline management</h2>
+          <p className="text-xs uppercase tracking-[0.3em] text-gold">Property Desk</p>
+          <h2 className="mt-2 font-display text-3xl">Property intake and inventory management</h2>
         </div>
         {canCreateClients ? (
           <Link to="/clients/new">
-            <Button icon={Plus}>Add Client</Button>
+            <Button icon={Plus}>Add Property</Button>
           </Link>
         ) : null}
       </div>
@@ -132,14 +137,14 @@ export default function ClientsPage() {
         rows={clients}
         totalRecords={totalClients}
         loading={isLoading}
-        loadingMessage="Loading clients..."
-        emptyMessage="No clients found."
-        searchPlaceholder="Search clients..."
+        loadingMessage="Loading properties..."
+        emptyMessage="No properties found."
+        searchPlaceholder="Search properties..."
         defaultRowsPerPage={10}
       />
 
       <Modal
-        title="Delete Client"
+        title="Delete Property"
         isOpen={canDeleteClients && Boolean(clientToDelete)}
         onClose={() => {
           if (!isDeleting) {
@@ -149,7 +154,7 @@ export default function ClientsPage() {
         }}
       >
         <div className="space-y-4">
-          <p className="text-sm text-muted">Are you sure you want to delete this client?</p>
+          <p className="text-sm text-muted">Are you sure you want to delete this property intake record?</p>
           {deleteError ? <p className="text-sm text-rose-300">{deleteError}</p> : null}
           <div className="flex justify-end gap-3">
             <Button

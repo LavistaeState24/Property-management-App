@@ -1,4 +1,4 @@
-import { CalendarDays, Mail, MapPin, Phone, Save, Shapes, UserRound, Wallet } from "lucide-react";
+import { Building2, CalendarDays, MapPin, Save, Shapes, UserRound, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
@@ -6,47 +6,67 @@ import { useNavigate, useParams } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
 import SelectDropdown from "../../../components/common/SelectDropdown";
-import { clientStatuses, propertyTypes } from "../../../constants/theme";
+import { propertyConditionOptions, propertySourceOptions, propertyTypes } from "../../../constants/theme";
 import { clientService } from "../../../services/clientService";
 import {
   applyServerErrors,
   dateRules,
-  emailRules,
   getErrorMessage,
   numberRules,
-  phoneRules,
   selectRules,
   textRules,
   toOptionalNumber,
 } from "../../../utils/validation";
 
 const initialState = {
-  name: "",
-  phone: "",
-  email: "",
-  requirement: "",
-  budgetMin: "",
-  budgetMax: "",
-  preferredArea: "",
+  ownerName: "",
+  address: "",
+  premiseName: "",
+  premiseArea: "",
+  sourceOfProperty: "",
   propertyType: "",
-  followUpDate: "",
-  status: "new",
-  notes: "",
+  ownerPrice: "",
+  propertyCondition: "",
+  propertyAge: "",
+  propertySize: "",
+  dateOfAddingProperty: "",
 };
 
 const mapClientToForm = (client) => ({
-  name: client.name || "",
-  phone: client.phone || "",
-  email: client.email || "",
-  requirement: client.requirement || "",
-  budgetMin: client.budgetMin?.toString() || "",
-  budgetMax: client.budgetMax?.toString() || "",
-  preferredArea: client.preferredArea || "",
+  ownerName: client.ownerName || "",
+  address: client.address || "",
+  premiseName: client.premiseName || "",
+  premiseArea: client.premiseArea || "",
+  sourceOfProperty: client.sourceOfProperty || "",
   propertyType: client.propertyType || "",
-  followUpDate: client.followUpDate ? new Date(client.followUpDate).toISOString().slice(0, 10) : "",
-  status: client.status || "new",
-  notes: client.notes || "",
+  ownerPrice: client.ownerPrice?.toString() || "",
+  propertyCondition: client.propertyCondition || "",
+  propertyAge: client.propertyAge || "",
+  propertySize: client.propertySize || "",
+  dateOfAddingProperty: client.dateOfAddingProperty ? new Date(client.dateOfAddingProperty).toISOString().slice(0, 10) : "",
 });
+
+const formatCompactPrice = (value) => {
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return "";
+  }
+
+  if (amount >= 10000000) {
+    return `${(amount / 10000000).toFixed(amount % 10000000 === 0 ? 0 : 1)} Cr`;
+  }
+
+  if (amount >= 100000) {
+    return `${(amount / 100000).toFixed(amount % 100000 === 0 ? 0 : 1)} Lac`;
+  }
+
+  if (amount >= 1000) {
+    return `${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}K`;
+  }
+
+  return amount.toString();
+};
 
 export default function AddClientPage() {
   const navigate = useNavigate();
@@ -80,7 +100,7 @@ export default function AddClientPage() {
         const client = await clientService.getById(id);
         reset(mapClientToForm(client));
       } catch (requestError) {
-        setLoadError(requestError.response?.data?.message || "Unable to load client details");
+        setLoadError(requestError.response?.data?.message || "Unable to load property details");
       } finally {
         setIsLoadingClient(false);
       }
@@ -89,7 +109,7 @@ export default function AddClientPage() {
     loadClient();
   }, [id, isEditMode, reset]);
 
-  const budgetMin = watch("budgetMin");
+  const ownerPrice = watch("ownerPrice");
 
   const onSubmit = async (formValues) => {
     setFormError("");
@@ -97,8 +117,7 @@ export default function AddClientPage() {
     try {
       const payload = {
         ...formValues,
-        budgetMin: toOptionalNumber(formValues.budgetMin) ?? 0,
-        budgetMax: toOptionalNumber(formValues.budgetMax) ?? 0,
+        ownerPrice: toOptionalNumber(formValues.ownerPrice),
       };
 
       if (isEditMode) {
@@ -115,7 +134,7 @@ export default function AddClientPage() {
   };
 
   if (isLoadingClient) {
-    return <p className="text-sm text-muted">Loading client details...</p>;
+    return <p className="text-sm text-muted">Loading property details...</p>;
   }
 
   if (loadError) {
@@ -123,7 +142,7 @@ export default function AddClientPage() {
       <div className="space-y-4">
         <p className="text-sm text-rose-300">{loadError}</p>
         <Button variant="secondary" onClick={() => navigate("/clients")}>
-          Back to Clients
+          Back to Properties
         </Button>
       </div>
     );
@@ -132,92 +151,51 @@ export default function AddClientPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-md tracking-[0.1em] text-gold">
-          {isEditMode ? "Lead Editing" : "Lead Intake"}
-        </p>
+        <p className="text-md tracking-[0.1em] text-gold">{isEditMode ? "Property Editing" : "Property Intake"}</p>
         <h2 className="mt-2 font-display text-3xl">
-          {isEditMode ? "Update qualified client profile" : "Add a qualified client profile"}
+          {isEditMode ? "Update property intake profile" : "Add a new property intake profile"}
         </h2>
       </div>
 
       <form className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
         <FormInput
-          label="Client Name"
+          label="Owner Name"
           icon={UserRound}
-          placeholder="Enter client name"
-          error={getErrorMessage(errors.name)}
-          {...register("name", textRules("Client name", { min: 3, max: 60 }))}
+          placeholder="Enter owner name"
+          error={getErrorMessage(errors.ownerName)}
+          {...register("ownerName", textRules("Owner name", { min: 3, max: 80 }))}
         />
 
         <FormInput
-          label="Phone"
-          type="tel"
-          icon={Phone}
-          placeholder="Enter phone number"
-          inputMode="numeric"
-          maxLength={10}
-          error={getErrorMessage(errors.phone)}
-          {...register("phone", {
-            ...phoneRules(),
-            onChange: (event) => {
-              event.target.value = event.target.value.replace(/\D/g, "").slice(0, 10);
-            },
-          })}
-        />
-
-        <FormInput
-          label="Email"
-          icon={Mail}
-          type="email"
-          placeholder="Enter email address"
-          error={getErrorMessage(errors.email)}
-          {...register("email", emailRules({ required: false }))}
-        />
-
-        <FormInput
-          label="Requirement"
-          placeholder="e.g. 3 BHK in 1 Cr budget"
-          error={getErrorMessage(errors.requirement)}
-          {...register("requirement", textRules("Requirement", { min: 5, max: 160, required: true }))}
-        />
-
-        <FormInput
-          label="Budget"
-          icon={Wallet}
-          placeholder="Minimum budget"
-          error={getErrorMessage(errors.budgetMin)}
-          {...register("budgetMin", numberRules("Minimum budget", { required: false, min: 0 }))}
-        />
-
-        {/* <FormInput
-          label="Budget Max"
-          icon={Wallet}
-          placeholder="Maximum budget"
-          error={getErrorMessage(errors.budgetMax)}
-          {...register("budgetMax", {
-            ...numberRules("Maximum budget", { required: false, min: 0 }),
-            validate: (value) => {
-              const baseValidation = numberRules("Maximum budget", { required: false, min: 0 }).validate(value);
-
-              if (baseValidation !== true) {
-                return baseValidation;
-              }
-
-              if (value === "" || budgetMin === "") {
-                return true;
-              }
-
-              return Number(value) >= Number(budgetMin) || "Maximum budget must be greater than or equal to minimum budget";
-            },
-          })}
-        /> */}
-
-        <FormInput
-          label="Preferred Area"
+          label="Address"
           icon={MapPin}
-          placeholder="e.g. Gota, Chandkheda, Science City"
-          error={getErrorMessage(errors.preferredArea)}
-          {...register("preferredArea", textRules("Preferred area", { min: 2, max: 80, required: true }))}
+          placeholder="Enter full property address"
+          error={getErrorMessage(errors.address)}
+          {...register("address", textRules("Address", { min: 5, max: 200 }))}
+        />
+
+        <FormInput
+          label="Premise Name"
+          icon={Building2}
+          placeholder="Enter premise name"
+          error={getErrorMessage(errors.premiseName)}
+          {...register("premiseName", textRules("Premise name", { min: 2, max: 100 }))}
+        />
+
+        <FormInput
+          label="Premise Area"
+          icon={MapPin}
+          placeholder="Enter premise area"
+          error={getErrorMessage(errors.premiseArea)}
+          {...register("premiseArea", textRules("Premise area", { min: 2, max: 80 }))}
+        />
+
+        <SelectDropdown
+          label="Source of Property"
+          icon={Shapes}
+          options={propertySourceOptions}
+          error={getErrorMessage(errors.sourceOfProperty)}
+          {...register("sourceOfProperty", selectRules("Source of property"))}
         />
 
         <SelectDropdown
@@ -228,39 +206,63 @@ export default function AddClientPage() {
           {...register("propertyType", selectRules("Property type"))}
         />
 
-        <FormInput
-          label="Client Details Added"
-          icon={CalendarDays}
-          type="date"
-          error={getErrorMessage(errors.followUpDate)}
-          {...register("followUpDate", dateRules("Client details added"))}
-        />
+        <div className="space-y-2">
+          <FormInput
+            label="Owner Price"
+            icon={Wallet}
+            type="number"
+            placeholder="Enter owner price"
+            error={getErrorMessage(errors.ownerPrice)}
+            {...register("ownerPrice", numberRules("Owner price", { required: true, min: 0 }))}
+          />
+          {formatCompactPrice(ownerPrice) ? (
+            <div className="inline-flex rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-medium text-gold-2">
+              {formatCompactPrice(ownerPrice)}
+            </div>
+          ) : null}
+        </div>
 
         <SelectDropdown
-          label="Status"
-          options={clientStatuses}
-          error={getErrorMessage(errors.status)}
-          {...register("status", selectRules("Status"))}
+          label="Property Condition"
+          icon={Shapes}
+          options={propertyConditionOptions}
+          error={getErrorMessage(errors.propertyCondition)}
+          {...register("propertyCondition", selectRules("Property condition"))}
         />
 
         <FormInput
-          label="Notes"
+          label="Property Age"
+          placeholder="e.g. 5 years"
+          error={getErrorMessage(errors.propertyAge)}
+          {...register("propertyAge", textRules("Property age", { min: 1, max: 80 }))}
+        />
+
+        <FormInput
+          label="Size of Property"
+          placeholder="e.g. 1450 sq ft"
+          error={getErrorMessage(errors.propertySize)}
+          {...register("propertySize", textRules("Size of property", { min: 1, max: 80 }))}
+        />
+
+        <FormInput
+          label="Date of Adding Property"
+          icon={CalendarDays}
+          type="date"
           className="lg:col-span-2"
-          placeholder="Add client notes, preferences, follow-up details"
-          error={getErrorMessage(errors.notes)}
-          {...register("notes", textRules("Notes", { min: 0, max: 500, required: false }))}
+          error={getErrorMessage(errors.dateOfAddingProperty)}
+          {...register("dateOfAddingProperty", dateRules("Date of adding property", { required: true }))}
         />
 
         {formError ? <p className="lg:col-span-2 text-sm text-rose-300">{formError}</p> : null}
 
-        <div className="lg:col-span-2 flex gap-3">
+        <div className="lg:col-span-2 flex justify-end gap-3 text-center">
           {isEditMode ? (
             <Button type="button" variant="secondary" onClick={() => navigate(`/clients/${id}`)}>
               Cancel
             </Button>
           ) : null}
           <Button disabled={isSubmitting} icon={Save}>
-            {isSubmitting ? "Saving..." : isEditMode ? "Update Client" : "Save Client"}
+            {isSubmitting ? "Saving..." : isEditMode ? "Update Property" : "Save Property"}
           </Button>
         </div>
       </form>
