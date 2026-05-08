@@ -5,15 +5,24 @@ export const roles = [
   { value: "sales", label: "Sales Executive" },
 ];
 
+export const propertySourceOptions = ["Owner", "Broker"];
+
 export const propertyTypes = [
-  "1 BHK",
-  "2 BHK",
-  "3 BHK",
-  "4 BHK",
-  "villa",
-  "plot",
-  "office",
-  "showroom",
+  "1BHK",
+  "2BHK",
+  "3BHK",
+  "4BHK",
+  "Penthouse",
+  "Raw House",
+  "Tenament",
+  "Bungalow",
+];
+
+export const propertyConditionOptions = [
+  "Unfurnished",
+  "Semi Furnished",
+  "Furnished",
+  "Fully Furnished",
 ];
 
 export const projectPropertyTypes = [

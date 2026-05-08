@@ -2,35 +2,32 @@ import mongoose from "mongoose";
 
 const clientSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, trim: true, minlength: 3, maxlength: 60 },
-    phone: { type: String, required: true, trim: true, match: /^[6-9]\d{9}$/ },
-    email: { type: String, trim: true, lowercase: true, maxlength: 120, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-    requirement: { type: String, required: true, trim: true, minlength: 5, maxlength: 160 },
-    budgetMin: { type: Number, min: 0 },
-    budgetMax: {
-      type: Number,
-      min: 0,
-      validate: {
-        validator(value) {
-          return value === undefined || value >= (this.budgetMin ?? 0);
-        },
-        message: "Maximum budget must be greater than or equal to minimum budget",
-      },
+    ownerName: { type: String, required: true, trim: true, minlength: 3, maxlength: 80 },
+    address: { type: String, required: true, trim: true, minlength: 5, maxlength: 200 },
+    premiseName: { type: String, required: true, trim: true, minlength: 2, maxlength: 100 },
+    premiseArea: { type: String, required: true, trim: true, minlength: 2, maxlength: 80 },
+    sourceOfProperty: {
+      type: String,
+      required: true,
+      trim: true,
+      enum: ["Owner", "Broker"],
     },
-    preferredArea: { type: String, required: true, trim: true, minlength: 2, maxlength: 80 },
     propertyType: {
       type: String,
       required: true,
       trim: true,
-      enum: ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "villa", "plot", "office", "showroom"],
+      enum: ["1BHK", "2BHK", "3BHK", "4BHK", "Penthouse", "Raw House", "Tenament", "Bungalow"],
     },
-    followUpDate: Date,
-    status: {
+    ownerPrice: { type: Number, required: true, min: 0 },
+    propertyCondition: {
       type: String,
-      enum: ["new", "interested", "site visit", "negotiation", "closed", "lost"],
-      default: "new",
+      required: true,
+      trim: true,
+      enum: ["Unfurnished", "Semi Furnished", "Furnished", "Fully Furnished"],
     },
-    notes: { type: String, trim: true, maxlength: 500 },
+    propertyAge: { type: String, required: true, trim: true, minlength: 1, maxlength: 80 },
+    propertySize: { type: String, required: true, trim: true, minlength: 1, maxlength: 80 },
+    dateOfAddingProperty: { type: Date, required: true },
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

@@ -1,41 +1,37 @@
 import {
   throwIfValidationFailed,
   validateDate,
-  validateEmail,
   validateEnum,
   validateNumber,
-  validateOptionalText,
-  validatePhone,
   validateRequiredText,
 } from "./common.js";
 
-const propertyTypes = ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "villa", "plot", "office", "showroom"];
-const clientStatuses = ["new", "interested", "site visit", "negotiation", "closed", "lost"];
+const sourceOfPropertyValues = ["Owner", "Broker"];
+const propertyTypes = ["1BHK", "2BHK", "3BHK", "4BHK", "Penthouse", "Raw House", "Tenament", "Bungalow"];
+const propertyConditionValues = ["Unfurnished", "Semi Furnished", "Furnished", "Fully Furnished"];
 
 export const validateClientInput = (payload) => {
   const errors = {};
 
   const sanitized = {
-    name: validateRequiredText(errors, "name", payload.name, { label: "Client name", min: 3, max: 60 }),
-    phone: validatePhone(errors, "phone", payload.phone),
-    email: validateEmail(errors, "email", payload.email, { required: false }) || undefined,
-    requirement: validateRequiredText(errors, "requirement", payload.requirement, { label: "Requirement", min: 5, max: 160 }),
-    budgetMin: validateNumber(errors, "budgetMin", payload.budgetMin, { label: "Minimum budget", min: 0 }),
-    budgetMax: validateNumber(errors, "budgetMax", payload.budgetMax, { label: "Maximum budget", min: 0 }),
-    preferredArea: validateRequiredText(errors, "preferredArea", payload.preferredArea, { label: "Preferred area", min: 2, max: 80 }),
+    ownerName: validateRequiredText(errors, "ownerName", payload.ownerName, { label: "Owner name", min: 3, max: 80 }),
+    address: validateRequiredText(errors, "address", payload.address, { label: "Address", min: 5, max: 200 }),
+    premiseName: validateRequiredText(errors, "premiseName", payload.premiseName, { label: "Premise name", min: 2, max: 100 }),
+    premiseArea: validateRequiredText(errors, "premiseArea", payload.premiseArea, { label: "Premise area", min: 2, max: 80 }),
+    sourceOfProperty: validateEnum(errors, "sourceOfProperty", payload.sourceOfProperty, {
+      label: "Source of property",
+      values: sourceOfPropertyValues,
+    }),
     propertyType: validateEnum(errors, "propertyType", payload.propertyType, { label: "Property type", values: propertyTypes }),
-    followUpDate: validateDate(errors, "followUpDate", payload.followUpDate, { label: "Client details added" }),
-    status: validateEnum(errors, "status", payload.status || "new", { label: "Status", values: clientStatuses }),
-    notes: validateOptionalText(errors, "notes", payload.notes, { label: "Notes", max: 500 }) || undefined,
+    ownerPrice: validateNumber(errors, "ownerPrice", payload.ownerPrice, { label: "Owner price", required: true, min: 0 }),
+    propertyCondition: validateEnum(errors, "propertyCondition", payload.propertyCondition, {
+      label: "Property condition",
+      values: propertyConditionValues,
+    }),
+    propertyAge: validateRequiredText(errors, "propertyAge", payload.propertyAge, { label: "Property age", min: 1, max: 80 }),
+    propertySize: validateRequiredText(errors, "propertySize", payload.propertySize, { label: "Size of property", min: 1, max: 80 }),
+    dateOfAddingProperty: validateDate(errors, "dateOfAddingProperty", payload.dateOfAddingProperty, { label: "Date of adding property", required: true }),
   };
-
-  if (
-    sanitized.budgetMin !== undefined &&
-    sanitized.budgetMax !== undefined &&
-    sanitized.budgetMax < sanitized.budgetMin
-  ) {
-    errors.budgetMax = "Maximum budget must be greater than or equal to minimum budget";
-  }
 
   throwIfValidationFailed(errors);
   return sanitized;
