@@ -29,6 +29,7 @@ export default function ProjectsPage() {
   const canUpdateProjects = useCan("projects", "update");
   const canDeleteProjects = useCan("projects", "delete");
   const [projects, setProjects] = useState([]);
+  const [totalProjects, setTotalProjects] = useState(0);
   const [filters, setFilters] = useState({
     area: "",
     propertyType: "",
@@ -47,8 +48,9 @@ export default function ProjectsPage() {
     setListError("");
 
     try {
-      const data = await projectService.list(params);
+      const data = await projectService.listAll(params);
       setProjects(data.items);
+      setTotalProjects(data.meta?.total ?? data.items.length);
     } catch (requestError) {
       setListError(requestError.response?.data?.message || "Unable to load projects");
     } finally {
@@ -71,6 +73,7 @@ export default function ProjectsPage() {
     try {
       await projectService.remove(projectToDelete._id);
       setProjects((currentProjects) => currentProjects.filter((project) => project._id !== projectToDelete._id));
+      setTotalProjects((currentTotalProjects) => Math.max(0, currentTotalProjects - 1));
       setProjectToDelete(null);
     } catch (requestError) {
       setDeleteError(requestError.response?.data?.message || "Unable to delete project");
@@ -178,6 +181,7 @@ export default function ProjectsPage() {
       <AdvancedDataTable
         columns={columns}
         rows={projects}
+        totalRecords={totalProjects}
         loading={isLoading}
         loadingMessage="Loading projects..."
         emptyMessage="No projects found."

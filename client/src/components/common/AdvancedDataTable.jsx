@@ -24,6 +24,7 @@ const normalizeValue = (value) => {
 export default function AdvancedDataTable({
   columns,
   rows,
+  totalRecords,
   emptyMessage = "No records found.",
   loading = false,
   loadingMessage = "Loading records...",
@@ -58,6 +59,7 @@ export default function AdvancedDataTable({
   }, [columns, rows, searchQuery]);
 
   const totalRows = filteredRows.length;
+  const resolvedTotalRecords = typeof totalRecords === "number" ? totalRecords : rows.length;
   const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
   const pageStartIndex = totalRows === 0 ? 0 : (currentPage - 1) * rowsPerPage;
   const pageEndIndex = Math.min(pageStartIndex + rowsPerPage, totalRows);
@@ -89,7 +91,11 @@ export default function AdvancedDataTable({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:justify-end">
           <div className="text-sm text-muted">
-            {loading ? loadingMessage : `${totalRows} record${totalRows === 1 ? "" : "s"}`}
+            {loading
+              ? loadingMessage
+              : searchQuery.trim()
+                ? `${totalRows} matching record${totalRows === 1 ? "" : "s"} of ${resolvedTotalRecords} total`
+                : `${resolvedTotalRecords} total record${resolvedTotalRecords === 1 ? "" : "s"}`}
           </div>
 
           <label className="flex items-center gap-3 text-sm text-muted">
@@ -156,7 +162,9 @@ export default function AdvancedDataTable({
         <p>
           {loading || totalRows === 0
             ? "Showing 0 to 0 of 0 entries"
-            : `Showing ${pageStartIndex + 1} to ${pageEndIndex} of ${totalRows} entries`}
+            : searchQuery.trim()
+              ? `Showing ${pageStartIndex + 1} to ${pageEndIndex} of ${totalRows} matching entries (${resolvedTotalRecords} total)`
+              : `Showing ${pageStartIndex + 1} to ${pageEndIndex} of ${resolvedTotalRecords} entries`}
         </p>
 
         <div className="flex items-center gap-2 self-end md:self-auto">
