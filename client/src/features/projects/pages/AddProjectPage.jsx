@@ -45,7 +45,7 @@ const initialState = {
   brochure: null,
 };
 
-const MAX_BROCHURE_SIZE_BYTES = 100 * 1024 * 1024;
+const MAX_BROCHURE_SIZE_BYTES = 1000 * 1024 * 1024;
 
 const legacyPropertyTypeMap = {
   "1 BHK": "1BHK",
@@ -229,7 +229,7 @@ export default function AddProjectPage() {
     }
 
     if (file.size > MAX_BROCHURE_SIZE_BYTES) {
-      setBrochureError("Brochure PDF must be 100MB or smaller");
+      setBrochureError("Brochure PDF must be 1000MB or smaller");
       return;
     }
 
@@ -564,7 +564,7 @@ export default function AddProjectPage() {
           <input type="hidden" {...register("brochure")} />
           <UploadBox
             label="Brochure Upload"
-            helpText="Click to upload or drag and drop a PDF brochure up to 100MB"
+            helpText="Click to upload or drag and drop a PDF brochure up to 1000MB"
             asset={brochureAsset}
             uploading={isUploadingBrochure}
             error={brochureError || getErrorMessage(errors.brochure)}

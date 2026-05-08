@@ -4,7 +4,7 @@ import multer from "multer";
 import os from "os";
 import path from "path";
 
-export const MAX_UPLOAD_SIZE_BYTES = 100 * 1024 * 1024;
+export const MAX_UPLOAD_SIZE_BYTES = 1000 * 1024 * 1024;
 export const UPLOAD_TMP_DIR = path.join(os.tmpdir(), "property-management-crm", "uploads");
 
 export const allowedUploadMimeTypes = [
