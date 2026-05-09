@@ -1,5 +1,5 @@
 import { throwIfValidationFailed } from "./common.js";
-import { actionKeys, moduleKeys } from "../constants/rbac.js";
+import { actionKeys, moduleKeys, scopeKeys } from "../constants/rbac.js";
 
 export const validatePermissionUpdateInput = (payload) => {
   const errors = {};
@@ -22,6 +22,13 @@ export const validatePermissionUpdateInput = (payload) => {
     }
 
     for (const [actionKey, actionValue] of Object.entries(moduleValue)) {
+      if (actionKey === "scope") {
+        if (!scopeKeys.includes(actionValue)) {
+          errors[`${moduleKey}.scope`] = "Scope is invalid";
+        }
+        continue;
+      }
+
       if (!actionKeys.includes(actionKey)) {
         errors[`${moduleKey}.${actionKey}`] = "Action is invalid";
         continue;
