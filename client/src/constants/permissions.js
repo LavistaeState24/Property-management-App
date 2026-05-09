@@ -9,7 +9,7 @@ export const permissionModules = [
   { key: "settings", label: "Settings" },
 ];
 
-export const permissionActions = ["view", "create", "update", "delete"];
+export const permissionActions = ["view", "create", "update", "delete", "scope"];
 
 export const roleOptions = [
   { value: "super-admin", label: "Super Admin" },

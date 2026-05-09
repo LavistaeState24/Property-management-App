@@ -53,6 +53,9 @@ export const getProjects = async (query, currentUser) => {
     own: ["createdBy"],
   });
 
+  console.log("PROJECT FILTER:", scopedFilters);
+  console.log("USER:", currentUser._id, currentUser.role);
+
   const [items, total] = await Promise.all([
     Project.find(scopedFilters)
       .populate("createdBy", "name role")

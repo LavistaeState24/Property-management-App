@@ -49,6 +49,7 @@ export const buildDefaultPermissions = (roleKey) => {
         reports: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         settings: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
       };
+
     case "admin":
       return {
         dashboard: createPermission({ view: true, scope: "all" }),
@@ -56,29 +57,31 @@ export const buildDefaultPermissions = (roleKey) => {
         clients: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         followups: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         shareRecords: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
-        users: createPermission({ view: true, create: false, update: false, delete: false, scope: "all" }),
+        users: createPermission({ view: true, create: true, update: true, delete: false, scope: "all" }),
         reports: createPermission({ view: true, scope: "all" }),
-        settings: createPermission({ view: true, scope: "all" }),
+        settings: createPermission({ view: false, scope: "none" }),
       };
+
     case "manager":
       return {
         dashboard: createPermission({ view: true, scope: "assigned" }),
-        projects: createPermission({ view: true, scope: "assigned" }),
-        clients: createPermission({ view: true, create: true, update: true, scope: "assigned" }),
-        followups: createPermission({ view: true, create: true, update: true, scope: "assigned" }),
-        shareRecords: createPermission({ view: true, create: true, update: true, scope: "assigned" }),
+        projects: createPermission({ view: true, scope: "all" }),
+        clients: createPermission({ view: true, create: true, update: true, delete: false, scope: "assigned" }),
+        followups: createPermission({ view: true, create: true, update: true, delete: false, scope: "assigned" }),
+        shareRecords: createPermission({ view: true, create: true, update: true, delete: false, scope: "assigned" }),
         users: createPermission({ scope: "none" }),
         reports: createPermission({ scope: "none" }),
         settings: createPermission({ scope: "none" }),
       };
+
     case "sales":
     default:
       return {
         dashboard: createPermission({ view: true, scope: "own" }),
-        projects: createPermission({ view: true, scope: "assigned" }),
+        projects: createPermission({ view: true, scope: "all" }),
         clients: createPermission({ view: true, scope: "assigned" }),
-        followups: createPermission({ view: true, create: true, update: true, scope: "own" }),
-        shareRecords: createPermission({ view: true, create: true, scope: "own" }),
+        followups: createPermission({ view: true, create: true, update: true, delete: false, scope: "own" }),
+        shareRecords: createPermission({ view: true, create: true, update: false, delete: false, scope: "own" }),
         users: createPermission({ scope: "none" }),
         reports: createPermission({ scope: "none" }),
         settings: createPermission({ scope: "none" }),
