@@ -78,18 +78,23 @@ export const validateEmail = (errors, field, value, { required = true } = {}) =>
   return normalized;
 };
 
-export const validatePhone = (errors, field, value, { required = true } = {}) => {
+export const validatePhone = (
+  errors,
+  field,
+  value,
+  { required = true, requiredMessage = "Valid Indian mobile number is required", invalidMessage = "Valid Indian mobile number is required" } = {}
+) => {
   const normalized = normalizeString(value);
 
   if (!normalized) {
     if (required) {
-      setError(errors, field, "Valid Indian mobile number is required");
+      setError(errors, field, requiredMessage);
     }
     return "";
   }
 
   if (!INDIAN_PHONE_REGEX.test(normalized)) {
-    setError(errors, field, "Valid Indian mobile number is required");
+    setError(errors, field, invalidMessage);
   }
 
   return normalized;

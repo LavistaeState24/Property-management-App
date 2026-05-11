@@ -3,12 +3,15 @@ import {
   validateDate,
   validateEnum,
   validateNumber,
+  validateOptionalText,
+  validatePhone,
   validateRequiredText,
 } from "./common.js";
 
 const sourceOfPropertyValues = ["Owner", "Broker"];
 const propertyTypes = ["1BHK", "2BHK", "3BHK", "4BHK", "Penthouse", "Raw House", "Tenament", "Bungalow"];
 const propertyConditionValues = ["Unfurnished", "Semi Furnished", "Furnished", "Fully Furnished"];
+const propertyStatusValues = ["Available", "Hold", "Sold", "Rent Out", "Not Available"];
 
 export const validateClientInput = (payload) => {
   const errors = {};
@@ -30,6 +33,15 @@ export const validateClientInput = (payload) => {
     }),
     propertyAge: validateRequiredText(errors, "propertyAge", payload.propertyAge, { label: "Property age", min: 1, max: 80 }),
     propertySize: validateRequiredText(errors, "propertySize", payload.propertySize, { label: "Size of property", min: 1, max: 80 }),
+    clientPhoneNumber: validatePhone(errors, "clientPhoneNumber", payload.clientPhoneNumber, {
+      requiredMessage: "Client phone number is required",
+      invalidMessage: "Client phone number must be a valid 10-digit Indian mobile number",
+    }),
+    internalNotes: validateOptionalText(errors, "internalNotes", payload.internalNotes, { label: "Internal notes", max: 500 }),
+    propertyStatus: validateEnum(errors, "propertyStatus", payload.propertyStatus, {
+      label: "Property status",
+      values: propertyStatusValues,
+    }),
     dateOfAddingProperty: validateDate(errors, "dateOfAddingProperty", payload.dateOfAddingProperty, { label: "Date of adding property", required: true }),
   };
 

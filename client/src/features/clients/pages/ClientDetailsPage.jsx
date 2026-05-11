@@ -1,4 +1,4 @@
-import { Building2, CalendarDays, MapPin, Ruler, ScrollText, Shapes, Sparkles, UserRound, Wallet } from "lucide-react";
+import { Building2, CalendarDays, MapPin, Phone, Ruler, ScrollText, Shapes, Sparkles, UserRound, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
@@ -51,6 +51,7 @@ export default function ClientDetailsPage() {
         </div>
         <div className="flex items-center gap-3">
           <Badge tone="green">{client.sourceOfProperty}</Badge>
+          <Badge tone="slate">{client.propertyStatus || "Status Pending"}</Badge>
           <Link to={`/clients/${client._id}/edit`}>
             <Button>Edit Property</Button>
           </Link>
@@ -72,6 +73,8 @@ export default function ClientDetailsPage() {
               ["Premise Area", client.premiseArea, MapPin],
               ["Source of Property", client.sourceOfProperty, Shapes],
               ["Property Type", client.propertyType, Sparkles],
+              ["Client Phone Number", client.clientPhoneNumber, Phone],
+              ["Property Status", client.propertyStatus, Shapes],
               ["Owner Price", client.ownerPrice?.toLocaleString("en-IN"), Wallet],
               ["Property Condition", client.propertyCondition, Shapes],
               ["Property Age", client.propertyAge, ScrollText],
@@ -98,9 +101,16 @@ export default function ClientDetailsPage() {
           <div className="mt-5 rounded-3xl border border-white/10 bg-black/20 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Quick Summary</p>
             <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">
-              {`${client.premiseName || "Property"} in ${client.premiseArea || "selected area"} listed by ${client.sourceOfProperty || "source not added"} for ${client.ownerPrice?.toLocaleString("en-IN") || "-"} with ${client.propertyCondition || "condition not added"} condition.`}
+              {`${client.premiseName || "Property"} in ${client.premiseArea || "selected area"} listed by ${client.sourceOfProperty || "source not added"} for ${client.ownerPrice?.toLocaleString("en-IN") || "-"} with ${client.propertyCondition || "condition not added"} condition and ${client.propertyStatus || "status not added"} status.`}
             </p>
           </div>
+
+          {client.internalNotes ? (
+            <div className="mt-4 rounded-3xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Internal Notes</p>
+              <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">{client.internalNotes}</p>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

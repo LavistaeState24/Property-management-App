@@ -25,6 +25,14 @@ export const propertyConditionOptions = [
   "Fully Furnished",
 ];
 
+export const propertyStatusOptions = [
+  "Available",
+  "Hold",
+  "Sold",
+  "Rent Out",
+  "Not Available",
+];
+
 export const projectPropertyTypes = [
   "1BHK",
   "2BHK",
