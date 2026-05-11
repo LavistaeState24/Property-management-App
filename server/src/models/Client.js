@@ -27,6 +27,14 @@ const clientSchema = new mongoose.Schema(
     },
     propertyAge: { type: String, required: true, trim: true, minlength: 1, maxlength: 80 },
     propertySize: { type: String, required: true, trim: true, minlength: 1, maxlength: 80 },
+    clientPhoneNumber: { type: String, required: true, trim: true, match: /^[6-9]\d{9}$/ },
+    internalNotes: { type: String, trim: true, maxlength: 500, default: "" },
+    propertyStatus: {
+      type: String,
+      required: true,
+      trim: true,
+      enum: ["Available", "Hold", "Sold", "Rent Out", "Not Available"],
+    },
     dateOfAddingProperty: { type: Date, required: true },
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,

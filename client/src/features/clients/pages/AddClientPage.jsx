@@ -1,4 +1,4 @@
-import { Building2, CalendarDays, MapPin, Save, Shapes, UserRound, Wallet } from "lucide-react";
+import { Building2, CalendarDays, MapPin, Phone, Save, Shapes, UserRound, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
@@ -6,13 +6,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
 import SelectDropdown from "../../../components/common/SelectDropdown";
-import { propertyConditionOptions, propertySourceOptions, propertyTypes } from "../../../constants/theme";
+import { propertyConditionOptions, propertySourceOptions, propertyStatusOptions, propertyTypes } from "../../../constants/theme";
 import { clientService } from "../../../services/clientService";
 import {
   applyServerErrors,
   dateRules,
   getErrorMessage,
   numberRules,
+  phoneRules,
   selectRules,
   textRules,
   toOptionalNumber,
@@ -20,6 +21,7 @@ import {
 
 const initialState = {
   ownerName: "",
+  clientPhoneNumber: "",
   address: "",
   premiseName: "",
   premiseArea: "",
@@ -29,11 +31,14 @@ const initialState = {
   propertyCondition: "",
   propertyAge: "",
   propertySize: "",
+  internalNotes: "",
+  propertyStatus: "",
   dateOfAddingProperty: "",
 };
 
 const mapClientToForm = (client) => ({
   ownerName: client.ownerName || "",
+  clientPhoneNumber: client.clientPhoneNumber || "",
   address: client.address || "",
   premiseName: client.premiseName || "",
   premiseArea: client.premiseArea || "",
@@ -43,6 +48,8 @@ const mapClientToForm = (client) => ({
   propertyCondition: client.propertyCondition || "",
   propertyAge: client.propertyAge || "",
   propertySize: client.propertySize || "",
+  internalNotes: client.internalNotes || "",
+  propertyStatus: client.propertyStatus || "",
   dateOfAddingProperty: client.dateOfAddingProperty ? new Date(client.dateOfAddingProperty).toISOString().slice(0, 10) : "",
 });
 
@@ -167,6 +174,23 @@ export default function AddClientPage() {
         />
 
         <FormInput
+          label="Client Phone Number"
+          icon={Phone}
+          type="tel"
+          inputMode="numeric"
+          maxLength={10}
+          placeholder="Enter client phone number"
+          error={getErrorMessage(errors.clientPhoneNumber)}
+          {...register(
+            "clientPhoneNumber",
+            phoneRules({
+              requiredMessage: "Client phone number is required",
+              invalidMessage: "Client phone number must be a valid 10-digit Indian mobile number",
+            })
+          )}
+        />
+
+        <FormInput
           label="Address"
           icon={MapPin}
           placeholder="Enter full property address"
@@ -204,6 +228,15 @@ export default function AddClientPage() {
           options={propertyTypes}
           error={getErrorMessage(errors.propertyType)}
           {...register("propertyType", selectRules("Property type"))}
+        />
+
+        <SelectDropdown
+          label="Property Status"
+          icon={Shapes}
+          options={propertyStatusOptions}
+          placeholder="Select property status"
+          error={getErrorMessage(errors.propertyStatus)}
+          {...register("propertyStatus", selectRules("Property status", { requiredMessage: "Property status is required" }))}
         />
 
         <div className="space-y-2">
@@ -251,6 +284,16 @@ export default function AddClientPage() {
           className="lg:col-span-2"
           error={getErrorMessage(errors.dateOfAddingProperty)}
           {...register("dateOfAddingProperty", dateRules("Date of adding property", { required: true }))}
+        />
+
+        <FormInput
+          label="Internal Notes"
+          as="textarea"
+          rows={5}
+          className="lg:col-span-2"
+          placeholder="Add internal notes about this property/client"
+          error={getErrorMessage(errors.internalNotes)}
+          {...register("internalNotes", textRules("Internal notes", { min: 0, max: 500, required: false }))}
         />
 
         {formError ? <p className="lg:col-span-2 text-sm text-rose-300">{formError}</p> : null}

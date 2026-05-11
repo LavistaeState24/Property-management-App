@@ -77,17 +77,17 @@ export const emailRules = ({ required = true } = {}) => {
   return rules;
 };
 
-export const phoneRules = ({ required = true } = {}) => {
+export const phoneRules = ({ required = true, requiredMessage = "Phone number is required", invalidMessage = "Valid Indian mobile number is required" } = {}) => {
   const rules = {
     pattern: {
       value: INDIAN_PHONE_REGEX,
-      message: "Valid Indian mobile number is required",
+      message: invalidMessage,
     },
     setValueAs: (value) => (typeof value === "string" ? value.trim() : value),
   };
 
   if (required) {
-    rules.required = "Phone number is required";
+    rules.required = requiredMessage;
   }
 
   return rules;
@@ -109,8 +109,8 @@ export const passwordRules = () => ({
   },
 });
 
-export const selectRules = (label) => ({
-  required: `${label} is required`,
+export const selectRules = (label, { requiredMessage } = {}) => ({
+  required: requiredMessage || `${label} is required`,
 });
 
 export const numberRules = (label, { required = false, min = 0, integer = false } = {}) => ({
