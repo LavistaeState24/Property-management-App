@@ -33,12 +33,13 @@ export const formatCompactPrice = (value) => {
 };
 
 export const formatBudgetRange = (budgetMin, budgetMax) => {
-  const min = Number.isFinite(Number(budgetMin)) ? Number(budgetMin).toLocaleString("en-IN") : "";
-  const max = Number.isFinite(Number(budgetMax)) ? Number(budgetMax).toLocaleString("en-IN") : "";
+  const hasBudgetValue = (value) => value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+  const min = hasBudgetValue(budgetMin) ? Number(budgetMin).toLocaleString("en-IN") : "";
+  const max = hasBudgetValue(budgetMax) ? Number(budgetMax).toLocaleString("en-IN") : "";
 
   if (min && max) {
     return `${min} - ${max}`;
   }
 
-  return min || max || "Not added";
+  return min || max || "-";
 };

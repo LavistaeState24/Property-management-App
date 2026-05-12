@@ -13,7 +13,7 @@ export const createFollowup = async (payload, userId, currentUser) => {
   }
 
   assertDocumentScope(client, getModuleScope(currentUser, "clients"), currentUser, {
-    assigned: ["assignedTo", "createdBy"],
+    assigned: ["assignedStaff", "assignedTo", "createdBy"],
     own: ["createdBy"],
   });
 

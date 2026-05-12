@@ -9,10 +9,11 @@ import FormInput from "../../../components/common/FormInput";
 import Modal from "../../../components/common/Modal";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import { interestLevelOptions, leadStatusOptions } from "../../../constants/theme";
+import { useAuth } from "../../../hooks/useAuth";
 import { useCan } from "../../../hooks/useCan";
 import { clientService } from "../../../services/clientService";
 import { userService } from "../../../services/userService";
-import { getInterestLevelTone } from "../clientPipeline";
+import { formatBudgetRange, getInterestLevelTone } from "../clientPipeline";
 
 const initialFilters = {
   search: "",
@@ -22,6 +23,8 @@ const initialFilters = {
 };
 
 export default function ClientsPage() {
+  const { user } = useAuth();
+  const isSalesUser = user?.role === "sales";
   const canCreateClients = useCan("clients", "create");
   const canUpdateClients = useCan("clients", "update");
   const canDeleteClients = useCan("clients", "delete");
@@ -124,17 +127,7 @@ export default function ClientsPage() {
       key: "budget",
       label: "Budget",
       searchValue: (row) => `${row.budgetMin || ""} ${row.budgetMax || ""}`,
-      render: (row) => {
-        if (row.budgetMin && row.budgetMax) {
-          return `${row.budgetMin.toLocaleString("en-IN")} - ${row.budgetMax.toLocaleString("en-IN")}`;
-        }
-
-        if (row.budgetMin || row.budgetMax) {
-          return (row.budgetMin || row.budgetMax).toLocaleString("en-IN");
-        }
-
-        return "Not added";
-      },
+      render: (row) => formatBudgetRange(row.budgetMin, row.budgetMax),
     },
     {
       key: "actions",
@@ -146,7 +139,7 @@ export default function ClientsPage() {
               <Eye className="h-3.5 w-3.5" />
             </button>
           </Link>
-          {canUpdateClients ? (
+          {canUpdateClients && !isSalesUser ? (
             <Link to={`/clients/${row._id}/edit`}>
               <button type="button" className={actionButtonClassName} title="Edit lead" aria-label="Edit lead">
                 <Pencil className="h-3.5 w-3.5" />

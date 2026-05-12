@@ -4,6 +4,60 @@ import { ApiError } from "../utils/ApiError.js";
 import { buildPagination } from "../utils/query.js";
 
 const toObjectId = (value) => value?._id || value || null;
+const toObjectIdString = (value) => String(toObjectId(value) || "");
+
+const populateClientUsers = (query) =>
+  query
+    .populate("assignedStaff", "name role managerId")
+    .populate("assignedTo", "name role managerId")
+    .populate("createdBy", "name role");
+
+const normalizeAssignedStaff = (client) => {
+  if (!client) {
+    return client;
+  }
+
+  if (!client.assignedStaff && client.assignedTo) {
+    client.assignedStaff = client.assignedTo;
+  }
+
+  return client;
+};
+
+const normalizeClients = (clients) => clients.map((client) => normalizeAssignedStaff(client));
+
+const getAssignedUserId = (client) => toObjectId(client.assignedStaff) || toObjectId(client.assignedTo) || null;
+
+const assertValidAssignee = async (assignedStaff, currentUser) => {
+  if (!assignedStaff) {
+    return null;
+  }
+
+  if (currentUser.role === "sales") {
+    if (toObjectIdString(assignedStaff) === toObjectIdString(currentUser._id)) {
+      return currentUser._id;
+    }
+
+    throw new ApiError(403, "Sales users cannot reassign leads");
+  }
+
+  const user = await User.findOne({ _id: assignedStaff, isActive: true }).select("_id role managerId");
+
+  if (!user || user.role === "super-admin") {
+    throw new ApiError(400, "Assigned staff is invalid");
+  }
+
+  if (currentUser.role === "manager") {
+    const isSelf = toObjectIdString(user._id) === toObjectIdString(currentUser._id);
+    const isManagedSales = user.role === "sales" && toObjectIdString(user.managerId) === toObjectIdString(currentUser._id);
+
+    if (!isSelf && !isManagedSales) {
+      throw new ApiError(403, "Managers can only assign leads to their own team");
+    }
+  }
+
+  return user._id;
+};
 
 const buildClientVisibilityFilter = async (currentUser) => {
   if (["super-admin", "admin"].includes(currentUser.role)) {
@@ -18,12 +72,12 @@ const buildClientVisibilityFilter = async (currentUser) => {
     const teamUserIds = teamMembers.map((user) => user._id);
 
     return {
-      $or: [{ assignedStaff: { $in: teamUserIds } }, { createdBy: { $in: teamUserIds } }],
+      $or: [{ assignedStaff: { $in: teamUserIds } }, { assignedTo: { $in: teamUserIds } }, { createdBy: { $in: teamUserIds } }],
     };
   }
 
   return {
-    assignedStaff: currentUser._id,
+    $or: [{ assignedStaff: currentUser._id }, { assignedTo: currentUser._id }],
   };
 };
 
@@ -33,7 +87,7 @@ const assertClientAccess = async (client, currentUser) => {
   }
 
   if (currentUser.role === "manager") {
-    const relatedUserIds = [toObjectId(client.assignedStaff), toObjectId(client.createdBy)].filter(Boolean);
+    const relatedUserIds = [getAssignedUserId(client), toObjectId(client.createdBy)].filter(Boolean);
     const managedSalesCount = await User.countDocuments({
       role: "sales",
       managerId: currentUser._id,
@@ -41,14 +95,14 @@ const assertClientAccess = async (client, currentUser) => {
     });
 
     const hasAccess =
-      String(client.assignedStaff || "") === String(currentUser._id) ||
+      toObjectIdString(getAssignedUserId(client)) === toObjectIdString(currentUser._id) ||
       String(client.createdBy || "") === String(currentUser._id) ||
       managedSalesCount > 0;
 
     if (hasAccess) {
       return;
     }
-  } else if (String(client.assignedStaff || "") === String(currentUser._id)) {
+  } else if (toObjectIdString(getAssignedUserId(client)) === toObjectIdString(currentUser._id)) {
     return;
   }
 
@@ -58,12 +112,13 @@ const assertClientAccess = async (client, currentUser) => {
 export const createClient = async (payload, currentUser) =>
   Client.create({
     ...payload,
-    assignedStaff: payload.assignedStaff || currentUser._id,
+    assignedStaff: (await assertValidAssignee(payload.assignedStaff || currentUser._id, currentUser)) || currentUser._id,
     createdBy: currentUser._id,
   });
 
 export const getClients = async (query, currentUser) => {
   const filters = {};
+  const andFilters = [];
   const { page, limit, skip } = buildPagination(query);
 
   if (query.search) {
@@ -97,7 +152,9 @@ export const getClients = async (query, currentUser) => {
   }
 
   if (query.assignedStaff) {
-    filters.assignedStaff = query.assignedStaff;
+    andFilters.push({
+      $or: [{ assignedStaff: query.assignedStaff }, { assignedTo: query.assignedStaff }],
+    });
   }
 
   if (query.source) {
@@ -112,18 +169,17 @@ export const getClients = async (query, currentUser) => {
     filters.requirementType = { $regex: query.requirementType, $options: "i" };
   }
 
+  const baseFilters = andFilters.length ? { ...filters, $and: andFilters } : filters;
   const visibilityFilter = await buildClientVisibilityFilter(currentUser);
   const scopedFilters =
-    Object.keys(filters).length && Object.keys(visibilityFilter).length
-      ? { $and: [filters, visibilityFilter] }
-      : Object.keys(filters).length
-        ? filters
+    Object.keys(baseFilters).length && Object.keys(visibilityFilter).length
+      ? { $and: [baseFilters, visibilityFilter] }
+      : Object.keys(baseFilters).length
+        ? baseFilters
         : visibilityFilter;
 
   const [items, total] = await Promise.all([
-    Client.find(scopedFilters)
-      .populate("assignedStaff", "name role managerId")
-      .populate("createdBy", "name role")
+    populateClientUsers(Client.find(scopedFilters))
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
@@ -131,7 +187,7 @@ export const getClients = async (query, currentUser) => {
   ]);
 
   return {
-    items,
+    items: normalizeClients(items),
     meta: {
       page,
       limit,
@@ -142,9 +198,7 @@ export const getClients = async (query, currentUser) => {
 };
 
 export const getClientById = async (clientId, currentUser) => {
-  const client = await Client.findById(clientId)
-    .populate("assignedStaff", "name role managerId")
-    .populate("createdBy", "name role");
+  const client = await populateClientUsers(Client.findById(clientId));
 
   if (!client) {
     throw new ApiError(404, "Client not found");
@@ -152,7 +206,7 @@ export const getClientById = async (clientId, currentUser) => {
 
   await assertClientAccess(client, currentUser);
 
-  return client;
+  return normalizeAssignedStaff(client);
 };
 
 export const updateClient = async (clientId, payload, currentUser) => {
@@ -164,10 +218,14 @@ export const updateClient = async (clientId, payload, currentUser) => {
 
   await assertClientAccess(client, currentUser);
 
+  if (Object.prototype.hasOwnProperty.call(payload, "assignedStaff")) {
+    payload.assignedStaff = await assertValidAssignee(payload.assignedStaff, currentUser);
+  }
+
   client.set(payload);
   await client.save();
 
-  return Client.findById(client._id).populate("assignedStaff", "name role managerId").populate("createdBy", "name role");
+  return normalizeAssignedStaff(await populateClientUsers(Client.findById(client._id)));
 };
 
 export const deleteClient = async (clientId, currentUser) => {

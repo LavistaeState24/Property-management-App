@@ -42,6 +42,11 @@ const clientSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     leadStatus: {
       type: String,
       required: true,
@@ -102,6 +107,16 @@ const clientSchema = new mongoose.Schema(
       trim: true,
       maxlength: 120,
       default: "",
+    },
+    lastCallStatus: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: "",
+    },
+    nextFollowUpDate: {
+      type: Date,
+      default: null,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
