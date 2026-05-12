@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 
 import { env } from "../config/env.js";
 import { User } from "../models/User.js";
-import { getResolvedPermissionsForRole, hasPermission } from "../services/permissionService.js";
+import { getPermissionScope, getResolvedPermissionsForRole, hasPermission } from "../services/permissionService.js";
 import { ApiError } from "../utils/ApiError.js";
 
 export const protect = async (req, _res, next) => {
@@ -37,7 +37,14 @@ export const authorize =
       return next(new ApiError(401, "Authentication required"));
     }
 
-    if (!hasPermission(req.user.permissions, moduleKey, actionKey)) {
+    const hasDirectPermission = hasPermission(req.user.permissions, moduleKey, actionKey);
+    const isSalesAssignedClientUpdate =
+      moduleKey === "clients" &&
+      actionKey === "update" &&
+      req.user.role === "sales" &&
+      getPermissionScope(req.user.permissions, "clients") === "assigned";
+
+    if (!hasDirectPermission && !isSalesAssignedClientUpdate) {
       return next(new ApiError(403, "You do not have access to this resource"));
     }
 

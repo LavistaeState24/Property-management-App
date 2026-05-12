@@ -27,6 +27,7 @@ import {
   propertyTypes,
   requirementTypeOptions,
 } from "../../../constants/theme";
+import { useAuth } from "../../../hooks/useAuth";
 import { clientService } from "../../../services/clientService";
 import { userService } from "../../../services/userService";
 import {
@@ -66,6 +67,8 @@ const initialState = {
   requirementType: "",
   areaPreference: "",
   notes: "",
+  lastCallStatus: "",
+  nextFollowUpDate: "",
 };
 
 const mapClientToForm = (client) => ({
@@ -93,12 +96,16 @@ const mapClientToForm = (client) => ({
   requirementType: client.requirementType || "",
   areaPreference: client.areaPreference || "",
   notes: client.notes || "",
+  lastCallStatus: client.lastCallStatus || "",
+  nextFollowUpDate: client.nextFollowUpDate ? new Date(client.nextFollowUpDate).toISOString().slice(0, 10) : "",
 });
 
 export default function AddClientPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
   const isEditMode = Boolean(id);
+  const isSalesEditMode = isEditMode && user?.role === "sales";
   const [formError, setFormError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [staffOptions, setStaffOptions] = useState([]);
@@ -194,6 +201,17 @@ export default function AddClientPage() {
         <p className="text-sm text-rose-300">{loadError}</p>
         <Button variant="secondary" onClick={() => navigate("/clients")}>
           Back to Leads
+        </Button>
+      </div>
+    );
+  }
+
+  if (isSalesEditMode) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-muted">Sales users can update leads from the lead details quick update panel only.</p>
+        <Button variant="secondary" onClick={() => navigate(`/clients/${id}`)}>
+          Back to Lead Details
         </Button>
       </div>
     );
@@ -329,6 +347,20 @@ export default function AddClientPage() {
             placeholder="Conversation summary, next step, objections, urgency..."
             error={getErrorMessage(errors.notes)}
             {...register("notes", textRules("Notes", { min: 0, max: 2000, required: false }))}
+          />
+
+          <FormInput
+            label="Last Call Status"
+            placeholder="Answered, no response, busy..."
+            error={getErrorMessage(errors.lastCallStatus)}
+            {...register("lastCallStatus", textRules("Last call status", { min: 0, max: 120, required: false }))}
+          />
+
+          <FormInput
+            label="Next Follow-up Date"
+            type="date"
+            error={getErrorMessage(errors.nextFollowUpDate)}
+            {...register("nextFollowUpDate")}
           />
         </section>
 

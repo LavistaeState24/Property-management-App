@@ -17,11 +17,13 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
+import FormInput from "../../../components/common/FormInput";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import {
   interestLevelOptions,
   leadStatusOptions,
 } from "../../../constants/theme";
+import { useAuth } from "../../../hooks/useAuth";
 import { useCan } from "../../../hooks/useCan";
 import { clientService } from "../../../services/clientService";
 import { userService } from "../../../services/userService";
@@ -30,10 +32,21 @@ import { formatBudgetRange, getInterestLevelTone } from "../clientPipeline";
 export default function ClientDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isSalesUser = user?.role === "sales";
   const canUpdateClients = useCan("clients", "update");
+  const canShowQuickUpdate = canUpdateClients || isSalesUser;
   const [client, setClient] = useState(null);
   const [staffOptions, setStaffOptions] = useState([]);
-  const [quickEdit, setQuickEdit] = useState({ assignedStaff: "", leadStatus: "", interestLevel: "" });
+  const [quickEdit, setQuickEdit] = useState({
+    assignedStaff: "",
+    leadStatus: "",
+    interestLevel: "",
+    notes: "",
+    internalNotes: "",
+    lastCallStatus: "",
+    nextFollowUpDate: "",
+  });
   const [loadError, setLoadError] = useState("");
   const [updateError, setUpdateError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -55,6 +68,10 @@ export default function ClientDetailsPage() {
           assignedStaff: data.assignedStaff?._id || data.assignedStaff || "",
           leadStatus: data.leadStatus || "New Lead",
           interestLevel: data.interestLevel || "Warm",
+          notes: data.notes || "",
+          internalNotes: data.internalNotes || "",
+          lastCallStatus: data.lastCallStatus || "",
+          nextFollowUpDate: data.nextFollowUpDate ? new Date(data.nextFollowUpDate).toISOString().slice(0, 10) : "",
         });
       } catch (requestError) {
         setLoadError(requestError.response?.data?.message || "Unable to load lead details");
@@ -69,34 +86,31 @@ export default function ClientDetailsPage() {
     setIsSaving(true);
 
     try {
-      const updatedClient = await clientService.update(id, {
-        ownerName: client.ownerName,
-        clientPhoneNumber: client.clientPhoneNumber,
-        address: client.address,
-        premiseName: client.premiseName,
-        premiseArea: client.premiseArea,
-        sourceOfProperty: client.sourceOfProperty,
-        propertyType: client.propertyType,
-        ownerPrice: client.ownerPrice,
-        propertyCondition: client.propertyCondition,
-        propertyAge: client.propertyAge,
-        propertySize: client.propertySize,
-        internalNotes: client.internalNotes,
-        propertyStatus: client.propertyStatus,
-        dateOfAddingProperty: client.dateOfAddingProperty ? new Date(client.dateOfAddingProperty).toISOString().slice(0, 10) : "",
-        source: client.source,
-        purpose: client.purpose,
-        budgetMin: client.budgetMin,
-        budgetMax: client.budgetMax,
-        requirementType: client.requirementType,
-        areaPreference: client.areaPreference,
-        notes: client.notes,
-        assignedStaff: quickEdit.assignedStaff || undefined,
+      const payload = {
         leadStatus: quickEdit.leadStatus,
         interestLevel: quickEdit.interestLevel,
-      });
+        notes: quickEdit.notes,
+        internalNotes: quickEdit.internalNotes,
+        lastCallStatus: quickEdit.lastCallStatus,
+        nextFollowUpDate: quickEdit.nextFollowUpDate || null,
+      };
+
+      if (!isSalesUser) {
+        payload.assignedStaff = quickEdit.assignedStaff || null;
+      }
+
+      const updatedClient = await clientService.update(id, payload);
 
       setClient(updatedClient);
+      setQuickEdit({
+        assignedStaff: updatedClient.assignedStaff?._id || updatedClient.assignedStaff || "",
+        leadStatus: updatedClient.leadStatus || "New Lead",
+        interestLevel: updatedClient.interestLevel || "Warm",
+        notes: updatedClient.notes || "",
+        internalNotes: updatedClient.internalNotes || "",
+        lastCallStatus: updatedClient.lastCallStatus || "",
+        nextFollowUpDate: updatedClient.nextFollowUpDate ? new Date(updatedClient.nextFollowUpDate).toISOString().slice(0, 10) : "",
+      });
     } catch (requestError) {
       setUpdateError(requestError.response?.data?.message || "Unable to update lead");
     } finally {
@@ -131,7 +145,7 @@ export default function ClientDetailsPage() {
           <Badge tone="slate">{client.leadStatus || "New Lead"}</Badge>
           <Badge tone={getInterestLevelTone(client.interestLevel)}>{client.interestLevel || "Warm"}</Badge>
           <Badge tone="green">{client.assignedStaff?.name || "Unassigned"}</Badge>
-          {canUpdateClients ? (
+          {canUpdateClients && !isSalesUser ? (
             <Link to={`/clients/${client._id}/edit`}>
               <Button>Edit Lead</Button>
             </Link>
@@ -155,6 +169,8 @@ export default function ClientDetailsPage() {
                 ["Requirement Type", client.requirementType, Shapes],
                 ["Area Preference", client.areaPreference, MapPin],
                 ["Budget Range", formatBudgetRange(client.budgetMin, client.budgetMax), IndianRupee],
+                ["Last Call Status", client.lastCallStatus, Phone],
+                ["Next Follow-up", client.nextFollowUpDate ? new Date(client.nextFollowUpDate).toLocaleDateString("en-IN") : "-", CalendarDays],
                 ["Premise Name", client.premiseName, Building2],
                 ["Premise Area", client.premiseArea, MapPin],
               ].map(([label, value, Icon]) => (
@@ -203,7 +219,7 @@ export default function ClientDetailsPage() {
         </div>
 
         <div className="space-y-6">
-          {canUpdateClients ? (
+          { canShowQuickUpdate ? (
             <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
               <div className="flex items-center gap-3">
                 <ClipboardList className="h-5 w-5 text-gold-2" />
@@ -211,13 +227,15 @@ export default function ClientDetailsPage() {
               </div>
 
               <div className="mt-5 space-y-4">
-                <SelectDropdown
-                  label="Assigned Staff"
-                  options={staffOptions}
-                  placeholder="Auto assign to creator"
-                  value={quickEdit.assignedStaff}
-                  onChange={(event) => setQuickEdit((current) => ({ ...current, assignedStaff: event.target.value }))}
-                />
+                {!isSalesUser ? (
+                  <SelectDropdown
+                    label="Assigned Staff"
+                    options={staffOptions}
+                    placeholder="Auto assign to creator"
+                    value={quickEdit.assignedStaff}
+                    onChange={(event) => setQuickEdit((current) => ({ ...current, assignedStaff: event.target.value }))}
+                  />
+                ) : null}
                 <SelectDropdown
                   label="Lead Status"
                   options={leadStatusOptions}
@@ -229,6 +247,34 @@ export default function ClientDetailsPage() {
                   options={interestLevelOptions}
                   value={quickEdit.interestLevel}
                   onChange={(event) => setQuickEdit((current) => ({ ...current, interestLevel: event.target.value }))}
+                />
+                <FormInput
+                  label="Last Call Status"
+                  placeholder="Answered, no response, busy..."
+                  value={quickEdit.lastCallStatus}
+                  onChange={(event) => setQuickEdit((current) => ({ ...current, lastCallStatus: event.target.value }))}
+                />
+                <FormInput
+                  label="Next Follow-up Date"
+                  type="date"
+                  value={quickEdit.nextFollowUpDate}
+                  onChange={(event) => setQuickEdit((current) => ({ ...current, nextFollowUpDate: event.target.value }))}
+                />
+                <FormInput
+                  label="Lead Notes"
+                  as="textarea"
+                  rows={4}
+                  className="lg:col-span-2"
+                  value={quickEdit.notes}
+                  onChange={(event) => setQuickEdit((current) => ({ ...current, notes: event.target.value }))}
+                />
+                <FormInput
+                  label="Internal Notes"
+                  as="textarea"
+                  rows={4}
+                  className="lg:col-span-2"
+                  value={quickEdit.internalNotes}
+                  onChange={(event) => setQuickEdit((current) => ({ ...current, internalNotes: event.target.value }))}
                 />
 
                 {updateError ? <p className="text-sm text-rose-300">{updateError}</p> : null}
@@ -258,6 +304,16 @@ export default function ClientDetailsPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Internal Notes</p>
                 <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">
                   {client.internalNotes || "No internal notes added."}
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Follow-up</p>
+                <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">
+                  {client.lastCallStatus || "No call status added."}
+                </p>
+                <p className="mt-2 text-sm text-muted">
+                  Next follow-up: {client.nextFollowUpDate ? new Date(client.nextFollowUpDate).toLocaleDateString("en-IN") : "-"}
                 </p>
               </div>
             </div>
