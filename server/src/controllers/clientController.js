@@ -8,7 +8,7 @@ import {
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const createClientHandler = asyncHandler(async (req, res) => {
-  const client = await createClient(req.body, req.user._id);
+  const client = await createClient(req.body, req.user);
   res.status(201).json({ success: true, data: client });
 });
 

@@ -2,6 +2,7 @@ import {
   throwIfValidationFailed,
   validateEmail,
   validateEnum,
+  validateObjectId,
   validatePassword,
   validatePhone,
   validateRequiredText,
@@ -18,6 +19,7 @@ export const validateCreateUserInput = (payload) => {
     phone: validatePhone(errors, "phone", payload.phone),
     password: validatePassword(errors, "password", payload.password),
     role: validateEnum(errors, "role", payload.role, { label: "Role", values: roles }),
+    managerId: validateObjectId(errors, "managerId", payload.managerId, { label: "Manager", required: false }) || null,
   };
 
   throwIfValidationFailed(errors);

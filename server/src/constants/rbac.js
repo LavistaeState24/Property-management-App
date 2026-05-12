@@ -79,7 +79,7 @@ export const buildDefaultPermissions = (roleKey) => {
       return {
         dashboard: createPermission({ view: true, scope: "own" }),
         projects: createPermission({ view: true, scope: "all" }),
-        clients: createPermission({ view: true, scope: "assigned" }),
+        clients: createPermission({ view: true, create:true, update: true, delete: false, scope: "assigned" }),
         followups: createPermission({ view: true, create: true, update: true, delete: false, scope: "own" }),
         shareRecords: createPermission({ view: true, create: true, update: false, delete: false, scope: "own" }),
         users: createPermission({ scope: "none" }),

@@ -8,12 +8,54 @@ const sanitizeUser = (user) => ({
   role: user.role,
   phone: user.phone,
   isActive: user.isActive,
+  managerId: user.managerId?._id || user.managerId || null,
+  managerName: user.managerId?.name || "",
 });
 
 export const listManagedUsers = async (currentUser) => {
   const filters = currentUser.role === "super-admin" ? {} : { role: { $ne: "super-admin" } };
-  const users = await User.find(filters).select("-password").sort({ createdAt: -1 });
+  const users = await User.find(filters).select("-password").populate("managerId", "name").sort({ createdAt: -1 });
   return users.map(sanitizeUser);
+};
+
+export const listAssignableUsers = async (currentUser) => {
+  if (currentUser.role === "super-admin" || currentUser.role === "admin") {
+    const users = await User.find({ role: { $ne: "super-admin" }, isActive: true })
+      .select("_id name role managerId")
+      .sort({ name: 1 });
+
+    return users.map((user) => ({
+      id: user._id,
+      name: user.name,
+      role: user.role,
+      managerId: user.managerId || null,
+    }));
+  }
+
+  if (currentUser.role === "manager") {
+    const users = await User.find({
+      isActive: true,
+      $or: [{ _id: currentUser._id }, { role: "sales", managerId: currentUser._id }],
+    })
+      .select("_id name role managerId")
+      .sort({ role: 1, name: 1 });
+
+    return users.map((user) => ({
+      id: user._id,
+      name: user.name,
+      role: user.role,
+      managerId: user.managerId || null,
+    }));
+  }
+
+  return [
+    {
+      id: currentUser._id,
+      name: currentUser.name,
+      role: currentUser.role,
+      managerId: currentUser.managerId || null,
+    },
+  ];
 };
 
 export const createManagedUser = async (payload, currentUser) => {
@@ -31,6 +73,23 @@ export const createManagedUser = async (payload, currentUser) => {
     throw new ApiError(409, "User already exists");
   }
 
+  if (payload.managerId) {
+    const manager = await User.findById(payload.managerId).select("_id role isActive");
+
+    if (!manager || !manager.isActive) {
+      throw new ApiError(400, "Selected manager was not found");
+    }
+
+    if (!["manager", "admin", "super-admin"].includes(manager.role)) {
+      throw new ApiError(400, "Selected manager is invalid");
+    }
+  }
+
+  if (payload.role !== "sales") {
+    payload.managerId = null;
+  }
+
   const user = await User.create(payload);
-  return sanitizeUser(user);
+  const populatedUser = await User.findById(user._id).populate("managerId", "name");
+  return sanitizeUser(populatedUser);
 };

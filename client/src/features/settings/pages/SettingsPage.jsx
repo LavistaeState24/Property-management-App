@@ -92,6 +92,7 @@ export default function SettingsPage() {
     handleSubmit,
     reset,
     setError,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     mode: "onBlur",
@@ -101,8 +102,10 @@ export default function SettingsPage() {
       phone: "",
       password: "",
       role: "sales",
+      managerId: "",
     },
   });
+  const selectedUserRole = watch("role");
 
   const activeRole = useMemo(
     () => roles.find((role) => role.key === selectedRole) || null,
@@ -193,14 +196,25 @@ export default function SettingsPage() {
     setUserSuccess("");
 
     try {
-      const createdUser = await userService.create(formValues);
+      const payload = {
+        ...formValues,
+        managerId: formValues.role === "sales" && formValues.managerId ? formValues.managerId : undefined,
+      };
+      const createdUser = await userService.create(payload);
       setUsers((currentUsers) => [createdUser, ...currentUsers]);
       setUserSuccess(`${createdUser.name} created successfully.`);
-      reset({ name: "", email: "", phone: "", password: "", role: "sales" });
+      reset({ name: "", email: "", phone: "", password: "", role: "sales", managerId: "" });
     } catch (requestError) {
       applyServerErrors(requestError, setError, setUserError);
     }
   };
+
+  const managerOptions = users
+    .filter((managedUser) => ["manager", "admin", "super-admin"].includes(managedUser.role))
+    .map((managedUser) => ({
+      value: managedUser.id,
+      label: `${managedUser.name} (${managedUser.role})`,
+    }));
 
   return (
     <div className="space-y-6">
@@ -364,6 +378,15 @@ export default function SettingsPage() {
                     error={getErrorMessage(errors.role)}
                     {...register("role", selectRules("Role"))}
                   />
+                  {selectedUserRole === "sales" ? (
+                    <SelectDropdown
+                      label="Reporting Manager"
+                      options={managerOptions}
+                      placeholder="Select manager"
+                      error={getErrorMessage(errors.managerId)}
+                      {...register("managerId")}
+                    />
+                  ) : null}
 
                   {userError ? <p className="text-sm text-rose-300">{userError}</p> : null}
                   {userSuccess ? <p className="text-sm text-emerald-300">{userSuccess}</p> : null}
@@ -392,6 +415,7 @@ export default function SettingsPage() {
                         </span>
                       </div>
                       <p className="mt-2 text-sm text-muted">{managedUser.phone}</p>
+                      {managedUser.managerName ? <p className="mt-1 text-sm text-muted">Reports to {managedUser.managerName}</p> : null}
                     </div>
                   ))
                 ) : (
