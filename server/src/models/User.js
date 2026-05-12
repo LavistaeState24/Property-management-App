@@ -37,6 +37,12 @@ const userSchema = new mongoose.Schema(
       default: "sales",
     },
 
+    managerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
     phone: {
       type: String,
       required: true,

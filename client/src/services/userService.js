@@ -5,6 +5,10 @@ export const userService = {
     const { data } = await api.get("/users");
     return data.data;
   },
+  listAssignable: async () => {
+    const { data } = await api.get("/users/assignable");
+    return data.data;
+  },
   create: async (payload) => {
     const { data } = await api.post("/users", payload);
     return data.data;

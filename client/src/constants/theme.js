@@ -5,6 +5,27 @@ export const roles = [
   { value: "sales", label: "Sales Executive" },
 ];
 
+export const leadStatusOptions = [
+  "New Lead",
+  "Call Pending",
+  "Connected",
+  "Requirement Taken",
+  "Details Sent",
+  "Follow-up Pending",
+  "Positive",
+  "Site Visit Planned",
+  "Negotiation",
+  "Booking",
+  "Closed",
+  "Lost",
+];
+
+export const interestLevelOptions = ["Hot", "Warm", "Cold"];
+
+export const leadPurposeOptions = ["Buy", "Rent", "Lease", "Investment"];
+
+export const requirementTypeOptions = ["Residential", "Commercial", "Plot", "Rental"];
+
 export const propertySourceOptions = ["Owner", "Broker"];
 
 export const propertyTypes = [

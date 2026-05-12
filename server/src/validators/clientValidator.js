@@ -3,6 +3,7 @@ import {
   validateDate,
   validateEnum,
   validateNumber,
+  validateObjectId,
   validateOptionalText,
   validatePhone,
   validateRequiredText,
@@ -12,6 +13,21 @@ const sourceOfPropertyValues = ["Owner", "Broker"];
 const propertyTypes = ["1BHK", "2BHK", "3BHK", "4BHK", "Penthouse", "Raw House", "Tenament", "Bungalow"];
 const propertyConditionValues = ["Unfurnished", "Semi Furnished", "Furnished", "Fully Furnished"];
 const propertyStatusValues = ["Available", "Hold", "Sold", "Rent Out", "Not Available"];
+const leadStatusValues = [
+  "New Lead",
+  "Call Pending",
+  "Connected",
+  "Requirement Taken",
+  "Details Sent",
+  "Follow-up Pending",
+  "Positive",
+  "Site Visit Planned",
+  "Negotiation",
+  "Booking",
+  "Closed",
+  "Lost",
+];
+const interestLevelValues = ["Hot", "Warm", "Cold"];
 
 export const validateClientInput = (payload) => {
   const errors = {};
@@ -43,7 +59,24 @@ export const validateClientInput = (payload) => {
       values: propertyStatusValues,
     }),
     dateOfAddingProperty: validateDate(errors, "dateOfAddingProperty", payload.dateOfAddingProperty, { label: "Date of adding property", required: true }),
+    assignedStaff: validateObjectId(errors, "assignedStaff", payload.assignedStaff, { label: "Assigned staff", required: false }) || null,
+    leadStatus: validateEnum(errors, "leadStatus", payload.leadStatus, { label: "Lead status", values: leadStatusValues }),
+    interestLevel: validateEnum(errors, "interestLevel", payload.interestLevel, {
+      label: "Interest level",
+      values: interestLevelValues,
+    }),
+    source: validateOptionalText(errors, "source", payload.source, { label: "Lead source", max: 100 }),
+    purpose: validateOptionalText(errors, "purpose", payload.purpose, { label: "Purpose", max: 80 }),
+    budgetMin: validateNumber(errors, "budgetMin", payload.budgetMin, { label: "Minimum budget", required: false, min: 0 }),
+    budgetMax: validateNumber(errors, "budgetMax", payload.budgetMax, { label: "Maximum budget", required: false, min: 0 }),
+    requirementType: validateOptionalText(errors, "requirementType", payload.requirementType, { label: "Requirement type", max: 80 }),
+    areaPreference: validateOptionalText(errors, "areaPreference", payload.areaPreference, { label: "Area preference", max: 120 }),
+    notes: validateOptionalText(errors, "notes", payload.notes, { label: "Notes", max: 2000 }),
   };
+
+  if (sanitized.budgetMin !== undefined && sanitized.budgetMax !== undefined && sanitized.budgetMax < sanitized.budgetMin) {
+    errors.budgetMax = "Maximum budget must be at least minimum budget";
+  }
 
   throwIfValidationFailed(errors);
   return sanitized;
