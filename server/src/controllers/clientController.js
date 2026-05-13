@@ -3,6 +3,7 @@ import {
   deleteClient,
   getClientById,
   getClients,
+  importClients,
   updateClient,
 } from "../services/clientService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -15,6 +16,11 @@ export const createClientHandler = asyncHandler(async (req, res) => {
 export const listClientsHandler = asyncHandler(async (req, res) => {
   const clients = await getClients(req.query, req.user);
   res.json({ success: true, data: clients });
+});
+
+export const importClientsHandler = asyncHandler(async (req, res) => {
+  const summary = await importClients(req.body, req.user);
+  res.status(201).json({ success: true, data: summary });
 });
 
 export const getClientHandler = asyncHandler(async (req, res) => {

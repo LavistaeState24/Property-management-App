@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ClipboardList,
   IndianRupee,
+  Mail,
   MapPin,
   Phone,
   Ruler,
@@ -195,6 +196,7 @@ export default function ClientDetailsPage() {
               {[
                 ["Client Name", client.ownerName, UserRound],
                 ["Phone Number", client.clientPhoneNumber, Phone],
+                ["Email", client.email, Mail],
                 ["Address", client.address, MapPin],
                 ["Source of Property", client.sourceOfProperty, Shapes],
                 ["Property Type", client.propertyType, Sparkles],

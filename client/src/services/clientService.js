@@ -11,6 +11,10 @@ export const clientService = {
     const { data } = await api.post("/clients", payload);
     return data.data;
   },
+  importLeads: async (payload) => {
+    const { data } = await api.post("/clients/import", payload);
+    return data.data;
+  },
   getById: async (id) => {
     const { data } = await api.get(`/clients/${id}`);
     return data.data;

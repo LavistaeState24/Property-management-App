@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ClipboardList,
   IndianRupee,
+  Mail,
   MapPin,
   Phone,
   Save,
@@ -33,6 +34,7 @@ import { userService } from "../../../services/userService";
 import {
   applyServerErrors,
   dateRules,
+  emailRules,
   getErrorMessage,
   numberRules,
   phoneRules,
@@ -45,6 +47,7 @@ import { formatCompactPrice } from "../clientPipeline";
 const initialState = {
   ownerName: "",
   clientPhoneNumber: "",
+  email: "",
   address: "",
   premiseName: "",
   premiseArea: "",
@@ -74,6 +77,7 @@ const initialState = {
 const mapClientToForm = (client) => ({
   ownerName: client.ownerName || "",
   clientPhoneNumber: client.clientPhoneNumber || "",
+  email: client.email || "",
   address: client.address || "",
   premiseName: client.premiseName || "",
   premiseArea: client.premiseArea || "",
@@ -393,6 +397,15 @@ export default function AddClientPage() {
                 invalidMessage: "Client phone number must be a valid 10-digit Indian mobile number",
               })
             )}
+          />
+
+          <FormInput
+            label="Email"
+            icon={Mail}
+            type="email"
+            placeholder="Enter client email"
+            error={getErrorMessage(errors.email)}
+            {...register("email", emailRules({ required: false }))}
           />
 
           <FormInput
