@@ -2,6 +2,8 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
+  Clock,
+  History,
   IndianRupee,
   Mail,
   MapPin,
@@ -37,8 +39,26 @@ export default function ClientDetailsPage() {
   const isSalesUser = user?.role === "sales";
   const canUpdateClients = useCan("clients", "update");
   const canShowQuickUpdate = canUpdateClients || isSalesUser;
+  const initialCallForm = {
+    callConnected: false,
+    leadStatus: "New Lead",
+    interestLevel: "Warm",
+    discussionSummary: "",
+    requirementNote: "",
+    objection: "",
+    nextAction: "",
+    nextFollowupDateTime: "",
+    reminderType: "Call",
+    callDuration: "",
+    lostReason: "",
+  };
   const [client, setClient] = useState(null);
+  const [callLogs, setCallLogs] = useState([]);
   const [staffOptions, setStaffOptions] = useState([]);
+  const [callForm, setCallForm] = useState(initialCallForm);
+  const [callErrors, setCallErrors] = useState({});
+  const [callError, setCallError] = useState("");
+  const [isSavingCall, setIsSavingCall] = useState(false);
   const [quickEdit, setQuickEdit] = useState({
     assignedStaff: "",
     leadStatus: "",
@@ -57,8 +77,13 @@ export default function ClientDetailsPage() {
       setLoadError("");
 
       try {
-        const [data, assignableUsers] = await Promise.all([clientService.getById(id), userService.listAssignable()]);
+        const [data, assignableUsers, callHistory] = await Promise.all([
+          clientService.getById(id),
+          userService.listAssignable(),
+          clientService.listCallLogs(id),
+        ]);
         setClient(data);
+        setCallLogs(callHistory);
         setStaffOptions(
           assignableUsers.map((user) => ({
             value: user.id,
@@ -74,6 +99,11 @@ export default function ClientDetailsPage() {
           lastCallStatus: data.lastCallStatus || "",
           nextFollowUpDate: data.nextFollowUpDate ? new Date(data.nextFollowUpDate).toISOString().slice(0, 10) : "",
         });
+        setCallForm((current) => ({
+          ...current,
+          leadStatus: data.leadStatus || "New Lead",
+          interestLevel: data.interestLevel || "Warm",
+        }));
       } catch (requestError) {
         setLoadError(requestError.response?.data?.message || "Unable to load lead details");
       }
@@ -118,6 +148,54 @@ export default function ClientDetailsPage() {
       setIsSaving(false);
     }
   };
+
+  const updateCallForm = (field, value) => {
+    setCallForm((current) => ({ ...current, [field]: value }));
+    setCallErrors((current) => {
+      const nextErrors = { ...current };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+  };
+
+  const handleCallUpdate = async () => {
+    setCallError("");
+    setCallErrors({});
+    setIsSavingCall(true);
+
+    try {
+      const payload = {
+        ...callForm,
+        callDuration: callForm.callDuration ? Number(callForm.callDuration) : undefined,
+        nextFollowupDateTime: callForm.nextFollowupDateTime || null,
+      };
+      const savedCallLog = await clientService.createCallLog(id, payload);
+      const updatedClient = await clientService.getById(id);
+
+      setClient(updatedClient);
+      setCallLogs((current) => [savedCallLog, ...current]);
+      setQuickEdit((current) => ({
+        ...current,
+        leadStatus: updatedClient.leadStatus || "New Lead",
+        interestLevel: updatedClient.interestLevel || "Warm",
+        notes: updatedClient.notes || "",
+        lastCallStatus: updatedClient.lastCallStatus || "",
+        nextFollowUpDate: updatedClient.nextFollowUpDate ? new Date(updatedClient.nextFollowUpDate).toISOString().slice(0, 10) : "",
+      }));
+      setCallForm({
+        ...initialCallForm,
+        leadStatus: updatedClient.leadStatus || "New Lead",
+        interestLevel: updatedClient.interestLevel || "Warm",
+      });
+    } catch (requestError) {
+      setCallErrors(requestError.response?.data?.errors || {});
+      setCallError(requestError.response?.data?.message || "Unable to save call update");
+    } finally {
+      setIsSavingCall(false);
+    }
+  };
+
+  const formatDateTime = (value) => (value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "-");
 
   if (loadError) {
     return (
@@ -285,6 +363,160 @@ export default function ClientDetailsPage() {
                   <Button type="button" onClick={handleQuickUpdate} disabled={isSaving}>
                     {isSaving ? "Saving..." : "Save Update"}
                   </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {canShowQuickUpdate ? (
+            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+              <div className="flex items-center gap-3">
+                <Phone className="h-5 w-5 text-gold-2" />
+                <h3 className="font-display text-2xl">Call Update</h3>
+              </div>
+
+              <div className="mt-5 grid gap-4">
+                <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm font-semibold text-ivory">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-gold"
+                    checked={callForm.callConnected}
+                    onChange={(event) => updateCallForm("callConnected", event.target.checked)}
+                  />
+                  Call connected
+                </label>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <SelectDropdown
+                    label="Lead Status"
+                    options={leadStatusOptions}
+                    value={callForm.leadStatus}
+                    onChange={(event) => updateCallForm("leadStatus", event.target.value)}
+                    error={callErrors.leadStatus}
+                  />
+                  <SelectDropdown
+                    label="Interest Level"
+                    options={interestLevelOptions}
+                    value={callForm.interestLevel}
+                    onChange={(event) => updateCallForm("interestLevel", event.target.value)}
+                    error={callErrors.interestLevel}
+                  />
+                </div>
+
+                <FormInput
+                  label="Discussion Summary"
+                  as="textarea"
+                  rows={4}
+                  value={callForm.discussionSummary}
+                  onChange={(event) => updateCallForm("discussionSummary", event.target.value)}
+                  error={callErrors.discussionSummary}
+                />
+                <FormInput
+                  label="Requirement Note"
+                  as="textarea"
+                  rows={3}
+                  value={callForm.requirementNote}
+                  onChange={(event) => updateCallForm("requirementNote", event.target.value)}
+                  error={callErrors.requirementNote}
+                />
+                <FormInput
+                  label="Objection"
+                  as="textarea"
+                  rows={3}
+                  value={callForm.objection}
+                  onChange={(event) => updateCallForm("objection", event.target.value)}
+                  error={callErrors.objection}
+                />
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormInput
+                    label="Next Action"
+                    value={callForm.nextAction}
+                    onChange={(event) => updateCallForm("nextAction", event.target.value)}
+                    error={callErrors.nextAction}
+                  />
+                  <FormInput
+                    label="Next Follow-up"
+                    type="datetime-local"
+                    value={callForm.nextFollowupDateTime}
+                    onChange={(event) => updateCallForm("nextFollowupDateTime", event.target.value)}
+                    error={callErrors.nextFollowupDateTime}
+                  />
+                  <SelectDropdown
+                    label="Reminder Type"
+                    options={["None", "Call", "WhatsApp", "Email", "Meeting", "Site Visit"]}
+                    value={callForm.reminderType}
+                    onChange={(event) => updateCallForm("reminderType", event.target.value)}
+                    error={callErrors.reminderType}
+                  />
+                  <FormInput
+                    label="Call Duration (minutes)"
+                    type="number"
+                    min="0"
+                    value={callForm.callDuration}
+                    onChange={(event) => updateCallForm("callDuration", event.target.value)}
+                    error={callErrors.callDuration}
+                  />
+                </div>
+
+                {callForm.leadStatus === "Lost" ? (
+                  <FormInput
+                    label="Lost Reason"
+                    as="textarea"
+                    rows={3}
+                    value={callForm.lostReason}
+                    onChange={(event) => updateCallForm("lostReason", event.target.value)}
+                    error={callErrors.lostReason}
+                  />
+                ) : null}
+
+                {callError ? <p className="text-sm text-rose-300">{callError}</p> : null}
+
+                <div className="flex justify-end">
+                  <Button type="button" icon={Clock} onClick={handleCallUpdate} disabled={isSavingCall}>
+                    {isSavingCall ? "Saving..." : "Save Call Update"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-6 border-t border-white/10 pt-5">
+                <div className="flex items-center gap-3">
+                  <History className="h-5 w-5 text-gold-2" />
+                  <h3 className="font-display text-2xl">Call History</h3>
+                </div>
+
+                <div className="mt-4 overflow-auto rounded-2xl border border-white/10">
+                  <table className="w-full min-w-[720px] text-left text-sm">
+                    <thead className="bg-white/5 text-xs uppercase tracking-[0.16em] text-muted">
+                      <tr>
+                        {["Date", "Status", "Connected", "Summary", "Next Follow-up", "By"].map((heading) => (
+                          <th key={heading} className="px-3 py-2 font-semibold">
+                            {heading}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {callLogs.length ? (
+                        callLogs.map((callLog) => (
+                          <tr key={callLog._id} className="border-t border-white/10 align-top">
+                            <td className="px-3 py-3 text-muted">{formatDateTime(callLog.createdAt)}</td>
+                            <td className="px-3 py-3 text-ivory">{callLog.leadStatus}</td>
+                            <td className="px-3 py-3 text-muted">{callLog.callConnected ? "Yes" : "No"}</td>
+                            <td className="max-w-xs px-3 py-3 text-muted">{callLog.discussionSummary}</td>
+                            <td className="px-3 py-3 text-muted">{formatDateTime(callLog.nextFollowupDateTime)}</td>
+                            <td className="px-3 py-3 text-muted">{callLog.createdBy?.name || "-"}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td className="px-3 py-6 text-center text-muted" colSpan={6}>
+                            No call updates saved yet.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
