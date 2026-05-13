@@ -1,6 +1,10 @@
 import { Router } from "express";
 
 import {
+  createClientCallLogHandler,
+  listClientCallLogsHandler,
+} from "../controllers/callLogController.js";
+import {
   createClientHandler,
   deleteClientHandler,
   getClientHandler,
@@ -16,6 +20,8 @@ const router = Router();
 
 router.get("/", protect, authorize("clients", "view"), listClientsHandler);
 router.post("/import", protect, authorize("clients", "create"), importClientsHandler);
+router.get("/:id/call-logs", protect, authorize("clients", "view"), listClientCallLogsHandler);
+router.post("/:id/call-logs", protect, authorize("clients", "update"), createClientCallLogHandler);
 router.get("/:id", protect, authorize("clients", "view"), getClientHandler);
 router.post("/", protect, authorize("clients", "create"), validateBody(validateClientInput), createClientHandler);
 router.put(

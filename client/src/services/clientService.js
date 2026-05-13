@@ -23,6 +23,14 @@ export const clientService = {
     const { data } = await api.put(`/clients/${id}`, payload);
     return data.data;
   },
+  listCallLogs: async (id) => {
+    const { data } = await api.get(`/clients/${id}/call-logs`);
+    return data.data;
+  },
+  createCallLog: async (id, payload) => {
+    const { data } = await api.post(`/clients/${id}/call-logs`, payload);
+    return data.data;
+  },
   remove: async (id) => {
     const { data } = await api.delete(`/clients/${id}`);
     return data;
