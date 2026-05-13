@@ -1,6 +1,7 @@
 import {
   throwIfValidationFailed,
   validateDate,
+  validateEmail,
   validateEnum,
   validateNumber,
   validateObjectId,
@@ -62,6 +63,7 @@ export const validateClientInput = (payload, options = {}) => {
     "propertyAge",
     "propertySize",
     "clientPhoneNumber",
+    "email",
     "internalNotes",
     "propertyStatus",
     "dateOfAddingProperty",
@@ -122,6 +124,9 @@ export const validateClientInput = (payload, options = {}) => {
       requiredMessage: "Client phone number is required",
       invalidMessage: "Client phone number must be a valid 10-digit Indian mobile number",
     }) }
+      : {}),
+    ...(shouldValidateField("email")
+      ? { email: validateEmail(errors, "email", payload.email, { required: false }) }
       : {}),
     ...(shouldValidateField("internalNotes")
       ? { internalNotes: validateOptionalText(errors, "internalNotes", payload.internalNotes, { label: "Internal notes", max: 500 }) }

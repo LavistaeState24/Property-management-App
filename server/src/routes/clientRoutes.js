@@ -4,6 +4,7 @@ import {
   createClientHandler,
   deleteClientHandler,
   getClientHandler,
+  importClientsHandler,
   listClientsHandler,
   updateClientHandler,
 } from "../controllers/clientController.js";
@@ -14,6 +15,7 @@ import { validateClientInput, validateClientUpdateInput } from "../validators/cl
 const router = Router();
 
 router.get("/", protect, authorize("clients", "view"), listClientsHandler);
+router.post("/import", protect, authorize("clients", "create"), importClientsHandler);
 router.get("/:id", protect, authorize("clients", "view"), getClientHandler);
 router.post("/", protect, authorize("clients", "create"), validateBody(validateClientInput), createClientHandler);
 router.put(
