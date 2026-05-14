@@ -1,6 +1,8 @@
 import {
   Building2,
+  Bell,
   CalendarDays,
+  CheckCircle2,
   ClipboardList,
   Clock,
   History,
@@ -21,6 +23,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
+import Modal from "../../../components/common/Modal";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import {
   interestLevelOptions,
@@ -29,8 +32,11 @@ import {
 import { useAuth } from "../../../hooks/useAuth";
 import { useCan } from "../../../hooks/useCan";
 import { clientService } from "../../../services/clientService";
+import { followupService } from "../../../services/followupService";
 import { userService } from "../../../services/userService";
 import { formatBudgetRange, getInterestLevelTone } from "../clientPipeline";
+
+const reminderTypes = ["Call", "WhatsApp", "Details Send", "Site Visit", "Payment", "Document"];
 
 export default function ClientDetailsPage() {
   const { id } = useParams();
@@ -38,6 +44,9 @@ export default function ClientDetailsPage() {
   const { user } = useAuth();
   const isSalesUser = user?.role === "sales";
   const canUpdateClients = useCan("clients", "update");
+  const canViewFollowups = useCan("followups", "view");
+  const canCreateFollowups = useCan("followups", "create");
+  const canUpdateFollowups = useCan("followups", "update");
   const canShowQuickUpdate = canUpdateClients || isSalesUser;
   const initialCallForm = {
     callConnected: false,
@@ -52,13 +61,26 @@ export default function ClientDetailsPage() {
     callDuration: "",
     lostReason: "",
   };
+  const initialReminderForm = {
+    assignedStaff: "",
+    reminderType: "Call",
+    reminderDateTime: "",
+    note: "",
+  };
   const [client, setClient] = useState(null);
   const [callLogs, setCallLogs] = useState([]);
+  const [reminders, setReminders] = useState([]);
   const [staffOptions, setStaffOptions] = useState([]);
   const [callForm, setCallForm] = useState(initialCallForm);
   const [callErrors, setCallErrors] = useState({});
   const [callError, setCallError] = useState("");
   const [isSavingCall, setIsSavingCall] = useState(false);
+  const [reminderForm, setReminderForm] = useState(initialReminderForm);
+  const [reminderErrors, setReminderErrors] = useState({});
+  const [reminderError, setReminderError] = useState("");
+  const [completionReminder, setCompletionReminder] = useState(null);
+  const [completionNote, setCompletionNote] = useState("");
+  const [isSavingReminder, setIsSavingReminder] = useState(false);
   const [quickEdit, setQuickEdit] = useState({
     assignedStaff: "",
     leadStatus: "",
@@ -77,13 +99,15 @@ export default function ClientDetailsPage() {
       setLoadError("");
 
       try {
-        const [data, assignableUsers, callHistory] = await Promise.all([
+        const [data, assignableUsers, callHistory, reminderData] = await Promise.all([
           clientService.getById(id),
           userService.listAssignable(),
           clientService.listCallLogs(id),
+          canViewFollowups ? followupService.list({ leadId: id, limit: 100 }) : Promise.resolve({ items: [] }),
         ]);
         setClient(data);
         setCallLogs(callHistory);
+        setReminders(reminderData.items || []);
         setStaffOptions(
           assignableUsers.map((user) => ({
             value: user.id,
@@ -104,13 +128,17 @@ export default function ClientDetailsPage() {
           leadStatus: data.leadStatus || "New Lead",
           interestLevel: data.interestLevel || "Warm",
         }));
+        setReminderForm((current) => ({
+          ...current,
+          assignedStaff: data.assignedStaff?._id || data.assignedStaff || "",
+        }));
       } catch (requestError) {
         setLoadError(requestError.response?.data?.message || "Unable to load lead details");
       }
     };
 
     loadClient();
-  }, [id]);
+  }, [canViewFollowups, id]);
 
   const handleQuickUpdate = async () => {
     setUpdateError("");
@@ -170,10 +198,14 @@ export default function ClientDetailsPage() {
         nextFollowupDateTime: callForm.nextFollowupDateTime || null,
       };
       const savedCallLog = await clientService.createCallLog(id, payload);
-      const updatedClient = await clientService.getById(id);
+      const [updatedClient, reminderData] = await Promise.all([
+        clientService.getById(id),
+        canViewFollowups ? followupService.list({ leadId: id, limit: 100 }) : Promise.resolve({ items: [] }),
+      ]);
 
       setClient(updatedClient);
       setCallLogs((current) => [savedCallLog, ...current]);
+      setReminders(reminderData.items || []);
       setQuickEdit((current) => ({
         ...current,
         leadStatus: updatedClient.leadStatus || "New Lead",
@@ -195,7 +227,65 @@ export default function ClientDetailsPage() {
     }
   };
 
+  const updateReminderForm = (field, value) => {
+    setReminderForm((current) => ({ ...current, [field]: value }));
+    setReminderErrors((current) => {
+      const nextErrors = { ...current };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+  };
+
+  const handleCreateReminder = async () => {
+    setReminderError("");
+    setReminderErrors({});
+    setIsSavingReminder(true);
+
+    try {
+      await followupService.create({
+        client: id,
+        ...reminderForm,
+      });
+      const reminderData = canViewFollowups ? await followupService.list({ leadId: id, limit: 100 }) : { items: [] };
+      setReminders(reminderData.items || []);
+      setReminderForm({
+        ...initialReminderForm,
+        assignedStaff: client.assignedStaff?._id || client.assignedStaff || "",
+      });
+    } catch (requestError) {
+      setReminderErrors(requestError.response?.data?.errors || {});
+      setReminderError(requestError.response?.data?.message || "Unable to create reminder");
+    } finally {
+      setIsSavingReminder(false);
+    }
+  };
+
+  const handleCompleteReminder = async () => {
+    if (!completionReminder) return;
+
+    setReminderError("");
+    setIsSavingReminder(true);
+
+    try {
+      await followupService.complete(completionReminder._id, { completionNote });
+      const reminderData = canViewFollowups ? await followupService.list({ leadId: id, limit: 100 }) : { items: [] };
+      setReminders(reminderData.items || []);
+      setCompletionReminder(null);
+      setCompletionNote("");
+    } catch (requestError) {
+      setReminderError(requestError.response?.data?.errors?.completionNote || requestError.response?.data?.message || "Unable to complete reminder");
+    } finally {
+      setIsSavingReminder(false);
+    }
+  };
+
   const formatDateTime = (value) => (value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "-");
+  const getReminderStatusTone = (status) => {
+    if (status === "Completed") return "green";
+    if (status === "Overdue") return "rose";
+    if (status === "Cancelled") return "slate";
+    return "gold";
+  };
 
   if (loadError) {
     return (
@@ -444,7 +534,7 @@ export default function ClientDetailsPage() {
                   />
                   <SelectDropdown
                     label="Reminder Type"
-                    options={["None", "Call", "WhatsApp", "Email", "Meeting", "Site Visit"]}
+                    options={["None", ...reminderTypes]}
                     value={callForm.reminderType}
                     onChange={(event) => updateCallForm("reminderType", event.target.value)}
                     error={callErrors.reminderType}
@@ -522,6 +612,113 @@ export default function ClientDetailsPage() {
             </div>
           ) : null}
 
+          {canViewFollowups ? (
+            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+              <div className="flex items-center gap-3">
+                <Bell className="h-5 w-5 text-gold-2" />
+                <h3 className="font-display text-2xl">Reminders</h3>
+              </div>
+
+              {canCreateFollowups ? (
+              <div className="mt-5 grid gap-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <SelectDropdown
+                    label="Assigned Staff"
+                    options={staffOptions}
+                    value={reminderForm.assignedStaff}
+                    onChange={(event) => updateReminderForm("assignedStaff", event.target.value)}
+                    error={reminderErrors.assignedStaff}
+                  />
+                  <SelectDropdown
+                    label="Reminder Type"
+                    options={reminderTypes}
+                    value={reminderForm.reminderType}
+                    onChange={(event) => updateReminderForm("reminderType", event.target.value)}
+                    error={reminderErrors.reminderType}
+                  />
+                  <FormInput
+                    label="Reminder Date/Time"
+                    type="datetime-local"
+                    value={reminderForm.reminderDateTime}
+                    onChange={(event) => updateReminderForm("reminderDateTime", event.target.value)}
+                    error={reminderErrors.reminderDateTime}
+                  />
+                  <FormInput
+                    label="Reminder Note"
+                    value={reminderForm.note}
+                    onChange={(event) => updateReminderForm("note", event.target.value)}
+                    error={reminderErrors.note}
+                  />
+                </div>
+
+                {reminderError ? <p className="text-sm text-rose-300">{reminderError}</p> : null}
+
+                <div className="flex justify-end">
+                  <Button type="button" icon={Bell} disabled={isSavingReminder} onClick={handleCreateReminder}>
+                    {isSavingReminder ? "Saving..." : "Create Reminder"}
+                  </Button>
+                </div>
+              </div>
+              ) : null}
+
+              <div className="mt-6 overflow-auto rounded-2xl border border-white/10">
+                <table className="w-full min-w-[720px] text-left text-sm">
+                  <thead className="bg-white/5 text-xs uppercase tracking-[0.16em] text-muted">
+                    <tr>
+                      {["Reminder", "Type", "Assigned", "Note", "Status", "Action"].map((heading) => (
+                        <th key={heading} className="px-3 py-2 font-semibold">
+                          {heading}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reminders.length ? (
+                      reminders.map((reminder) => (
+                        <tr key={reminder._id} className="border-t border-white/10 align-top">
+                          <td className={`px-3 py-3 ${reminder.status === "Overdue" ? "font-semibold text-rose-300" : "text-muted"}`}>
+                            {formatDateTime(reminder.reminderDateTime)}
+                          </td>
+                          <td className="px-3 py-3 text-ivory">{reminder.reminderType}</td>
+                          <td className="px-3 py-3 text-muted">{reminder.assignedStaff?.name || "-"}</td>
+                          <td className="max-w-xs px-3 py-3 text-muted">{reminder.note}</td>
+                          <td className="px-3 py-3">
+                            <Badge tone={getReminderStatusTone(reminder.status)}>{reminder.status}</Badge>
+                          </td>
+                          <td className="px-3 py-3">
+                            {canUpdateFollowups && !["Completed", "Cancelled"].includes(reminder.status) ? (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                icon={CheckCircle2}
+                                disabled={isSavingReminder}
+                                onClick={() => {
+                                  setReminderError("");
+                                  setCompletionNote("");
+                                  setCompletionReminder(reminder);
+                                }}
+                              >
+                                Complete
+                              </Button>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td className="px-3 py-6 text-center text-muted" colSpan={6}>
+                          No reminders saved yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
             <div className="flex items-center gap-3">
               <ScrollText className="h-5 w-5 text-gold-2" />
@@ -554,6 +751,34 @@ export default function ClientDetailsPage() {
           </div>
         </div>
       </div>
+      <Modal
+        title="Complete Reminder"
+        isOpen={Boolean(completionReminder)}
+        onClose={() => {
+          if (!isSavingReminder) {
+            setCompletionReminder(null);
+          }
+        }}
+      >
+        <div className="space-y-4">
+          <FormInput
+            label="Completion Note"
+            as="textarea"
+            rows={4}
+            value={completionNote}
+            onChange={(event) => setCompletionNote(event.target.value)}
+            error={reminderError}
+          />
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" disabled={isSavingReminder} onClick={() => setCompletionReminder(null)}>
+              Cancel
+            </Button>
+            <Button type="button" icon={CheckCircle2} disabled={isSavingReminder} onClick={handleCompleteReminder}>
+              {isSavingReminder ? "Saving..." : "Complete"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

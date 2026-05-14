@@ -22,7 +22,7 @@ const leadStatusValues = [
   "Lost",
 ];
 const interestLevelValues = ["Hot", "Warm", "Cold"];
-const reminderTypeValues = ["None", "Call", "WhatsApp", "Email", "Meeting", "Site Visit"];
+const reminderTypeValues = ["None", "Call", "WhatsApp", "Details Send", "Site Visit", "Payment", "Document"];
 
 const toBoolean = (value) => value === true || value === "true";
 
