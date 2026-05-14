@@ -2,6 +2,7 @@ import { CallLog } from "../models/CallLog.js";
 import { Client } from "../models/Client.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
+import { createFollowupFromCallLog, hasOverduePendingFollowup } from "./followupService.js";
 
 const toObjectId = (value) => value?._id || value || null;
 const toObjectIdString = (value) => String(toObjectId(value) || "");
@@ -57,6 +58,13 @@ export const listCallLogs = async (clientId, currentUser) => {
 
 export const createCallLog = async (clientId, payload, currentUser) => {
   const client = await getAccessibleClient(clientId, currentUser);
+
+  if (!["super-admin", "admin"].includes(currentUser.role) && (await hasOverduePendingFollowup(client._id))) {
+    throw new ApiError(409, "Overdue pending reminder must be completed before saving a new call update", null, {
+      reminder: "Complete or cancel overdue pending reminders before saving a new call update",
+    });
+  }
+
   const callLog = await CallLog.create({
     ...payload,
     client: client._id,
@@ -79,6 +87,15 @@ export const createCallLog = async (clientId, payload, currentUser) => {
 
   client.set(clientUpdates);
   await client.save();
+
+  await createFollowupFromCallLog({
+    client: client._id,
+    assignedStaff: getAssignedUserId(client) || currentUser._id,
+    reminderType: payload.reminderType,
+    reminderDateTime: payload.nextFollowupDateTime,
+    note: payload.nextAction || payload.discussionSummary,
+    createdBy: currentUser._id,
+  });
 
   return populateCallLogUsers(CallLog.findById(callLog._id));
 };

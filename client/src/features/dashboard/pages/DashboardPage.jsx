@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState([]);
   const [totalProjects, setTotalProjects] = useState(0);
   const [clients, setClients] = useState([]);
-  const [followups, setFollowups] = useState([]);
+  const [reminderCounts, setReminderCounts] = useState({ today: 0, overdue: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -45,14 +45,14 @@ export default function DashboardPage() {
           projectService.dashboardSummary(),
           canViewProjects ? projectService.listAll() : Promise.resolve({ items: [], meta: { total: 0 } }),
           canViewClients ? clientService.list({ limit: 3 }) : Promise.resolve({ items: [] }),
-          canViewFollowups ? followupService.list({ today: true }) : Promise.resolve([]),
+          canViewFollowups ? followupService.counts() : Promise.resolve({ today: 0, overdue: 0 }),
         ]);
 
         setSummary(summaryData);
         setProjects(projectData.items);
         setTotalProjects(projectData.meta?.total ?? projectData.items.length);
         setClients(clientData.items);
-        setFollowups(followupData);
+        setReminderCounts(followupData);
         
       } finally {
         setIsLoading(false);
@@ -96,7 +96,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
         <StatCard label="Total Projects" value={summary?.totalProjects ?? "--"} accent="gold" meta="Inventory" icon={FolderKanban} />
         <StatCard label="Active Projects" value={summary?.activeProjects ?? "--"} accent="green" meta="Live" icon={TrendingUp} />
         <StatCard
@@ -106,7 +106,8 @@ export default function DashboardPage() {
           meta="Pipeline"
           icon={CalendarClock}
         />
-        <StatCard label="Today's Follow-ups" value={canViewFollowups ? followups.length : "--"} accent="gold" meta="Due today" icon={CalendarClock} />
+        <StatCard label="Today Reminders" value={canViewFollowups ? reminderCounts.today : "--"} accent="gold" meta="Due today" icon={CalendarClock} />
+        <StatCard label="Overdue Reminders" value={canViewFollowups ? reminderCounts.overdue : "--"} accent="rose" meta="Overdue" icon={CalendarClock} />
       </section>
 
       <section className="grid gap-6 grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1">

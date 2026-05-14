@@ -42,7 +42,7 @@ const callLogSchema = new mongoose.Schema(
     reminderType: {
       type: String,
       trim: true,
-      enum: ["None", "Call", "WhatsApp", "Email", "Meeting", "Site Visit", ""],
+      enum: ["None", "Call", "WhatsApp", "Details Send", "Site Visit", "Payment", "Document", ""],
       default: "",
     },
     callDuration: { type: Number, min: 0, default: null },

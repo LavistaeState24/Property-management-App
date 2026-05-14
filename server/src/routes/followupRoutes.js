@@ -1,16 +1,23 @@
 import { Router } from "express";
 
 import {
+  cancelFollowupHandler,
+  completeFollowupHandler,
   createFollowupHandler,
+  getFollowupCountsHandler,
   listFollowupsHandler,
+  updateFollowupHandler,
 } from "../controllers/followupController.js";
 import { authorize, protect } from "../middlewares/authMiddleware.js";
-import { validateBody } from "../middlewares/validationMiddleware.js";
-import { validateFollowupInput } from "../validators/followupValidator.js";
 
 const router = Router();
 
 router.get("/", protect, authorize("followups", "view"), listFollowupsHandler);
-router.post("/", protect, authorize("followups", "create"), validateBody(validateFollowupInput), createFollowupHandler);
+router.get("/counts", protect, authorize("followups", "view"), getFollowupCountsHandler);
+router.post("/", protect, authorize("followups", "create"), createFollowupHandler);
+router.put("/:id", protect, authorize("followups", "update"), updateFollowupHandler);
+router.patch("/:id/complete", protect, authorize("followups", "update"), completeFollowupHandler);
+router.patch("/:id/cancel", protect, authorize("followups", "update"), cancelFollowupHandler);
+router.delete("/:id", protect, authorize("followups", "delete"), cancelFollowupHandler);
 
 export default router;
