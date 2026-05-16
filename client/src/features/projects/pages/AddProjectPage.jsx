@@ -8,9 +8,9 @@ import FormInput from "../../../components/common/FormInput";
 import MultiSelectDropdown from "../../../components/common/MultiSelectDropdown";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import UploadBox from "../../../components/common/UploadBox";
-import { projectPropertyTypes, projectStatuses } from "../../../constants/theme";
+import { projectPropertyTypes, projectStatuses , projectSearchTypeOptions } from "../../../constants/theme";
 import { projectService } from "../../../services/projectService";
-import { uploadService } from "../../../services/uploadService";
+import { uploadService } from "../../../services/uploadService";;
 import {
   applyServerErrors,
   dateRules,
@@ -73,7 +73,7 @@ const normalizePropertyTypeValue = (value) => {
 const parseSizeRange = (value) => {
   const normalized = String(value || "")
     .trim()
-    .replace(/[–—]/g, "-")
+    .replace(/[â€“â€”]/g, "-")
     .replace(/\bto\b/gi, "-");
   const matches = normalized.match(/\d+(\.\d+)?/g) || [];
 
@@ -374,7 +374,17 @@ export default function AddProjectPage() {
         />
 
         <FormInput
-          label="Configuration"
+          label="Requirement Type"
+         render={({ field }) => (
+            <MultiSelectDropdown
+              label="Property Type"
+              icon={Shapes}
+              options={projectSearchTypeOptions}
+              placeholder="Select property types"
+              error={getErrorMessage(errors.propertyType)}
+              {...field}
+            />
+          )}
           icon={Shapes}
           placeholder="Villa / Apartemnt"
           error={getErrorMessage(errors.configuration)}

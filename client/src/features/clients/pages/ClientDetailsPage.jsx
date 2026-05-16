@@ -35,6 +35,7 @@ import { clientService } from "../../../services/clientService";
 import { followupService } from "../../../services/followupService";
 import { userService } from "../../../services/userService";
 import { formatBudgetRange, getInterestLevelTone } from "../clientPipeline";
+import ClientMatchingSection from "../components/ClientMatchingSection";
 
 const reminderTypes = ["Call", "WhatsApp", "Details Send", "Site Visit", "Payment", "Document"];
 
@@ -93,6 +94,20 @@ export default function ClientDetailsPage() {
   const [loadError, setLoadError] = useState("");
   const [updateError, setUpdateError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  const syncClientState = (nextClient) => {
+    setClient(nextClient);
+    setQuickEdit((current) => ({
+      ...current,
+      assignedStaff: nextClient.assignedStaff?._id || nextClient.assignedStaff || "",
+      leadStatus: nextClient.leadStatus || "New Lead",
+      interestLevel: nextClient.interestLevel || "Warm",
+      notes: nextClient.notes || "",
+      internalNotes: nextClient.internalNotes || "",
+      lastCallStatus: nextClient.lastCallStatus || "",
+      nextFollowUpDate: nextClient.nextFollowUpDate ? new Date(nextClient.nextFollowUpDate).toISOString().slice(0, 10) : "",
+    }));
+  };
 
   useEffect(() => {
     const loadClient = async () => {
@@ -160,16 +175,7 @@ export default function ClientDetailsPage() {
 
       const updatedClient = await clientService.update(id, payload);
 
-      setClient(updatedClient);
-      setQuickEdit({
-        assignedStaff: updatedClient.assignedStaff?._id || updatedClient.assignedStaff || "",
-        leadStatus: updatedClient.leadStatus || "New Lead",
-        interestLevel: updatedClient.interestLevel || "Warm",
-        notes: updatedClient.notes || "",
-        internalNotes: updatedClient.internalNotes || "",
-        lastCallStatus: updatedClient.lastCallStatus || "",
-        nextFollowUpDate: updatedClient.nextFollowUpDate ? new Date(updatedClient.nextFollowUpDate).toISOString().slice(0, 10) : "",
-      });
+      syncClientState(updatedClient);
     } catch (requestError) {
       setUpdateError(requestError.response?.data?.message || "Unable to update lead");
     } finally {
@@ -203,17 +209,9 @@ export default function ClientDetailsPage() {
         canViewFollowups ? followupService.list({ leadId: id, limit: 100 }) : Promise.resolve({ items: [] }),
       ]);
 
-      setClient(updatedClient);
+      syncClientState(updatedClient);
       setCallLogs((current) => [savedCallLog, ...current]);
       setReminders(reminderData.items || []);
-      setQuickEdit((current) => ({
-        ...current,
-        leadStatus: updatedClient.leadStatus || "New Lead",
-        interestLevel: updatedClient.interestLevel || "Warm",
-        notes: updatedClient.notes || "",
-        lastCallStatus: updatedClient.lastCallStatus || "",
-        nextFollowUpDate: updatedClient.nextFollowUpDate ? new Date(updatedClient.nextFollowUpDate).toISOString().slice(0, 10) : "",
-      }));
       setCallForm({
         ...initialCallForm,
         leadStatus: updatedClient.leadStatus || "New Lead",
@@ -322,7 +320,7 @@ export default function ClientDetailsPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.05fr,0.95fr]">
+      <div className="grid gap-6 lg:grid-cols-1">
         <div className="space-y-6">
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
             <div className="flex items-center gap-3">
@@ -387,9 +385,11 @@ export default function ClientDetailsPage() {
             </div>
           </div>
         </div>
+      </div>
 
+      <div className="grid gap-6 lg:grid-cols-1">
         <div className="space-y-6">
-          { canShowQuickUpdate ? (
+          {canShowQuickUpdate ? (
             <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
               <div className="flex items-center gap-3">
                 <ClipboardList className="h-5 w-5 text-gold-2" />
@@ -620,45 +620,45 @@ export default function ClientDetailsPage() {
               </div>
 
               {canCreateFollowups ? (
-              <div className="mt-5 grid gap-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <SelectDropdown
-                    label="Assigned Staff"
-                    options={staffOptions}
-                    value={reminderForm.assignedStaff}
-                    onChange={(event) => updateReminderForm("assignedStaff", event.target.value)}
-                    error={reminderErrors.assignedStaff}
-                  />
-                  <SelectDropdown
-                    label="Reminder Type"
-                    options={reminderTypes}
-                    value={reminderForm.reminderType}
-                    onChange={(event) => updateReminderForm("reminderType", event.target.value)}
-                    error={reminderErrors.reminderType}
-                  />
-                  <FormInput
-                    label="Reminder Date/Time"
-                    type="datetime-local"
-                    value={reminderForm.reminderDateTime}
-                    onChange={(event) => updateReminderForm("reminderDateTime", event.target.value)}
-                    error={reminderErrors.reminderDateTime}
-                  />
-                  <FormInput
-                    label="Reminder Note"
-                    value={reminderForm.note}
-                    onChange={(event) => updateReminderForm("note", event.target.value)}
-                    error={reminderErrors.note}
-                  />
-                </div>
+                <div className="mt-5 grid gap-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <SelectDropdown
+                      label="Assigned Staff"
+                      options={staffOptions}
+                      value={reminderForm.assignedStaff}
+                      onChange={(event) => updateReminderForm("assignedStaff", event.target.value)}
+                      error={reminderErrors.assignedStaff}
+                    />
+                    <SelectDropdown
+                      label="Reminder Type"
+                      options={reminderTypes}
+                      value={reminderForm.reminderType}
+                      onChange={(event) => updateReminderForm("reminderType", event.target.value)}
+                      error={reminderErrors.reminderType}
+                    />
+                    <FormInput
+                      label="Reminder Date/Time"
+                      type="datetime-local"
+                      value={reminderForm.reminderDateTime}
+                      onChange={(event) => updateReminderForm("reminderDateTime", event.target.value)}
+                      error={reminderErrors.reminderDateTime}
+                    />
+                    <FormInput
+                      label="Reminder Note"
+                      value={reminderForm.note}
+                      onChange={(event) => updateReminderForm("note", event.target.value)}
+                      error={reminderErrors.note}
+                    />
+                  </div>
 
-                {reminderError ? <p className="text-sm text-rose-300">{reminderError}</p> : null}
+                  {reminderError ? <p className="text-sm text-rose-300">{reminderError}</p> : null}
 
-                <div className="flex justify-end">
-                  <Button type="button" icon={Bell} disabled={isSavingReminder} onClick={handleCreateReminder}>
-                    {isSavingReminder ? "Saving..." : "Create Reminder"}
-                  </Button>
+                  <div className="flex justify-end">
+                    <Button type="button" icon={Bell} disabled={isSavingReminder} onClick={handleCreateReminder}>
+                      {isSavingReminder ? "Saving..." : "Create Reminder"}
+                    </Button>
+                  </div>
                 </div>
-              </div>
               ) : null}
 
               <div className="mt-6 overflow-auto rounded-2xl border border-white/10">
@@ -749,6 +749,8 @@ export default function ClientDetailsPage() {
               </div>
             </div>
           </div>
+
+          <ClientMatchingSection client={client} onClientUpdate={syncClientState} />
         </div>
       </div>
       <Modal

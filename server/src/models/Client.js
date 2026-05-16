@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 const clientSchema = new mongoose.Schema(
   {
     ownerName: { type: String, required: true, trim: true, minlength: 3, maxlength: 80 },
@@ -16,14 +15,14 @@ const clientSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      enum: ["1BHK", "2BHK", "3BHK", "4BHK", "Penthouse", "Raw House", "Tenament", "Bungalow"],
+      maxlength: 40,
     },
     ownerPrice: { type: Number, required: true, min: 0 },
     propertyCondition: {
       type: String,
       required: true,
       trim: true,
-      enum: ["Unfurnished", "Semi Furnished", "Furnished", "Fully Furnished"],
+      maxlength: 40,
     },
     propertyAge: { type: String, required: true, trim: true, minlength: 1, maxlength: 80 },
     propertySize: { type: String, required: true, trim: true, minlength: 1, maxlength: 80 },

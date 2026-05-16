@@ -8,18 +8,48 @@ import {
   createClientHandler,
   deleteClientHandler,
   getClientHandler,
+  getClientShareHistoryHandler,
+  getMatchingProjectsForClientHandler,
   importClientsHandler,
   listClientsHandler,
+  shareMatchingProjectsWithClientHandler,
   updateClientHandler,
 } from "../controllers/clientController.js";
 import { authorize, protect } from "../middlewares/authMiddleware.js";
 import { validateBody } from "../middlewares/validationMiddleware.js";
-import { validateClientInput, validateClientUpdateInput } from "../validators/clientValidator.js";
+import {
+  validateClientInput,
+  validateClientMatchingQuery,
+  validateClientProjectShareInput,
+  validateClientUpdateInput,
+} from "../validators/clientValidator.js";
 
 const router = Router();
 
 router.get("/", protect, authorize("clients", "view"), listClientsHandler);
 router.post("/import", protect, authorize("clients", "create"), importClientsHandler);
+router.get(
+  "/:id/matching-projects",
+  protect,
+  authorize("clients", "view"),
+  (req, _res, next) => {
+    try {
+      req.query = validateClientMatchingQuery(req.query);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  getMatchingProjectsForClientHandler
+);
+router.get("/:id/share-history", protect, authorize("clients", "view"), getClientShareHistoryHandler);
+router.post(
+  "/:id/share-projects",
+  protect,
+  authorize("shareRecords", "create"),
+  validateBody(validateClientProjectShareInput),
+  shareMatchingProjectsWithClientHandler
+);
 router.get("/:id/call-logs", protect, authorize("clients", "view"), listClientCallLogsHandler);
 router.post("/:id/call-logs", protect, authorize("clients", "update"), createClientCallLogHandler);
 router.get("/:id", protect, authorize("clients", "view"), getClientHandler);

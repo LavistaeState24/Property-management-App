@@ -1,12 +1,18 @@
 import { Client } from "../models/Client.js";
+import { Followup } from "../models/Followup.js";
+import { Project } from "../models/Project.js";
+import { ShareRecord } from "../models/ShareRecord.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
-import { buildPagination } from "../utils/query.js";
+import { applyScopedFilter, getModuleScope } from "../utils/accessControl.js";
+import { buildPagination, buildProjectFilters } from "../utils/query.js";
+import { buildClientSafeProjectPayload } from "./projectService.js";
+import { buildClientSafeShareMessage } from "../utils/shareMessage.js";
+import { createFollowup } from "./followupService.js";
 import { EMAIL_REGEX, INDIAN_PHONE_REGEX, normalizeString } from "../validators/common.js";
 
 const toObjectId = (value) => value?._id || value || null;
 const toObjectIdString = (value) => String(toObjectId(value) || "");
-
 const populateClientUsers = (query) =>
   query
     .populate("assignedStaff", "name role managerId")
@@ -73,7 +79,7 @@ const parseBudgetRange = (value) => {
   }
 
   const normalized = normalizeString(value);
-  const parts = normalized.split(/\s*(?:-|to|–|—)\s*/i).filter(Boolean);
+  const parts = normalized.split(/\s*(?:-|to|â€“|â€”)\s*/i).filter(Boolean);
   const numbers = (parts.length > 1 ? parts : [value]).map(parseBudgetValue).filter((amount) => amount !== null);
 
   return {
@@ -201,6 +207,163 @@ const assertClientAccess = async (client, currentUser) => {
   throw new ApiError(403, "You do not have access to this resource");
 };
 
+const getAccessibleClient = async (clientId, currentUser) => {
+  const client = await Client.findById(clientId);
+
+  if (!client) {
+    throw new ApiError(404, "Client not found");
+  }
+
+  await assertClientAccess(client, currentUser);
+  return client;
+};
+
+const normalizeToken = (value) => normalizeString(value).toLowerCase();
+
+const propertyTypeKeywords = ["apartment", "villa", "plot", "commercial"];
+
+const extractBhkTokens = (client) => {
+  const sourceValues = [client.requirementType, client.propertyType];
+  const tokens = sourceValues
+    .flatMap((value) => String(value || "").match(/\d+\s*bhk/gi) || [])
+    .map((value) => value.replace(/\s+/g, "").toUpperCase());
+
+  return [...new Set(tokens)];
+};
+
+const extractPropertyTypeKeyword = (client) => {
+  const sourceValues = [client.requirementType, client.propertyType];
+
+  for (const sourceValue of sourceValues) {
+    const normalized = normalizeToken(sourceValue);
+    const matched = propertyTypeKeywords.find((keyword) => normalized.includes(keyword));
+
+    if (matched) {
+      return matched;
+    }
+  }
+
+  return null;
+};
+
+const buildMatchingProjectQuery = (client, query) => {
+  const bhkTokens = extractBhkTokens(client);
+  const propertyTypeKeyword = extractPropertyTypeKeyword(client);
+
+  return {
+    area: query.area || client.areaPreference || client.premiseArea || undefined,
+    propertyType: query.propertyType || propertyTypeKeyword || undefined,
+    bhk: query.bhk || (bhkTokens.length ? bhkTokens.join(",") : undefined),
+    status: query.status || "active",
+    availability: query.availability ?? "true",
+    minBudget: query.minBudget ?? client.budgetMin ?? undefined,
+    maxBudget: query.maxBudget ?? client.budgetMax ?? undefined,
+    minSize: query.minSize ?? undefined,
+    maxSize: query.maxSize ?? undefined,
+    possession: query.possession || undefined,
+  };
+};
+
+const includesText = (value, expected) => normalizeToken(value).includes(normalizeToken(expected));
+
+const getBudgetScore = (client, project) => {
+  const clientMin = client.budgetMin ?? null;
+  const clientMax = client.budgetMax ?? null;
+  const projectMin = project.priceRange?.min ?? null;
+  const projectMax = project.priceRange?.max ?? projectMin;
+
+  if (!projectMin || (clientMin === null && clientMax === null)) {
+    return 0;
+  }
+
+  const resolvedClientMin = clientMin ?? 0;
+  const resolvedClientMax = clientMax ?? Number.MAX_SAFE_INTEGER;
+
+  return projectMax >= resolvedClientMin && projectMin <= resolvedClientMax ? 2 : 0;
+};
+
+const getMatchInsights = (client, project) => {
+  const matchedOn = [];
+  let matchScore = 0;
+  const bhkTokens = extractBhkTokens(client);
+  const propertyTypeKeyword = extractPropertyTypeKeyword(client);
+
+  const preferredArea = client.areaPreference || client.premiseArea;
+  if (preferredArea && (includesText(project.area, preferredArea) || includesText(project.location, preferredArea))) {
+    matchedOn.push("area");
+    matchScore += 2;
+  }
+
+  if (
+    bhkTokens.length &&
+    bhkTokens.some(
+      (token) =>
+        normalizeToken(project.configuration).includes(token.toLowerCase()) ||
+        (Array.isArray(project.propertyType) && project.propertyType.some((type) => normalizeToken(type).includes(token.toLowerCase()))),
+    )
+  ) {
+    matchedOn.push("configuration");
+    matchScore += 2;
+  }
+
+  const budgetScore = getBudgetScore(client, project);
+  if (budgetScore) {
+    matchedOn.push("budget");
+    matchScore += budgetScore;
+  }
+
+  if (
+    propertyTypeKeyword &&
+    ((Array.isArray(project.propertyType) && project.propertyType.some((type) => normalizeToken(type).includes(propertyTypeKeyword))) ||
+      includesText(project.configuration, propertyTypeKeyword) ||
+      includesText(project.location, propertyTypeKeyword))
+  ) {
+    matchedOn.push("propertyType");
+    matchScore += 1;
+  }
+
+  if ((project.availableUnits ?? 0) > 0) {
+    matchedOn.push("availableUnits");
+    matchScore += 1;
+  }
+
+  return { matchedOn, matchScore };
+};
+
+const sortMatchingProjects = (items, sortBy = "matchScore") => {
+  return [...items].sort((left, right) => {
+    const leftPrice = left.priceRange?.min ?? 0;
+    const rightPrice = right.priceRange?.min ?? 0;
+    const leftPossession = left.possessionDate ? new Date(left.possessionDate).getTime() : Number.MAX_SAFE_INTEGER;
+    const rightPossession = right.possessionDate ? new Date(right.possessionDate).getTime() : Number.MAX_SAFE_INTEGER;
+    const leftCreated = new Date(left.createdAt).getTime();
+    const rightCreated = new Date(right.createdAt).getTime();
+
+    switch (sortBy) {
+      case "priceLowToHigh":
+        return leftPrice - rightPrice;
+      case "priceHighToLow":
+        return rightPrice - leftPrice;
+      case "possessionSoonest":
+        return leftPossession - rightPossession;
+      case "newest":
+        return rightCreated - leftCreated;
+      case "matchScore":
+      default:
+        if (right.matchScore !== left.matchScore) {
+          return right.matchScore - left.matchScore;
+        }
+
+        return rightCreated - leftCreated;
+    }
+  });
+};
+
+const buildShareHistoryNote = ({ shareChannel, projectCount, reminderDateTime, createdByName }) =>
+  `[${new Date().toISOString()}] Shared ${projectCount} matching project${projectCount === 1 ? "" : "s"} via ${shareChannel}. Follow-up scheduled for ${new Date(
+    reminderDateTime,
+  ).toISOString()}. Shared by ${createdByName}.`;
+
 export const createClient = async (payload, currentUser) =>
   Client.create({
     ...payload,
@@ -276,10 +439,7 @@ export const importClients = async (payload, currentUser) => {
 
     seenPhones.add(clientPhoneNumber);
     const hasBudgetRange = Object.prototype.hasOwnProperty.call(row, "budgetMin") || Object.prototype.hasOwnProperty.call(row, "budgetMax");
-    const explicitBudgetRange =
-      hasBudgetRange
-        ? [row.budgetMin, row.budgetMax]
-        : row.budget;
+    const explicitBudgetRange = hasBudgetRange ? [row.budgetMin, row.budgetMax] : row.budget;
     const { budgetMin, budgetMax } = parseBudgetRange(explicitBudgetRange);
     const fallbackLocation = areaPreference || "Imported lead";
 
@@ -442,6 +602,164 @@ export const getClientById = async (clientId, currentUser) => {
   await assertClientAccess(client, currentUser);
 
   return normalizeAssignedStaff(client);
+};
+
+export const getMatchingProjectsForClient = async (clientId, query, currentUser, origin) => {
+  const client = await getAccessibleClient(clientId, currentUser);
+  const filters = buildProjectFilters(buildMatchingProjectQuery(client, query));
+  const scopedFilters = applyScopedFilter(filters, getModuleScope(currentUser, "projects"), currentUser, {
+    assigned: ["createdBy"],
+    own: ["createdBy"],
+  });
+  const projects = await Project.find(scopedFilters).populate("createdBy", "name role");
+  const scoredProjects = projects
+    .map((project) => {
+      const { matchedOn, matchScore } = getMatchInsights(client, project);
+
+      return {
+        ...project.toObject(),
+        matchedOn,
+        matchScore,
+        sharePreview: buildClientSafeProjectPayload(project, currentUser, origin),
+      };
+    })
+    .filter((project) => project.matchScore > 0 || projects.length === 1 || Object.keys(filters).length === 0);
+
+  const sortBy = query.sortBy || "matchScore";
+  const sortedProjects = sortMatchingProjects(scoredProjects, sortBy);
+  const { page, limit, skip } = buildPagination(query);
+  const items = sortedProjects.slice(skip, skip + limit);
+
+  return {
+    items,
+    meta: {
+      page,
+      limit,
+      total: sortedProjects.length,
+      totalPages: Math.ceil(sortedProjects.length / limit) || 1,
+    },
+  };
+};
+
+export const getClientShareHistory = async (clientId, currentUser) => {
+  await getAccessibleClient(clientId, currentUser);
+
+  return ShareRecord.find({ client: clientId })
+    .populate("sharedBy", "name role phone")
+    .populate("projectId", "projectName publicAlias location status")
+    .sort({ sharedAt: -1, createdAt: -1 });
+};
+
+export const shareMatchingProjectsWithClient = async (clientId, payload, currentUser, origin) => {
+  const client = await getAccessibleClient(clientId, currentUser);
+  const scopedFilters = applyScopedFilter({ _id: { $in: payload.projectIds } }, getModuleScope(currentUser, "projects"), currentUser, {
+    assigned: ["createdBy"],
+    own: ["createdBy"],
+  });
+  const projects = await Project.find(scopedFilters);
+
+  if (projects.length !== payload.projectIds.length) {
+    throw new ApiError(403, "One or more selected projects are not accessible");
+  }
+
+  const orderedProjects = payload.projectIds
+    .map((projectId) => projects.find((project) => toObjectIdString(project._id) === String(projectId)))
+    .filter(Boolean);
+
+  if (!orderedProjects.length) {
+    throw new ApiError(400, "At least one project is required");
+  }
+
+  const safeProjects = orderedProjects.map((project) => buildClientSafeProjectPayload(project, currentUser, origin));
+  const message = buildClientSafeShareMessage(safeProjects, safeProjects[0]?.contact || {});
+  const sharedProjects = safeProjects.map((project) => ({
+    projectId: project.projectId,
+    projectPublicAlias: project.publicAlias,
+    sharedFields: {
+      area: project.area,
+      configuration: project.configuration,
+      size: project.size,
+      priceRange: project.priceRange,
+      possession: project.possession,
+      amenities: project.amenities?.map((item) => String(item).slice(0, 500)) || [],
+      brochureUrl: project.brochureUrl,
+      sampleVideoUrl: project.sampleVideoUrl,
+      photos: project.photos || [],
+    },
+  }));
+
+  let followup = null;
+  let shareRecord = null;
+
+  try {
+    followup = await createFollowup(
+      {
+        client: client._id,
+        assignedStaff: getAssignedUserId(client) || currentUser._id,
+        reminderType: payload.reminderType,
+        reminderDateTime: payload.reminderDateTime,
+        note: payload.reminderNote,
+        project: orderedProjects[0]?._id,
+      },
+      currentUser._id,
+      currentUser,
+    );
+
+    shareRecord = await ShareRecord.create({
+      client: client._id,
+      clientName: client.ownerName,
+      clientPhone: client.clientPhoneNumber,
+      clientEmail: client.email || undefined,
+      clientRequirement: payload.clientRequirement || client.requirementType || undefined,
+      projectId: orderedProjects[0]._id,
+      projectIds: orderedProjects.map((project) => project._id),
+      projectPublicAlias: orderedProjects[0].publicAlias,
+      projectPublicAliases: orderedProjects.map((project) => project.publicAlias),
+      sharedBy: currentUser._id,
+      sharedByName: currentUser.name,
+      sharedByPhone: currentUser.phone,
+      sharedFields: sharedProjects[0].sharedFields,
+      sharedProjects,
+      shareChannel: payload.shareChannel,
+      sharedMessage: message,
+      whatsappMessage: message,
+      sharedAt: new Date(),
+      status: "shared",
+      followUpDate: payload.reminderDateTime,
+      notes: payload.reminderNote,
+    });
+
+    client.leadStatus = "Details Sent";
+    client.nextFollowUpDate = payload.reminderDateTime;
+    client.internalNotes = [client.internalNotes, buildShareHistoryNote({
+      shareChannel: payload.shareChannel,
+      projectCount: orderedProjects.length,
+      reminderDateTime: payload.reminderDateTime,
+      createdByName: currentUser.name,
+    })]
+      .filter(Boolean)
+      .join("\n\n");
+
+    await client.save();
+
+    return {
+      message,
+      safeProjects,
+      shareRecord,
+      followup,
+      client: normalizeAssignedStaff(await populateClientUsers(Client.findById(client._id))),
+    };
+  } catch (error) {
+    if (shareRecord?._id) {
+      await ShareRecord.findByIdAndDelete(shareRecord._id);
+    }
+
+    if (followup?._id) {
+      await Followup.findByIdAndDelete(followup._id);
+    }
+
+    throw error;
+  }
 };
 
 export const updateClient = async (clientId, payload, currentUser) => {

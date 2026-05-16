@@ -39,6 +39,40 @@ const formatDate = (value) => {
   return `${day}/${month}/${year}`;
 };
 
+export const buildClientSafeProjectPayload = (project, user, origin) => {
+  const brochureUrl = formatAssetUrl(origin, project.brochure?.url);
+  const photos = (project.projectImages || [])
+    .map((image) => formatAssetUrl(origin, image?.url))
+    .filter(Boolean);
+
+  return {
+    projectId: String(project._id),
+    publicAlias: project.publicAlias,
+    location: project.location,
+    area: project.area,
+    configuration: project.configuration || formatPropertyTypes(project.propertyType),
+    size: project.sizeRange?.label
+      ? project.sizeRange.label
+      : project.sizeRange?.min && project.sizeRange?.max
+        ? `${project.sizeRange.min} - ${project.sizeRange.max} ${project.sizeRange.unit || "sqft"}`
+        : null,
+    priceRange: project.priceRange?.min
+      ? project.priceRange.min === project.priceRange.max || !project.priceRange?.max
+        ? `Rs${formatIndianCurrency(project.priceRange.min)}`
+        : `Rs${formatIndianCurrency(project.priceRange.min)} - Rs${formatIndianCurrency(project.priceRange.max)}`
+      : null,
+    possession: formatDate(project.possessionDate),
+    amenities: project.amenities || [],
+    brochureUrl,
+    sampleVideoUrl: project.hasSampleVideo ? formatAssetUrl(origin, project.sampleVideoUrl) : null,
+    photos,
+    contact: {
+      name: user.name,
+      phone: user.phone,
+    },
+  };
+};
+
 export const createProject = async (payload, userId) =>
   Project.create({
     ...payload,
@@ -52,9 +86,6 @@ export const getProjects = async (query, currentUser) => {
     assigned: ["createdBy"],
     own: ["createdBy"],
   });
-
-  console.log("PROJECT FILTER:", scopedFilters);
-  console.log("USER:", currentUser._id, currentUser.role);
 
   const [items, total] = await Promise.all([
     Project.find(scopedFilters)
@@ -103,36 +134,7 @@ export const getClientSafeProjectShare = async (projectId, user, origin) => {
     own: ["createdBy"],
   });
 
- const brochureUrl = formatAssetUrl(origin, project.brochure?.url);
-  const photos = (project.projectImages || [])
-    .map((image) => formatAssetUrl(origin, image?.url))
-    .filter(Boolean);
-
-  return {
-    publicAlias: project.publicAlias,
-    location: project.location,
-    area: project.area,
-    configuration: project.configuration || formatPropertyTypes(project.propertyType),
-    size: project.sizeRange?.label
-      ? project.sizeRange.label
-      : project.sizeRange?.min && project.sizeRange?.max
-      ? `${project.sizeRange.min} - ${project.sizeRange.max} ${project.sizeRange.unit || "sqft"}`
-      : null,
-    priceRange: project.priceRange?.min
-      ? project.priceRange.min === project.priceRange.max || !project.priceRange?.max
-        ? `₹${formatIndianCurrency(project.priceRange.min)}`
-        : `₹${formatIndianCurrency(project.priceRange.min)} - ₹${formatIndianCurrency(project.priceRange.max)}`
-      : null,
-    possession: formatDate(project.possessionDate),
-    amenities: project.amenities || [],
-    brochureUrl,
-    sampleVideoUrl: project.hasSampleVideo ? formatAssetUrl(origin, project.sampleVideoUrl) : null,
-    photos,
-    contact: {
-      name: user.name,
-      phone: user.phone,
-    },
-  };
+  return buildClientSafeProjectPayload(project, user, origin);
 };
 
 export const updateProject = async (projectId, payload, currentUser) => {
@@ -196,4 +198,3 @@ export const getDashboardSummary = async (currentUser) => {
     upcomingProjects,
   };
 };
-
