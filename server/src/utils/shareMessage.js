@@ -1,14 +1,9 @@
 const formatShareLine = (label, value) => (value ? `- ${label}: ${value}` : null);
 
-export const formatWhatsAppPhone = (phone) => {
-  const digits = String(phone || "").replace(/\D/g, "");
-  return digits.length === 10 ? `91${digits}` : digits;
-};
-
-export const buildClientSafeShareMessage = (projects = [], contact = {}) => {
+export const buildClientSafeShareMessage = (safeProjects = [], contact = {}) => {
   const lines = ["Premium Property Details by Lavista Estate", ""];
 
-  projects.forEach((project, index) => {
+  safeProjects.forEach((project, index) => {
     const amenitiesValue = project.amenities?.length ? project.amenities.join(", ") : null;
     const photosValue = project.photos?.length ? project.photos.join(", ") : null;
 

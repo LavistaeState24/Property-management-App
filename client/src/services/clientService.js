@@ -19,6 +19,18 @@ export const clientService = {
     const { data } = await api.get(`/clients/${id}`);
     return data.data;
   },
+  getMatchingProjects: async (id, params) => {
+    const { data } = await api.get(`/clients/${id}/matching-projects`, { params });
+    return data.data;
+  },
+  getShareHistory: async (id) => {
+    const { data } = await api.get(`/clients/${id}/share-history`);
+    return data.data;
+  },
+  shareProjects: async (id, payload) => {
+    const { data } = await api.post(`/clients/${id}/share-projects`, payload);
+    return data.data;
+  },
   update: async (id, payload) => {
     const { data } = await api.put(`/clients/${id}`, payload);
     return data.data;

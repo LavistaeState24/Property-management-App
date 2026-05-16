@@ -29,6 +29,9 @@ const leadStatusValues = [
   "Lost",
 ];
 const interestLevelValues = ["Hot", "Warm", "Cold"];
+const shareChannelValues = ["WhatsApp", "Copy"];
+const reminderTypeValues = ["Call", "WhatsApp", "Details Send", "Site Visit", "Payment", "Document"];
+const matchingSortValues = ["matchScore", "priceLowToHigh", "priceHighToLow", "possessionSoonest", "newest"];
 const salesAllowedUpdateFields = [
   "leadStatus",
   "interestLevel",
@@ -211,4 +214,71 @@ export const validateClientUpdateInput = (payload, currentUser) => {
   }
 
   return validateClientInput(payload, { partial: true });
+};
+
+export const validateClientMatchingQuery = (payload) => {
+  const errors = {};
+  const sanitized = {
+    area: validateOptionalText(errors, "area", payload.area, { label: "Area", max: 120 }) || undefined,
+    propertyType: validateOptionalText(errors, "propertyType", payload.propertyType, { label: "Property type", max: 120 }) || undefined,
+    bhk: validateOptionalText(errors, "bhk", payload.bhk, { label: "BHK", max: 80 }) || undefined,
+    possession: validateOptionalText(errors, "possession", payload.possession, { label: "Possession", max: 80 }) || undefined,
+    status: validateOptionalText(errors, "status", payload.status, { label: "Status", max: 40 }) || undefined,
+    availability:
+      payload.availability === undefined || payload.availability === null || payload.availability === ""
+        ? undefined
+        : String(payload.availability).trim(),
+    page: validateNumber(errors, "page", payload.page, { label: "Page", required: false, min: 1, integer: true }),
+    limit: validateNumber(errors, "limit", payload.limit, { label: "Limit", required: false, min: 1, max: 100, integer: true }),
+    minBudget: validateNumber(errors, "minBudget", payload.minBudget, { label: "Minimum budget", required: false, min: 0 }),
+    maxBudget: validateNumber(errors, "maxBudget", payload.maxBudget, { label: "Maximum budget", required: false, min: 0 }),
+    minSize: validateNumber(errors, "minSize", payload.minSize, { label: "Minimum size", required: false, min: 0 }),
+    maxSize: validateNumber(errors, "maxSize", payload.maxSize, { label: "Maximum size", required: false, min: 0 }),
+    sortBy: validateEnum(errors, "sortBy", payload.sortBy, { label: "Sort by", values: matchingSortValues, required: false }) || undefined,
+    sortOrder: validateEnum(errors, "sortOrder", payload.sortOrder, { label: "Sort order", values: ["asc", "desc"], required: false }) || undefined,
+  };
+
+  if (sanitized.availability && !["true", "false"].includes(sanitized.availability)) {
+    errors.availability = "Availability must be true or false";
+  }
+
+  if (sanitized.minBudget !== undefined && sanitized.maxBudget !== undefined && sanitized.maxBudget < sanitized.minBudget) {
+    errors.maxBudget = "Maximum budget must be at least minimum budget";
+  }
+
+  if (sanitized.minSize !== undefined && sanitized.maxSize !== undefined && sanitized.maxSize < sanitized.minSize) {
+    errors.maxSize = "Maximum size must be at least minimum size";
+  }
+
+  throwIfValidationFailed(errors);
+  return sanitized;
+};
+
+export const validateClientProjectShareInput = (payload) => {
+  const errors = {};
+  const rawProjectIds = Array.isArray(payload.projectIds) ? payload.projectIds : [];
+  const projectIds = rawProjectIds
+    .map((value, index) => validateObjectId(errors, `projectIds.${index}`, value, { label: `Project ${index + 1}` }))
+    .filter(Boolean);
+
+  const sanitized = {
+    projectIds,
+    shareChannel: validateEnum(errors, "shareChannel", payload.shareChannel, { label: "Share channel", values: shareChannelValues }),
+    clientRequirement:
+      validateOptionalText(errors, "clientRequirement", payload.clientRequirement, { label: "Client requirement", max: 200 }) || undefined,
+    reminderType: validateEnum(errors, "reminderType", payload.reminderType, { label: "Reminder type", values: reminderTypeValues }),
+    reminderDateTime: validateDate(errors, "reminderDateTime", payload.reminderDateTime, {
+      label: "Reminder date/time",
+      required: true,
+      future: true,
+    }),
+    reminderNote: validateRequiredText(errors, "reminderNote", payload.reminderNote, { label: "Reminder note", min: 3, max: 500 }),
+  };
+
+  if (!projectIds.length) {
+    errors.projectIds = "At least one project is required";
+  }
+
+  throwIfValidationFailed(errors);
+  return sanitized;
 };

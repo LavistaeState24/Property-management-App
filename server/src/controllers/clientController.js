@@ -2,8 +2,11 @@ import {
   createClient,
   deleteClient,
   getClientById,
+  getClientShareHistory,
   getClients,
+  getMatchingProjectsForClient,
   importClients,
+  shareMatchingProjectsWithClient,
   updateClient,
 } from "../services/clientService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -26,6 +29,23 @@ export const importClientsHandler = asyncHandler(async (req, res) => {
 export const getClientHandler = asyncHandler(async (req, res) => {
   const client = await getClientById(req.params.id, req.user);
   res.json({ success: true, data: client });
+});
+
+export const getMatchingProjectsForClientHandler = asyncHandler(async (req, res) => {
+  const origin = `${req.protocol}://${req.get("host")}`;
+  const result = await getMatchingProjectsForClient(req.params.id, req.query, req.user, origin);
+  res.json({ success: true, data: result });
+});
+
+export const shareMatchingProjectsWithClientHandler = asyncHandler(async (req, res) => {
+  const origin = `${req.protocol}://${req.get("host")}`;
+  const result = await shareMatchingProjectsWithClient(req.params.id, req.body, req.user, origin);
+  res.status(201).json({ success: true, data: result });
+});
+
+export const getClientShareHistoryHandler = asyncHandler(async (req, res) => {
+  const history = await getClientShareHistory(req.params.id, req.user);
+  res.json({ success: true, data: history });
 });
 
 export const updateClientHandler = asyncHandler(async (req, res) => {

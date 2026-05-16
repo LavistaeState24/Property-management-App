@@ -37,7 +37,7 @@ const normalizePropertyTypes = (value) => {
 const parseSizeRange = (value) => {
   const normalized = String(value || "")
     .trim()
-    .replace(/[–—]/g, "-")
+    .replace(/[â€“â€”]/g, "-")
     .replace(/\bto\b/gi, "-");
   const matches = normalized.match(/\d+(\.\d+)?/g) || [];
 
