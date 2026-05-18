@@ -206,7 +206,7 @@ export default function PositiveClientsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-gold">Client Conversion</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold">Positive Client Module</p>
         <h2 className="mt-2 font-display text-3xl">Positive clients with active follow-up momentum</h2>
       </div>
 
@@ -245,7 +245,7 @@ export default function PositiveClientsPage() {
               loadPositiveClients(initialFilters);
             }}
           >
-            Reset Filters
+            Reset 
           </Button>
           <Button
             type="button"
