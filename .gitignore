@@ -3,6 +3,7 @@ dist/
 build/
 .env
 .env.*
+.env_production
 !.env.example
 uploads/
 coverage/
