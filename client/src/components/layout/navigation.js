@@ -6,6 +6,7 @@ import {
   MessageSquareShare,
   Settings,
   SquareUserRound,
+  UserCheck,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -15,6 +16,7 @@ export const navigationItems = [
   { to: "/projects", label: "Projects", icon: Building2, moduleKey: "projects", actionKey: "view" },
   { to: "/projects/new", label: "Add Project", icon: FolderPlus, moduleKey: "projects", actionKey: "create" },
   { to: "/clients", label: "Leads", icon: Users, moduleKey: "clients", actionKey: "view" },
+  { to: "/positive-clients", label: "Positive Clients", icon: UserCheck, moduleKey: "clients", actionKey: "view" },
   { to: "/clients/new", label: "Add Lead", icon: UserPlus, moduleKey: "clients", actionKey: "create" },
   { to: "/followups", label: "Follow-ups", icon: BriefcaseBusiness, moduleKey: "followups", actionKey: "view" },
   { to: "/shared-history", label: "Shared History", icon: MessageSquareShare, moduleKey: "shareRecords", actionKey: "view" },

@@ -12,6 +12,7 @@ import {
   getMatchingProjectsForClientHandler,
   importClientsHandler,
   listClientsHandler,
+  listPositiveClientsHandler,
   shareMatchingProjectsWithClientHandler,
   updateClientHandler,
 } from "../controllers/clientController.js";
@@ -27,6 +28,7 @@ import {
 const router = Router();
 
 router.get("/", protect, authorize("clients", "view"), listClientsHandler);
+router.get("/positive", protect, authorize("clients", "view"), listPositiveClientsHandler);
 router.post("/import", protect, authorize("clients", "create"), importClientsHandler);
 router.get(
   "/:id/matching-projects",

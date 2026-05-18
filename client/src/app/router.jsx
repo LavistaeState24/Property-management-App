@@ -13,6 +13,7 @@ const ProjectsPage = lazy(() => import("../features/projects/pages/ProjectsPage"
 const AddProjectPage = lazy(() => import("../features/projects/pages/AddProjectPage"));
 const ProjectDetailsPage = lazy(() => import("../features/projects/pages/ProjectDetailsPage"));
 const ClientsPage = lazy(() => import("../features/clients/pages/ClientsPage"));
+const PositiveClientsPage = lazy(() => import("../features/clients/pages/PositiveClientsPage"));
 const AddClientPage = lazy(() => import("../features/clients/pages/AddClientPage"));
 const ClientDetailsPage = lazy(() => import("../features/clients/pages/ClientDetailsPage"));
 const FollowupsPage = lazy(() => import("../features/followups/pages/FollowupsPage"));
@@ -83,6 +84,14 @@ export const router = createBrowserRouter([
             element: withSuspense(
               <PermissionRoute moduleKey="clients">
                 <ClientsPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "positive-clients",
+            element: withSuspense(
+              <PermissionRoute moduleKey="clients">
+                <PositiveClientsPage />
               </PermissionRoute>
             ),
           },
