@@ -1,4 +1,5 @@
 import { Client } from "../models/Client.js";
+import { CallLog } from "../models/CallLog.js";
 import { Followup } from "../models/Followup.js";
 import { Project } from "../models/Project.js";
 import { ShareRecord } from "../models/ShareRecord.js";
@@ -18,6 +19,7 @@ const populateClientUsers = (query) =>
     .populate("assignedStaff", "name role managerId")
     .populate("assignedTo", "name role managerId")
     .populate("createdBy", "name role");
+const populatePositiveFollowupUsers = (query) => query.populate("assignedStaff", "name role");
 
 const normalizeAssignedStaff = (client) => {
   if (!client) {
@@ -364,6 +366,112 @@ const buildShareHistoryNote = ({ shareChannel, projectCount, reminderDateTime, c
     reminderDateTime,
   ).toISOString()}. Shared by ${createdByName}.`;
 
+const buildSearchFilters = (search) =>
+  search
+    ? {
+        $or: [
+          { ownerName: { $regex: search, $options: "i" } },
+          { clientPhoneNumber: { $regex: search, $options: "i" } },
+          { premiseName: { $regex: search, $options: "i" } },
+          { premiseArea: { $regex: search, $options: "i" } },
+          { areaPreference: { $regex: search, $options: "i" } },
+        ],
+      }
+    : {};
+
+const buildBaseClientFilters = (query) => {
+  const filters = buildSearchFilters(query.search);
+  const andFilters = [];
+
+  if (query.sourceOfProperty) {
+    filters.sourceOfProperty = query.sourceOfProperty;
+  }
+
+  if (query.premiseArea) {
+    filters.premiseArea = { $regex: query.premiseArea, $options: "i" };
+  }
+
+  if (query.propertyType) {
+    filters.propertyType = query.propertyType;
+  }
+
+  if (query.leadStatus) {
+    filters.leadStatus = query.leadStatus;
+  }
+
+  if (query.interestLevel) {
+    filters.interestLevel = query.interestLevel;
+  }
+
+  if (query.assignedStaff) {
+    andFilters.push({
+      $or: [{ assignedStaff: query.assignedStaff }, { assignedTo: query.assignedStaff }],
+    });
+  }
+
+  if (query.source) {
+    filters.source = { $regex: query.source, $options: "i" };
+  }
+
+  if (query.purpose) {
+    filters.purpose = { $regex: query.purpose, $options: "i" };
+  }
+
+  if (query.requirementType) {
+    filters.requirementType = { $regex: query.requirementType, $options: "i" };
+  }
+
+  return andFilters.length ? { ...filters, $and: andFilters } : filters;
+};
+
+const combineWithVisibilityFilter = (baseFilters, visibilityFilter) =>
+  Object.keys(baseFilters).length && Object.keys(visibilityFilter).length
+    ? { $and: [baseFilters, visibilityFilter] }
+    : Object.keys(baseFilters).length
+      ? baseFilters
+      : visibilityFilter;
+
+const resolveActiveFollowupStatus = (followup) => {
+  if (!followup) {
+    return null;
+  }
+
+  const reminderDateTime = followup.reminderDateTime || followup.dueDate;
+
+  if (followup.status === "Pending" && reminderDateTime && new Date(reminderDateTime) < new Date()) {
+    return "Overdue";
+  }
+
+  return followup.status || "Pending";
+};
+
+const buildPositiveClientDetails = (client, nextFollowup, latestCallLog, latestShareRecord) => {
+  const baseClient = typeof client.toObject === "function" ? client.toObject() : { ...client };
+
+  return {
+    ...baseClient,
+    interestedProjects:
+      latestShareRecord?.projectPublicAliases?.length
+        ? latestShareRecord.projectPublicAliases
+        : latestShareRecord?.projectPublicAlias
+          ? [latestShareRecord.projectPublicAlias]
+          : [],
+    objections: latestCallLog?.objection || "",
+    lastDiscussion: latestCallLog?.discussionSummary || baseClient.lastCallStatus || "",
+    lastDiscussionAt: latestCallLog?.createdAt || null,
+    nextActiveFollowup: nextFollowup
+      ? {
+          _id: nextFollowup._id,
+          note: nextFollowup.note,
+          reminderType: nextFollowup.reminderType,
+          reminderDateTime: nextFollowup.reminderDateTime || nextFollowup.dueDate,
+          status: resolveActiveFollowupStatus(nextFollowup),
+          assignedStaff: nextFollowup.assignedStaff || null,
+        }
+      : null,
+  };
+};
+
 export const createClient = async (payload, currentUser) =>
   Client.create({
     ...payload,
@@ -512,66 +620,10 @@ export const importClients = async (payload, currentUser) => {
 };
 
 export const getClients = async (query, currentUser) => {
-  const filters = {};
-  const andFilters = [];
   const { page, limit, skip } = buildPagination(query);
-
-  if (query.search) {
-    filters.$or = [
-      { ownerName: { $regex: query.search, $options: "i" } },
-      { clientPhoneNumber: { $regex: query.search, $options: "i" } },
-      { premiseName: { $regex: query.search, $options: "i" } },
-      { premiseArea: { $regex: query.search, $options: "i" } },
-      { areaPreference: { $regex: query.search, $options: "i" } },
-    ];
-  }
-
-  if (query.sourceOfProperty) {
-    filters.sourceOfProperty = query.sourceOfProperty;
-  }
-
-  if (query.premiseArea) {
-    filters.premiseArea = { $regex: query.premiseArea, $options: "i" };
-  }
-
-  if (query.propertyType) {
-    filters.propertyType = query.propertyType;
-  }
-
-  if (query.leadStatus) {
-    filters.leadStatus = query.leadStatus;
-  }
-
-  if (query.interestLevel) {
-    filters.interestLevel = query.interestLevel;
-  }
-
-  if (query.assignedStaff) {
-    andFilters.push({
-      $or: [{ assignedStaff: query.assignedStaff }, { assignedTo: query.assignedStaff }],
-    });
-  }
-
-  if (query.source) {
-    filters.source = { $regex: query.source, $options: "i" };
-  }
-
-  if (query.purpose) {
-    filters.purpose = { $regex: query.purpose, $options: "i" };
-  }
-
-  if (query.requirementType) {
-    filters.requirementType = { $regex: query.requirementType, $options: "i" };
-  }
-
-  const baseFilters = andFilters.length ? { ...filters, $and: andFilters } : filters;
+  const baseFilters = buildBaseClientFilters(query);
   const visibilityFilter = await buildClientVisibilityFilter(currentUser);
-  const scopedFilters =
-    Object.keys(baseFilters).length && Object.keys(visibilityFilter).length
-      ? { $and: [baseFilters, visibilityFilter] }
-      : Object.keys(baseFilters).length
-        ? baseFilters
-        : visibilityFilter;
+  const scopedFilters = combineWithVisibilityFilter(baseFilters, visibilityFilter);
 
   const [items, total] = await Promise.all([
     populateClientUsers(Client.find(scopedFilters))
@@ -583,6 +635,125 @@ export const getClients = async (query, currentUser) => {
 
   return {
     items: normalizeClients(items),
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+export const getPositiveClients = async (query, currentUser) => {
+  const { page, limit, skip } = buildPagination(query);
+  const visibilityFilter = await buildClientVisibilityFilter(currentUser);
+  const positiveFilters = buildBaseClientFilters(query);
+
+  positiveFilters.$and = [
+    ...(positiveFilters.$and || []),
+    {
+      $or: [{ budgetMin: { $gt: 0 } }, { budgetMax: { $gt: 0 } }],
+    },
+    {
+      requirementType: { $regex: /\S/ },
+    },
+    {
+      $or: [{ interestLevel: { $in: ["Hot", "Warm"] } }, { leadStatus: "Positive" }],
+    },
+  ];
+
+  const activeClientIds = await Followup.distinct("client", { status: "Pending" });
+
+  if (!activeClientIds.length) {
+    return {
+      items: [],
+      meta: {
+        page,
+        limit,
+        total: 0,
+        totalPages: 0,
+      },
+    };
+  }
+
+  positiveFilters.$and.push({ _id: { $in: activeClientIds } });
+
+  const scopedFilters = combineWithVisibilityFilter(positiveFilters, visibilityFilter);
+  const [items, total] = await Promise.all([
+    populateClientUsers(Client.find(scopedFilters))
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Client.countDocuments(scopedFilters),
+  ]);
+
+  const normalizedItems = normalizeClients(items);
+  const clientIds = normalizedItems.map((client) => client._id);
+
+  if (!clientIds.length) {
+    return {
+      items: [],
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  const [activeFollowups, latestCallLogs, latestShareRecords] = await Promise.all([
+    populatePositiveFollowupUsers(
+      Followup.find({
+        client: { $in: clientIds },
+        status: "Pending",
+      }).sort({ reminderDateTime: 1, dueDate: 1, createdAt: 1 }),
+    ),
+    CallLog.find({ client: { $in: clientIds } })
+      .select("client discussionSummary objection createdAt")
+      .sort({ createdAt: -1 }),
+    ShareRecord.find({ client: { $in: clientIds } })
+      .select("client projectPublicAlias projectPublicAliases createdAt")
+      .sort({ createdAt: -1 }),
+  ]);
+
+  const nextFollowupByClient = new Map();
+  const latestCallLogByClient = new Map();
+  const latestShareRecordByClient = new Map();
+
+  activeFollowups.forEach((followup) => {
+    const clientId = toObjectIdString(followup.client);
+
+    if (!nextFollowupByClient.has(clientId)) {
+      nextFollowupByClient.set(clientId, followup);
+    }
+  });
+
+  latestCallLogs.forEach((callLog) => {
+    const clientId = toObjectIdString(callLog.client);
+
+    if (!latestCallLogByClient.has(clientId)) {
+      latestCallLogByClient.set(clientId, callLog);
+    }
+  });
+
+  latestShareRecords.forEach((shareRecord) => {
+    const clientId = toObjectIdString(shareRecord.client);
+
+    if (!latestShareRecordByClient.has(clientId)) {
+      latestShareRecordByClient.set(clientId, shareRecord);
+    }
+  });
+
+  return {
+    items: normalizedItems.map((client) =>
+      buildPositiveClientDetails(
+        client,
+        nextFollowupByClient.get(toObjectIdString(client._id)),
+        latestCallLogByClient.get(toObjectIdString(client._id)),
+        latestShareRecordByClient.get(toObjectIdString(client._id)),
+      ),
+    ),
     meta: {
       page,
       limit,

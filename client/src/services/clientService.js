@@ -7,6 +7,11 @@ export const clientService = {
     return data.data;
   },
   listAll: async (params) => fetchAllPaginated((requestParams) => clientService.list(requestParams), params),
+  listPositive: async (params) => {
+    const { data } = await api.get("/clients/positive", { params });
+    return data.data;
+  },
+  listAllPositive: async (params) => fetchAllPaginated((requestParams) => clientService.listPositive(requestParams), params),
   create: async (payload) => {
     const { data } = await api.post("/clients", payload);
     return data.data;
