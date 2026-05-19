@@ -4,6 +4,8 @@ const SelectDropdown = forwardRef(function SelectDropdown(
   { label, options = [], className = "", icon: Icon, error, placeholder = "Select", ...props },
   ref
 ) {
+  console.log(`[SelectDropdown] ${label}:`, options.length, options.slice(0, 5));
+
   return (
     <label className={`flex flex-col gap-2 ${className}`}>
       <span className="font-semibold text-md text-muted">{label}</span>

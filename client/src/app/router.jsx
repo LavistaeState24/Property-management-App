@@ -17,6 +17,7 @@ const PositiveClientsPage = lazy(() => import("../features/clients/pages/Positiv
 const AddClientPage = lazy(() => import("../features/clients/pages/AddClientPage"));
 const ClientDetailsPage = lazy(() => import("../features/clients/pages/ClientDetailsPage"));
 const FollowupsPage = lazy(() => import("../features/followups/pages/FollowupsPage"));
+const SiteVisitsPage = lazy(() => import("../features/siteVisits/pages/SiteVisitsPage"));
 const SharedHistoryPage = lazy(() => import("../features/share/pages/SharedHistoryPage"));
 const SharePreviewPage = lazy(() => import("../features/share/pages/SharePreviewPage"));
 const SettingsPage = lazy(() => import("../features/settings/pages/SettingsPage"));
@@ -124,6 +125,14 @@ export const router = createBrowserRouter([
             element: withSuspense(
               <PermissionRoute moduleKey="followups">
                 <FollowupsPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "site-visits",
+            element: withSuspense(
+              <PermissionRoute moduleKey="siteVisits">
+                <SiteVisitsPage />
               </PermissionRoute>
             ),
           },
