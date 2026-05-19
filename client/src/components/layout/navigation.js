@@ -6,6 +6,7 @@ import {
   MessageSquareShare,
   Settings,
   SquareUserRound,
+  TicketCheck,
   UserCheck,
   UserPlus,
   Users,
@@ -19,6 +20,7 @@ export const navigationItems = [
   { to: "/positive-clients", label: "Positive Clients", icon: UserCheck, moduleKey: "clients", actionKey: "view" },
   { to: "/clients/new", label: "Add Lead", icon: UserPlus, moduleKey: "clients", actionKey: "create" },
   { to: "/followups", label: "Follow-ups", icon: BriefcaseBusiness, moduleKey: "followups", actionKey: "view" },
+  { to: "/site-visits", label: "Site Visits", icon: TicketCheck, moduleKey: "siteVisits", actionKey: "view" },
   { to: "/shared-history", label: "Shared History", icon: MessageSquareShare, moduleKey: "shareRecords", actionKey: "view" },
   { to: "/settings", label: "Settings", icon: Settings, moduleKey: "settings", actionKey: "view" },
 ];

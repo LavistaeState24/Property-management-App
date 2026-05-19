@@ -2,9 +2,12 @@ import {
   Building2,
   Bell,
   CalendarDays,
+  CalendarPlus,
   CheckCircle2,
   ClipboardList,
+  Copy,
   Clock,
+  ExternalLink,
   History,
   IndianRupee,
   Mail,
@@ -22,6 +25,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
+import DataTable from "../../../components/common/DataTable";
 import FormInput from "../../../components/common/FormInput";
 import Modal from "../../../components/common/Modal";
 import SelectDropdown from "../../../components/common/SelectDropdown";
@@ -33,9 +37,14 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useCan } from "../../../hooks/useCan";
 import { clientService } from "../../../services/clientService";
 import { followupService } from "../../../services/followupService";
+import { projectService } from "../../../services/projectService";
+import { siteVisitService } from "../../../services/siteVisitService";
 import { userService } from "../../../services/userService";
 import { formatBudgetRange, getInterestLevelTone } from "../clientPipeline";
 import ClientMatchingSection from "../components/ClientMatchingSection";
+import SiteVisitForm from "../../siteVisits/components/SiteVisitForm";
+import { formatSiteVisitDateTime, getSiteVisitStatusTone } from "../../siteVisits/siteVisitConfig";
+import { buildSiteVisitConfirmationMessage, getSiteVisitWhatsAppUrl } from "../../siteVisits/siteVisitMessaging";
 
 const reminderTypes = ["Call", "WhatsApp", "Details Send", "Site Visit", "Payment", "Document"];
 
@@ -48,6 +57,8 @@ export default function ClientDetailsPage() {
   const canViewFollowups = useCan("followups", "view");
   const canCreateFollowups = useCan("followups", "create");
   const canUpdateFollowups = useCan("followups", "update");
+  const canViewSiteVisits = useCan("siteVisits", "view");
+  const canCreateSiteVisits = useCan("siteVisits", "create");
   const canShowQuickUpdate = canUpdateClients || isSalesUser;
   const initialCallForm = {
     callConnected: false,
@@ -71,6 +82,8 @@ export default function ClientDetailsPage() {
   const [client, setClient] = useState(null);
   const [callLogs, setCallLogs] = useState([]);
   const [reminders, setReminders] = useState([]);
+  const [siteVisits, setSiteVisits] = useState([]);
+  const [projectOptions, setProjectOptions] = useState([]);
   const [staffOptions, setStaffOptions] = useState([]);
   const [callForm, setCallForm] = useState(initialCallForm);
   const [callErrors, setCallErrors] = useState({});
@@ -82,6 +95,8 @@ export default function ClientDetailsPage() {
   const [completionReminder, setCompletionReminder] = useState(null);
   const [completionNote, setCompletionNote] = useState("");
   const [isSavingReminder, setIsSavingReminder] = useState(false);
+  const [siteVisitError, setSiteVisitError] = useState("");
+  const [isSavingSiteVisit, setIsSavingSiteVisit] = useState(false);
   const [quickEdit, setQuickEdit] = useState({
     assignedStaff: "",
     leadStatus: "",
@@ -120,9 +135,20 @@ export default function ClientDetailsPage() {
           clientService.listCallLogs(id),
           canViewFollowups ? followupService.list({ leadId: id, limit: 100 }) : Promise.resolve({ items: [] }),
         ]);
+        const [visitData, projectsData] = await Promise.all([
+          canViewSiteVisits ? siteVisitService.list({ leadId: id, limit: 100 }) : Promise.resolve({ items: [] }),
+          canCreateSiteVisits ? projectService.listAll() : Promise.resolve({ items: [] }),
+        ]);
         setClient(data);
         setCallLogs(callHistory);
         setReminders(reminderData.items || []);
+        setSiteVisits(visitData.items || []);
+        setProjectOptions(
+          (projectsData.items || []).map((project) => ({
+            value: project._id,
+            label: `${project.projectName} (${project.publicAlias})`,
+          })),
+        );
         setStaffOptions(
           assignableUsers.map((user) => ({
             value: user.id,
@@ -153,7 +179,7 @@ export default function ClientDetailsPage() {
     };
 
     loadClient();
-  }, [canViewFollowups, id]);
+  }, [canCreateSiteVisits, canViewFollowups, canViewSiteVisits, id]);
 
   const handleQuickUpdate = async () => {
     setUpdateError("");
@@ -275,6 +301,28 @@ export default function ClientDetailsPage() {
     } finally {
       setIsSavingReminder(false);
     }
+  };
+
+  const handleCreateSiteVisit = async (values) => {
+    setSiteVisitError("");
+    setIsSavingSiteVisit(true);
+
+    try {
+      await siteVisitService.create(values);
+      const visitData = canViewSiteVisits ? await siteVisitService.list({ leadId: id, limit: 100 }) : { items: [] };
+      const updatedClient = await clientService.getById(id);
+      setSiteVisits(visitData.items || []);
+      syncClientState(updatedClient);
+    } catch (requestError) {
+      setSiteVisitError(requestError.response?.data?.message || "Unable to create site visit");
+      throw requestError;
+    } finally {
+      setIsSavingSiteVisit(false);
+    }
+  };
+
+  const handleCopySiteVisitMessage = async (siteVisit) => {
+    await navigator.clipboard.writeText(buildSiteVisitConfirmationMessage(siteVisit));
   };
 
   const formatDateTime = (value) => (value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "-");
@@ -715,6 +763,101 @@ export default function ClientDetailsPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          ) : null}
+
+          {canViewSiteVisits ? (
+            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+              <div className="flex items-center gap-3">
+                <CalendarDays className="h-5 w-5 text-gold-2" />
+                <h3 className="font-display text-2xl">Site Visits</h3>
+              </div>
+
+              {canCreateSiteVisits ? (
+                <div className="mt-5">
+                  <SiteVisitForm
+                    initialValues={{
+                      leadId: client._id,
+                      assignedStaff: client.assignedStaff?._id || client.assignedStaff || "",
+                      visitStatus: "Planned",
+                    }}
+                    hideLead
+                    lockLead
+                    projectOptions={projectOptions}
+                    staffOptions={staffOptions}
+                    isSaving={isSavingSiteVisit}
+                    saveLabel="Create Site Visit"
+                    submitIcon={CalendarPlus}
+                    onSubmit={handleCreateSiteVisit}
+                  />
+                  {siteVisitError ? <p className="mt-3 text-sm text-rose-300">{siteVisitError}</p> : null}
+                </div>
+              ) : null}
+
+              <div className="mt-6">
+                <DataTable
+                  columns={[
+                    {
+                      key: "project",
+                      label: "Project",
+                      searchValue: (row) => `${row.project?.projectName || ""} ${row.project?.publicAlias || ""}`,
+                      render: (row) => (
+                        <div>
+                          <p className="font-medium text-ivory">{row.project?.projectName || "-"}</p>
+                          <p className="text-xs text-muted">{row.project?.publicAlias || ""}</p>
+                        </div>
+                      ),
+                    },
+                    {
+                      key: "visitDateTime",
+                      label: "Visit Time",
+                      render: (row) => formatSiteVisitDateTime(row.visitDateTime),
+                    },
+                    {
+                      key: "assignedStaff",
+                      label: "Assigned",
+                      render: (row) => row.assignedStaff?.name || "-",
+                    },
+                    {
+                      key: "visitStatus",
+                      label: "Status",
+                      render: (row) => <Badge tone={getSiteVisitStatusTone(row.visitStatus)}>{row.visitStatus}</Badge>,
+                    },
+                    {
+                      key: "postVisitResult",
+                      label: "Result",
+                      render: (row) => row.postVisitResult || "-",
+                    },
+                    {
+                      key: "actions",
+                      label: "Actions",
+                      searchable: false,
+                      render: (row) => (
+                        <div className="flex flex-wrap gap-2">
+                          <button type="button" className="text-xs text-gold-2" onClick={() => handleCopySiteVisitMessage(row)}>
+                            <Copy className="mr-1 inline h-3.5 w-3.5" />
+                            Copy
+                          </button>
+                          <button
+                            type="button"
+                            className="text-xs text-gold-2"
+                            onClick={() => window.open(getSiteVisitWhatsAppUrl(row), "_blank", "noopener,noreferrer")}
+                          >
+                            <ExternalLink className="mr-1 inline h-3.5 w-3.5" />
+                            WhatsApp
+                          </button>
+                        </div>
+                      ),
+                    },
+                  ]}
+                  rows={siteVisits}
+                  totalRecords={siteVisits.length}
+                  loading={false}
+                  emptyMessage="No site visits saved for this lead."
+                  searchPlaceholder="Search site visits..."
+                  defaultRowsPerPage={5}
+                />
               </div>
             </div>
           ) : null}
