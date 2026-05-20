@@ -18,6 +18,12 @@ const AddClientPage = lazy(() => import("../features/clients/pages/AddClientPage
 const ClientDetailsPage = lazy(() => import("../features/clients/pages/ClientDetailsPage"));
 const FollowupsPage = lazy(() => import("../features/followups/pages/FollowupsPage"));
 const SiteVisitsPage = lazy(() => import("../features/siteVisits/pages/SiteVisitsPage"));
+const DealNegotiationPage = lazy(() => import("../features/deals/pages/DealNegotiationPage"));
+const DealBookingsPage = lazy(() => import("../features/deals/pages/DealBookingsPage"));
+const DealClosedDealsPage = lazy(() => import("../features/deals/pages/DealClosedDealsPage"));
+const DealRevenueSummaryPage = lazy(() => import("../features/deals/pages/DealRevenueSummaryPage"));
+const DealUpsertPage = lazy(() => import("../features/deals/pages/DealUpsertPage"));
+const DealDetailsPage = lazy(() => import("../features/deals/pages/DealDetailsPage"));
 const SharedHistoryPage = lazy(() => import("../features/share/pages/SharedHistoryPage"));
 const SharePreviewPage = lazy(() => import("../features/share/pages/SharePreviewPage"));
 const SettingsPage = lazy(() => import("../features/settings/pages/SettingsPage"));
@@ -133,6 +139,63 @@ export const router = createBrowserRouter([
             element: withSuspense(
               <PermissionRoute moduleKey="siteVisits">
                 <SiteVisitsPage />
+              </PermissionRoute>
+            ),
+          },
+          { path: "deals", element: <Navigate to="/deals/negotiation" replace /> },
+          {
+            path: "deals/negotiation",
+            element: withSuspense(
+              <PermissionRoute moduleKey="deals">
+                <DealNegotiationPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "deals/bookings",
+            element: withSuspense(
+              <PermissionRoute moduleKey="deals">
+                <DealBookingsPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "deals/closed",
+            element: withSuspense(
+              <PermissionRoute moduleKey="deals">
+                <DealClosedDealsPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "deals/revenue-summary",
+            element: withSuspense(
+              <PermissionRoute moduleKey="deals">
+                <DealRevenueSummaryPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "deals/new",
+            element: withSuspense(
+              <PermissionRoute moduleKey="deals" actionKey="create">
+                <DealUpsertPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "deals/:id/edit",
+            element: withSuspense(
+              <PermissionRoute moduleKey="deals" actionKey="update">
+                <DealUpsertPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "deals/:id",
+            element: withSuspense(
+              <PermissionRoute moduleKey="deals">
+                <DealDetailsPage />
               </PermissionRoute>
             ),
           },

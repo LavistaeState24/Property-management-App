@@ -8,9 +8,11 @@ import Button from "../../../components/common/Button";
 import StatCard from "../../../components/common/StatCard";
 import ClientCard from "../../../components/cards/ClientCard";
 import { useCan } from "../../../hooks/useCan";
+import { dealService } from "../../../services/dealService";
 import { projectService } from "../../../services/projectService";
 import { clientService } from "../../../services/clientService";
 import { followupService } from "../../../services/followupService";
+import DealSummaryCards from "../../deals/components/DealSummaryCards";
 
 const formatPropertyTypes = (value) => (Array.isArray(value) ? value.join(", ") : value || "-");
 const formatPrice = (value) => {
@@ -29,11 +31,13 @@ export default function DashboardPage() {
   const canViewProjects = useCan("projects", "view");
   const canViewClients = useCan("clients", "view");
   const canViewFollowups = useCan("followups", "view");
+  const canViewDeals = useCan("deals", "view");
   const [summary, setSummary] = useState(null);
   const [projects, setProjects] = useState([]);
   const [totalProjects, setTotalProjects] = useState(0);
   const [clients, setClients] = useState([]);
   const [reminderCounts, setReminderCounts] = useState({ today: 0, overdue: 0 });
+  const [dealSummary, setDealSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -41,11 +45,12 @@ export default function DashboardPage() {
       setIsLoading(true);
 
       try {
-        const [summaryData, projectData, clientData, followupData] = await Promise.all([
+        const [summaryData, projectData, clientData, followupData, dealSummaryData] = await Promise.all([
           projectService.dashboardSummary(),
           canViewProjects ? projectService.listAll() : Promise.resolve({ items: [], meta: { total: 0 } }),
           canViewClients ? clientService.list({ limit: 3 }) : Promise.resolve({ items: [] }),
           canViewFollowups ? followupService.counts() : Promise.resolve({ today: 0, overdue: 0 }),
+          canViewDeals ? dealService.summary() : Promise.resolve(null),
         ]);
 
         setSummary(summaryData);
@@ -53,14 +58,15 @@ export default function DashboardPage() {
         setTotalProjects(projectData.meta?.total ?? projectData.items.length);
         setClients(clientData.items);
         setReminderCounts(followupData);
-        
+        setDealSummary(dealSummaryData);
+
       } finally {
         setIsLoading(false);
       }
     };
 
     loadDashboard();
-  }, [canViewClients, canViewFollowups, canViewProjects]);
+  }, [canViewClients, canViewDeals, canViewFollowups, canViewProjects]);
 
   const projectColumns = [
     {
@@ -109,6 +115,16 @@ export default function DashboardPage() {
         <StatCard label="Today Reminders" value={canViewFollowups ? reminderCounts.today : "--"} accent="gold" meta="Due today" icon={CalendarClock} />
         <StatCard label="Overdue Reminders" value={canViewFollowups ? reminderCounts.overdue : "--"} accent="rose" meta="Overdue" icon={CalendarClock} />
       </section>
+
+      {canViewDeals ? (
+        <section className="space-y-4 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-gold">Deal Closing</p>
+            <h3 className="mt-2 font-display text-2xl">Closing pipeline snapshot</h3>
+          </div>
+          <DealSummaryCards summary={dealSummary} />
+        </section>
+      ) : null}
 
       <section className="grid gap-6 grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1">
       
