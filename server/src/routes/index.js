@@ -5,6 +5,7 @@ import clientRoutes from "./clientRoutes.js";
 import followupRoutes from "./followupRoutes.js";
 import permissionRoutes from "./permissionRoutes.js";
 import projectRoutes from "./projectRoutes.js";
+import dealRoutes from "./dealRoutes.js";
 import shareRoutes from "./shareRoutes.js";
 import siteVisitRoutes from "./siteVisitRoutes.js";
 import uploadRoutes from "./uploadRoutes.js";
@@ -16,6 +17,7 @@ const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/projects", projectRoutes);
+router.use("/deals", dealRoutes);
 router.use("/users", userRoutes);
 router.use("/permissions", permissionRoutes);
 router.use("/clients", clientRoutes);

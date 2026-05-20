@@ -21,6 +21,10 @@ export const navigationItems = [
   { to: "/clients/new", label: "Add Lead", icon: UserPlus, moduleKey: "clients", actionKey: "create" },
   { to: "/followups", label: "Follow-ups", icon: BriefcaseBusiness, moduleKey: "followups", actionKey: "view" },
   { to: "/site-visits", label: "Site Visits", icon: TicketCheck, moduleKey: "siteVisits", actionKey: "view" },
+  { to: "/deals/negotiation", label: "Negotiation", icon: BriefcaseBusiness, moduleKey: "deals", actionKey: "view", group: "Deal Closing" },
+  { to: "/deals/bookings", label: "Bookings", icon: BriefcaseBusiness, moduleKey: "deals", actionKey: "view", group: "Deal Closing" },
+  { to: "/deals/closed", label: "Closed Deals", icon: BriefcaseBusiness, moduleKey: "deals", actionKey: "view", group: "Deal Closing" },
+  { to: "/deals/revenue-summary", label: "Revenue Summary", icon: BriefcaseBusiness, moduleKey: "deals", actionKey: "view", group: "Deal Closing" },
   { to: "/shared-history", label: "Shared History", icon: MessageSquareShare, moduleKey: "shareRecords", actionKey: "view" },
   { to: "/settings", label: "Settings", icon: Settings, moduleKey: "settings", actionKey: "view" },
 ];

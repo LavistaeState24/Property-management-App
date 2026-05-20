@@ -39,25 +39,33 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-2">
-        {visibleItems.map((link) => {
+        {visibleItems.map((link, index) => {
           const Icon = link.icon;
+          const previousGroup = visibleItems[index - 1]?.group;
+          const shouldRenderGroup = link.group && link.group !== previousGroup;
 
           return (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              onClick={() => onClose()}
-              className={({ isActive }) =>
-                `group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200
+            <div key={link.to} className="space-y-2">
+              {shouldRenderGroup ? (
+                <p className="px-4 pt-4 text-xs uppercase tracking-[0.25em] text-gold-2/80">
+                  {link.group}
+                </p>
+              ) : null}
+              <NavLink
+                to={link.to}
+                onClick={() => onClose()}
+                className={({ isActive }) =>
+                  `group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200
             ${isActive
                   ? "border border-[#c9a35d]/25 bg-gradient-to-r from-[#c9a35d]/20 to-transparent text-[#f3d79b] shadow-[0_0_22px_rgba(201,163,93,0.12)]"
                   : "text-white/60 hover:bg-white/[0.06] hover:text-white"
                 }`
-              }
-            >
-              <Icon className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-              <span className="truncate">{link.label}</span>
-            </NavLink>
+                }
+              >
+                <Icon className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                <span className="truncate">{link.label}</span>
+              </NavLink>
+            </div>
           );
         })}
       </nav>
