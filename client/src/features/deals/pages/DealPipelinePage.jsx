@@ -113,11 +113,15 @@ export default function DealPipelinePage({ title, subtitle, status, statusLabel 
       searchable: false,
       render: (row) => (
         <div className="flex w-full items-center justify-center gap-2 whitespace-nowrap">
-          <Button type="button"
-           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2"
-    variant="ghost"
-           variant="ghost" icon={Eye} onClick={() => navigate(`/deals/${row._id}`)}>
-          </Button>
+          <button
+            type="button"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2"
+            onClick={() => navigate(`/deals/${row._id}`)}
+            title="View deal"
+            aria-label="View deal"
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </button>
           {canUpdateDeals ? (
             <Link to={`/deals/${row._id}/edit`}>
               <button

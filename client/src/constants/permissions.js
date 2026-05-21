@@ -5,6 +5,7 @@ export const permissionModules = [
   { key: "followups", label: "Follow-ups" },
   { key: "siteVisits", label: "Site Visits" },
   { key: "deals", label: "Deal Closing" },
+  { key: "dealReports", label: "Deal Reports" },
   { key: "shareRecords", label: "Share Records" },
   { key: "users", label: "Users" },
   { key: "reports", label: "Reports" },

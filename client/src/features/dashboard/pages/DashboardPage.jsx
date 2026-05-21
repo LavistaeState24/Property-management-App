@@ -31,7 +31,7 @@ export default function DashboardPage() {
   const canViewProjects = useCan("projects", "view");
   const canViewClients = useCan("clients", "view");
   const canViewFollowups = useCan("followups", "view");
-  const canViewDeals = useCan("deals", "view");
+  const canViewDealReports = useCan("dealReports", "view");
   const [summary, setSummary] = useState(null);
   const [projects, setProjects] = useState([]);
   const [totalProjects, setTotalProjects] = useState(0);
@@ -50,7 +50,7 @@ export default function DashboardPage() {
           canViewProjects ? projectService.listAll() : Promise.resolve({ items: [], meta: { total: 0 } }),
           canViewClients ? clientService.list({ limit: 3 }) : Promise.resolve({ items: [] }),
           canViewFollowups ? followupService.counts() : Promise.resolve({ today: 0, overdue: 0 }),
-          canViewDeals ? dealService.summary() : Promise.resolve(null),
+          canViewDealReports ? dealService.summary() : Promise.resolve(null),
         ]);
 
         setSummary(summaryData);
@@ -66,7 +66,7 @@ export default function DashboardPage() {
     };
 
     loadDashboard();
-  }, [canViewClients, canViewDeals, canViewFollowups, canViewProjects]);
+  }, [canViewClients, canViewDealReports, canViewFollowups, canViewProjects]);
 
   const projectColumns = [
     {
@@ -116,7 +116,7 @@ export default function DashboardPage() {
         <StatCard label="Overdue Reminders" value={canViewFollowups ? reminderCounts.overdue : "--"} accent="rose" meta="Overdue" icon={CalendarClock} />
       </section>
 
-      {canViewDeals ? (
+      {canViewDealReports ? (
         <section className="space-y-4 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-gold">Deal Closing</p>
