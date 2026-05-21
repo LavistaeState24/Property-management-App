@@ -170,7 +170,15 @@ export const router = createBrowserRouter([
           {
             path: "deals/revenue-summary",
             element: withSuspense(
-              <PermissionRoute moduleKey="deals">
+              <PermissionRoute moduleKey="dealReports">
+                <DealRevenueSummaryPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "deals/revenue",
+            element: withSuspense(
+              <PermissionRoute moduleKey="dealReports">
                 <DealRevenueSummaryPage />
               </PermissionRoute>
             ),

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useCan } from "../../../hooks/useCan";
 
 import DataTable from "../../../components/common/DataTable";
 import FormInput from "../../../components/common/FormInput";
@@ -12,6 +13,7 @@ const initialFilters = {
 };
 
 export default function DealRevenueSummaryPage() {
+  const canViewDealReports = useCan("dealReports", "view");
   const [summary, setSummary] = useState(null);
   const [staffReports, setStaffReports] = useState([]);
   const [filters, setFilters] = useState(initialFilters);
@@ -37,8 +39,14 @@ export default function DealRevenueSummaryPage() {
   };
 
   useEffect(() => {
-    loadReports();
-  }, []);
+    if (canViewDealReports) {
+      loadReports();
+    }
+  }, [canViewDealReports]);
+
+  if (!canViewDealReports) {
+    return null;
+  }
 
   const columns = [
     { key: "closerName", label: "Staff" },
