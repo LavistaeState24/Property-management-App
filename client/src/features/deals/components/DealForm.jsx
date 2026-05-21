@@ -54,7 +54,7 @@ export default function DealForm({
       </div>
 
       {showClosedFields ? (
-        <div className="grid gap-5 rounded-[28px] border border-gold/20  p-5 lg:grid-cols-2">
+        <div className="grid gap-5 rounded-[28px] lg:grid-cols-2">
           <FormInput
             label="Final Price"
             type="number"
