@@ -10,6 +10,7 @@ import {
   shareMatchingProjectsWithClient,
   updateClient,
 } from "../services/clientService.js";
+import { getClientActivityTimeline } from "../services/activityLogService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const createClientHandler = asyncHandler(async (req, res) => {
@@ -52,6 +53,11 @@ export const shareMatchingProjectsWithClientHandler = asyncHandler(async (req, r
 export const getClientShareHistoryHandler = asyncHandler(async (req, res) => {
   const history = await getClientShareHistory(req.params.id, req.user);
   res.json({ success: true, data: history });
+});
+
+export const getClientActivityTimelineHandler = asyncHandler(async (req, res) => {
+  const timeline = await getClientActivityTimeline(req.params.id, req.query, req.user);
+  res.json({ success: true, data: timeline });
 });
 
 export const updateClientHandler = asyncHandler(async (req, res) => {

@@ -4,6 +4,7 @@ import { Project } from "../models/Project.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { buildPagination } from "../utils/query.js";
+import { recordDealActivity, recordLeadChangeActivities } from "./activityLogService.js";
 
 const toObjectId = (value) => value?._id || value || null;
 const toObjectIdString = (value) => String(toObjectId(value) || "");
@@ -290,6 +291,7 @@ const buildClosedDealBaseFilter = async (currentUser, query = {}) => {
 
 export const createDeal = async (payload, currentUser) => {
   const lead = await getAccessibleLead(payload.leadId, currentUser);
+  const previousLead = lead.toObject();
   await assertProjectExists(payload.finalProject);
   const dealClosedBy = payload.dealStatus === "Closed" ? await assertValidCloser(payload.dealClosedBy, currentUser) : null;
 
@@ -304,7 +306,34 @@ export const createDeal = async (payload, currentUser) => {
     updatedBy: currentUser._id,
   });
 
-  await updateLeadStatus(deal.leadId, deal.dealStatus);
+  const updatedLead = await updateLeadStatus(deal.leadId, deal.dealStatus);
+
+  await recordDealActivity({
+    lead,
+    deal,
+    performedBy: currentUser._id,
+    action: "created",
+    newValues: {
+      dealStatus: deal.dealStatus,
+      finalProject: deal.finalProject,
+      finalUnit: deal.finalUnit,
+      finalPrice: deal.finalPrice,
+      bookingDate: deal.bookingDate,
+      dealClosedBy: deal.dealClosedBy,
+    },
+  });
+
+  if (updatedLead) {
+    await recordLeadChangeActivities({
+      lead: updatedLead,
+      before: previousLead,
+      after: updatedLead,
+      performedBy: currentUser._id,
+      metadata: {
+        source: "deal-created",
+      },
+    });
+  }
 
   return normalizeDeal(await populateDealUsers(Deal.findById(deal._id)));
 };
@@ -355,6 +384,7 @@ export const updateDeal = async (dealId, payload, currentUser) => {
   }
 
   const currentLead = await getAccessibleLead(deal.leadId, currentUser);
+  const previousDeal = deal.toObject();
   const nextPayload = { ...payload };
   const nextLeadId = nextPayload.leadId || deal.leadId;
   const nextStatus = nextPayload.dealStatus || deal.dealStatus;
@@ -387,6 +417,56 @@ export const updateDeal = async (dealId, payload, currentUser) => {
     await updateLeadStatus(nextLeadId, nextStatus);
   } else {
     await updateLeadStatus(deal.leadId, nextStatus);
+  }
+
+  const refreshedLead = await getAccessibleLead(nextLeadId, currentUser);
+  const previousLead = currentLead.toObject();
+  const refreshedDeal = await Deal.findById(deal._id);
+
+  await Promise.all([
+    recordDealActivity({
+      lead: refreshedLead,
+      deal: refreshedDeal,
+      performedBy: currentUser._id,
+      action: previousDeal.dealStatus !== nextStatus ? "status_changed" : "updated",
+      oldValues: {
+        dealStatus: previousDeal.dealStatus,
+        finalProject: previousDeal.finalProject,
+        finalUnit: previousDeal.finalUnit,
+        finalPrice: previousDeal.finalPrice,
+        brokerageDetails: previousDeal.brokerageDetails,
+        tokenAmount: previousDeal.tokenAmount,
+        bookingDate: previousDeal.bookingDate,
+        paymentStatus: previousDeal.paymentStatus,
+        documentsPending: previousDeal.documentsPending,
+        dealClosedBy: previousDeal.dealClosedBy,
+      },
+      newValues: {
+        dealStatus: refreshedDeal.dealStatus,
+        finalProject: refreshedDeal.finalProject,
+        finalUnit: refreshedDeal.finalUnit,
+        finalPrice: refreshedDeal.finalPrice,
+        brokerageDetails: refreshedDeal.brokerageDetails,
+        tokenAmount: refreshedDeal.tokenAmount,
+        bookingDate: refreshedDeal.bookingDate,
+        paymentStatus: refreshedDeal.paymentStatus,
+        documentsPending: refreshedDeal.documentsPending,
+        dealClosedBy: refreshedDeal.dealClosedBy,
+      },
+        metadata: previousDeal.dealStatus !== nextStatus ? { description: `Deal status changed from ${previousDeal.dealStatus} to ${nextStatus}.` } : {},
+    }),
+  ]);
+
+  if (toObjectIdString(nextLeadId) === toObjectIdString(currentLead._id)) {
+    await recordLeadChangeActivities({
+      lead: refreshedLead,
+      before: previousLead,
+      after: refreshedLead,
+      performedBy: currentUser._id,
+      metadata: {
+        source: "deal-updated",
+      },
+    });
   }
 
   return normalizeDeal(await populateDealUsers(Deal.findById(deal._id)));

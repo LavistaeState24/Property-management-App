@@ -2,6 +2,7 @@ import { Project } from "../models/Project.js";
 import { ShareRecord } from "../models/ShareRecord.js";
 import { ApiError } from "../utils/ApiError.js";
 import { applyScopedFilter, assertDocumentScope, getModuleScope } from "../utils/accessControl.js";
+import { recordShareActivity } from "./activityLogService.js";
 
 export const createShareRecord = async (payload, currentUser) => {
   const project = await Project.findById(payload.projectId);
@@ -15,12 +16,25 @@ export const createShareRecord = async (payload, currentUser) => {
     own: ["createdBy"],
   });
 
-  return ShareRecord.create({
+  const shareRecord = await ShareRecord.create({
     ...payload,
     sharedBy: currentUser._id,
     sharedByName: currentUser.name,
     sharedByPhone: currentUser.phone,
   });
+
+  if (shareRecord.client) {
+    await recordShareActivity({
+      lead: shareRecord.client,
+      shareRecord,
+      performedBy: currentUser._id,
+      metadata: {
+        source: "share-record",
+      },
+    });
+  }
+
+  return shareRecord;
 };
 
 export const listShareRecords = async (currentUser) =>
@@ -68,11 +82,24 @@ export const updateShareRecordStatus = async (id, payload, currentUser) => {
     own: ["sharedBy"],
   });
 
+  const previousShareRecord = shareRecord.toObject();
   shareRecord.status = payload.status;
   shareRecord.followUpDate = payload.followUpDate ?? null;
   await shareRecord.save();
   await shareRecord.populate("projectId", "publicAlias location status");
   await shareRecord.populate("sharedBy", "name phone role");
+
+  if (shareRecord.client) {
+    await recordShareActivity({
+      lead: shareRecord.client,
+      shareRecord,
+      performedBy: currentUser._id,
+      metadata: {
+        source: "share-record-status",
+        previousStatus: previousShareRecord.status,
+      },
+    });
+  }
 
   return shareRecord;
 };
@@ -89,11 +116,24 @@ export const updateShareRecordNotes = async (id, payload, currentUser) => {
     own: ["sharedBy"],
   });
 
+  const previousShareRecord = shareRecord.toObject();
   shareRecord.notes = payload.notes;
   shareRecord.followUpDate = payload.followUpDate ?? null;
   await shareRecord.save();
   await shareRecord.populate("projectId", "publicAlias location status");
   await shareRecord.populate("sharedBy", "name phone role");
+
+  if (shareRecord.client) {
+    await recordShareActivity({
+      lead: shareRecord.client,
+      shareRecord,
+      performedBy: currentUser._id,
+      metadata: {
+        source: "share-record-notes",
+        previousNotes: previousShareRecord.notes,
+      },
+    });
+  }
 
   return shareRecord;
 };
