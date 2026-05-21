@@ -32,6 +32,10 @@ export const clientService = {
     const { data } = await api.get(`/clients/${id}/share-history`);
     return data.data;
   },
+  getActivityTimeline: async (id, params) => {
+    const { data } = await api.get(`/clients/${id}/activity-timeline`, { params });
+    return data.data;
+  },
   shareProjects: async (id, payload) => {
     const { data } = await api.post(`/clients/${id}/share-projects`, payload);
     return data.data;

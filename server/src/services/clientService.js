@@ -7,6 +7,11 @@ import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { applyScopedFilter, getModuleScope } from "../utils/accessControl.js";
 import { buildPagination, buildProjectFilters } from "../utils/query.js";
+import {
+  recordLeadChangeActivities,
+  recordLeadCreatedActivity,
+  recordShareActivity,
+} from "./activityLogService.js";
 import { buildClientSafeProjectPayload } from "./projectService.js";
 import { buildClientSafeShareMessage } from "../utils/shareMessage.js";
 import { createFollowup } from "./followupService.js";
@@ -472,12 +477,23 @@ const buildPositiveClientDetails = (client, nextFollowup, latestCallLog, latestS
   };
 };
 
-export const createClient = async (payload, currentUser) =>
-  Client.create({
+export const createClient = async (payload, currentUser) => {
+  const client = await Client.create({
     ...payload,
     assignedStaff: (await assertValidAssignee(payload.assignedStaff || currentUser._id, currentUser)) || currentUser._id,
     createdBy: currentUser._id,
   });
+
+  await recordLeadCreatedActivity({
+    lead: client,
+    performedBy: currentUser._id,
+    metadata: {
+      assignedToName: currentUser.name,
+    },
+  });
+
+  return client;
+};
 
 export const importClients = async (payload, currentUser) => {
   const rows = Array.isArray(payload?.rows) ? payload.rows : [];
@@ -607,6 +623,20 @@ export const importClients = async (payload, currentUser) => {
   });
 
   const insertedClients = insertable.length ? await Client.insertMany(insertable, { ordered: false }) : [];
+
+  if (insertedClients.length) {
+    await Promise.all(
+      insertedClients.map((client) =>
+        recordLeadCreatedActivity({
+          lead: client,
+          performedBy: currentUser._id,
+          metadata: {
+            imported: true,
+          },
+        })
+      )
+    );
+  }
 
   return {
     imported: insertedClients.length,
@@ -823,6 +853,7 @@ export const getClientShareHistory = async (clientId, currentUser) => {
 
 export const shareMatchingProjectsWithClient = async (clientId, payload, currentUser, origin) => {
   const client = await getAccessibleClient(clientId, currentUser);
+  const previousClient = client.toObject();
   const scopedFilters = applyScopedFilter({ _id: { $in: payload.projectIds } }, getModuleScope(currentUser, "projects"), currentUser, {
     assigned: ["createdBy"],
     own: ["createdBy"],
@@ -913,6 +944,27 @@ export const shareMatchingProjectsWithClient = async (clientId, payload, current
 
     await client.save();
 
+    await Promise.all([
+      recordShareActivity({
+        lead: client,
+        shareRecord,
+        performedBy: currentUser._id,
+        metadata: {
+          shareChannel: payload.shareChannel,
+          projectCount: orderedProjects.length,
+        },
+      }),
+      recordLeadChangeActivities({
+        lead: client,
+        before: previousClient,
+        after: client,
+        performedBy: currentUser._id,
+        metadata: {
+          source: "share-projects",
+        },
+      }),
+    ]);
+
     return {
       message,
       safeProjects,
@@ -941,6 +993,7 @@ export const updateClient = async (clientId, payload, currentUser) => {
   }
 
   await assertClientAccess(client, currentUser);
+  const previousClient = client.toObject();
 
   if (Object.prototype.hasOwnProperty.call(payload, "assignedStaff")) {
     payload.assignedStaff = await assertValidAssignee(payload.assignedStaff, currentUser);
@@ -949,7 +1002,16 @@ export const updateClient = async (clientId, payload, currentUser) => {
   client.set(payload);
   await client.save();
 
-  return normalizeAssignedStaff(await populateClientUsers(Client.findById(client._id)));
+  const updatedClient = normalizeAssignedStaff(await populateClientUsers(Client.findById(client._id)));
+
+  await recordLeadChangeActivities({
+    lead: updatedClient,
+    before: previousClient,
+    after: updatedClient,
+    performedBy: currentUser._id,
+  });
+
+  return updatedClient;
 };
 
 export const deleteClient = async (clientId, currentUser) => {

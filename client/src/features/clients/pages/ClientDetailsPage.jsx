@@ -45,6 +45,7 @@ import ClientMatchingSection from "../components/ClientMatchingSection";
 import SiteVisitForm from "../../siteVisits/components/SiteVisitForm";
 import { formatSiteVisitDateTime, getSiteVisitStatusTone } from "../../siteVisits/siteVisitConfig";
 import { buildSiteVisitConfirmationMessage, getSiteVisitWhatsAppUrl } from "../../siteVisits/siteVisitMessaging";
+import ClientActivityTimeline from "../components/ClientActivityTimeline";
 
 const reminderTypes = ["Call", "WhatsApp", "Details Send", "Site Visit", "Payment", "Document"];
 
@@ -97,6 +98,7 @@ export default function ClientDetailsPage() {
   const [isSavingReminder, setIsSavingReminder] = useState(false);
   const [siteVisitError, setSiteVisitError] = useState("");
   const [isSavingSiteVisit, setIsSavingSiteVisit] = useState(false);
+  const [timelineRefreshKey, setTimelineRefreshKey] = useState(0);
   const [quickEdit, setQuickEdit] = useState({
     assignedStaff: "",
     leadStatus: "",
@@ -122,6 +124,10 @@ export default function ClientDetailsPage() {
       lastCallStatus: nextClient.lastCallStatus || "",
       nextFollowUpDate: nextClient.nextFollowUpDate ? new Date(nextClient.nextFollowUpDate).toISOString().slice(0, 10) : "",
     }));
+  };
+
+  const refreshTimeline = () => {
+    setTimelineRefreshKey((current) => current + 1);
   };
 
   useEffect(() => {
@@ -202,6 +208,7 @@ export default function ClientDetailsPage() {
       const updatedClient = await clientService.update(id, payload);
 
       syncClientState(updatedClient);
+      refreshTimeline();
     } catch (requestError) {
       setUpdateError(requestError.response?.data?.message || "Unable to update lead");
     } finally {
@@ -243,6 +250,7 @@ export default function ClientDetailsPage() {
         leadStatus: updatedClient.leadStatus || "New Lead",
         interestLevel: updatedClient.interestLevel || "Warm",
       });
+      refreshTimeline();
     } catch (requestError) {
       setCallErrors(requestError.response?.data?.errors || {});
       setCallError(requestError.response?.data?.message || "Unable to save call update");
@@ -276,6 +284,7 @@ export default function ClientDetailsPage() {
         ...initialReminderForm,
         assignedStaff: client.assignedStaff?._id || client.assignedStaff || "",
       });
+      refreshTimeline();
     } catch (requestError) {
       setReminderErrors(requestError.response?.data?.errors || {});
       setReminderError(requestError.response?.data?.message || "Unable to create reminder");
@@ -296,6 +305,7 @@ export default function ClientDetailsPage() {
       setReminders(reminderData.items || []);
       setCompletionReminder(null);
       setCompletionNote("");
+      refreshTimeline();
     } catch (requestError) {
       setReminderError(requestError.response?.data?.errors?.completionNote || requestError.response?.data?.message || "Unable to complete reminder");
     } finally {
@@ -313,6 +323,7 @@ export default function ClientDetailsPage() {
       const updatedClient = await clientService.getById(id);
       setSiteVisits(visitData.items || []);
       syncClientState(updatedClient);
+      refreshTimeline();
     } catch (requestError) {
       setSiteVisitError(requestError.response?.data?.message || "Unable to create site visit");
       throw requestError;
@@ -437,6 +448,8 @@ export default function ClientDetailsPage() {
 
       <div className="grid gap-6 lg:grid-cols-1">
         <div className="space-y-6">
+          <ClientActivityTimeline leadId={client._id} refreshKey={timelineRefreshKey} />
+
           {canShowQuickUpdate ? (
             <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
               <div className="flex items-center gap-3">
@@ -893,7 +906,13 @@ export default function ClientDetailsPage() {
             </div>
           </div>
 
-          <ClientMatchingSection client={client} onClientUpdate={syncClientState} />
+          <ClientMatchingSection
+            client={client}
+            onClientUpdate={(nextClient) => {
+              syncClientState(nextClient);
+              refreshTimeline();
+            }}
+          />
         </div>
       </div>
       <Modal

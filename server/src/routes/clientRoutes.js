@@ -8,6 +8,7 @@ import {
   createClientHandler,
   deleteClientHandler,
   getClientHandler,
+  getClientActivityTimelineHandler,
   getClientShareHistoryHandler,
   getMatchingProjectsForClientHandler,
   importClientsHandler,
@@ -45,6 +46,7 @@ router.get(
   getMatchingProjectsForClientHandler
 );
 router.get("/:id/share-history", protect, authorize("clients", "view"), getClientShareHistoryHandler);
+router.get("/:id/activity-timeline", protect, authorize("clients", "view"), getClientActivityTimelineHandler);
 router.post(
   "/:id/share-projects",
   protect,

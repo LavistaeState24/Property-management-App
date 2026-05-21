@@ -4,6 +4,7 @@ import { Project } from "../models/Project.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { buildPagination } from "../utils/query.js";
+import { recordFollowupActivity } from "./activityLogService.js";
 
 const toObjectId = (value) => value?._id || value || null;
 const toObjectIdString = (value) => String(toObjectId(value) || "");
@@ -234,6 +235,21 @@ export const createFollowup = async (payload, userId, currentUser) => {
     createdBy: userId,
   });
 
+  await recordFollowupActivity({
+    action: "created",
+    followup,
+    performedBy: userId,
+    metadata: {
+      description: `Follow-up scheduled for ${followup.reminderType}.`,
+    },
+    newValues: {
+      reminderType: followup.reminderType,
+      reminderDateTime: followup.reminderDateTime,
+      assignedStaff: followup.assignedStaff,
+      status: followup.status,
+    },
+  });
+
   return normalizeReminder(await populateReminderUsers(Followup.findById(followup._id)));
 };
 
@@ -296,6 +312,7 @@ export const updateFollowup = async (followupId, payload, currentUser) => {
   }
 
   const client = await getAccessibleClient(followup.client, currentUser);
+  const previousFollowup = followup.toObject();
   const nextPayload = { ...payload };
 
   if (!followup.assignedStaff) {
@@ -317,6 +334,24 @@ export const updateFollowup = async (followupId, payload, currentUser) => {
   followup.set(nextPayload);
   await followup.save();
 
+  await recordFollowupActivity({
+    action: "updated",
+    followup,
+    performedBy: currentUser._id,
+    oldValues: {
+      reminderType: previousFollowup.reminderType,
+      reminderDateTime: previousFollowup.reminderDateTime,
+      assignedStaff: previousFollowup.assignedStaff,
+      note: previousFollowup.note,
+    },
+    newValues: {
+      reminderType: followup.reminderType,
+      reminderDateTime: followup.reminderDateTime,
+      assignedStaff: followup.assignedStaff,
+      note: followup.note,
+    },
+  });
+
   return normalizeReminder(await populateReminderUsers(Followup.findById(followup._id)));
 };
 
@@ -328,6 +363,7 @@ export const completeFollowup = async (followupId, payload, currentUser) => {
   }
 
   const client = await getAccessibleClient(followup.client, currentUser);
+  const previousFollowup = followup.toObject();
 
   if (followup.status === "Completed" || followup.completed) {
     throw new ApiError(400, "Completed reminder cannot be completed again", null, {
@@ -345,6 +381,22 @@ export const completeFollowup = async (followupId, payload, currentUser) => {
   });
   await followup.save();
 
+  await recordFollowupActivity({
+    action: "completed",
+    followup,
+    performedBy: currentUser._id,
+    oldValues: {
+      status: previousFollowup.status,
+      completed: previousFollowup.completed,
+    },
+    newValues: {
+      status: followup.status,
+      completed: followup.completed,
+      completedAt: followup.completedAt,
+      completedBy: followup.completedBy,
+    },
+  });
+
   return normalizeReminder(await populateReminderUsers(Followup.findById(followup._id)));
 };
 
@@ -356,6 +408,7 @@ export const cancelFollowup = async (followupId, currentUser) => {
   }
 
   const client = await getAccessibleClient(followup.client, currentUser);
+  const previousFollowup = followup.toObject();
 
   if (followup.status === "Completed" || followup.completed) {
     throw new ApiError(400, "Completed reminder cannot be cancelled");
@@ -363,6 +416,14 @@ export const cancelFollowup = async (followupId, currentUser) => {
 
   followup.set({ assignedStaff: followup.assignedStaff || (await assertValidAssignee(null, client, currentUser)), status: "Cancelled" });
   await followup.save();
+
+  await recordFollowupActivity({
+    action: "cancelled",
+    followup,
+    performedBy: currentUser._id,
+    oldValues: { status: previousFollowup.status },
+    newValues: { status: followup.status },
+  });
 
   return normalizeReminder(await populateReminderUsers(Followup.findById(followup._id)));
 };
@@ -381,7 +442,7 @@ export const createFollowupFromCallLog = async ({ client, assignedStaff, reminde
     return null;
   }
 
-  return Followup.create({
+  const followup = await Followup.create({
     client,
     assignedStaff,
     reminderType,
@@ -393,4 +454,22 @@ export const createFollowupFromCallLog = async ({ client, assignedStaff, reminde
     completed: false,
     createdBy,
   });
+
+  await recordFollowupActivity({
+    action: "created",
+    followup,
+    performedBy: createdBy,
+    metadata: {
+      source: "call-log",
+      description: `Follow-up created from call log for ${reminderType}.`,
+    },
+    newValues: {
+      reminderType,
+      reminderDateTime,
+      assignedStaff,
+      status: "Pending",
+    },
+  });
+
+  return followup;
 };

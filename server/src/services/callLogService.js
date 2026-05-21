@@ -2,6 +2,7 @@ import { CallLog } from "../models/CallLog.js";
 import { Client } from "../models/Client.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
+import { recordCallActivity, recordLeadChangeActivities } from "./activityLogService.js";
 import { createFollowupFromCallLog, hasOverduePendingFollowup } from "./followupService.js";
 
 const toObjectId = (value) => value?._id || value || null;
@@ -58,6 +59,7 @@ export const listCallLogs = async (clientId, currentUser) => {
 
 export const createCallLog = async (clientId, payload, currentUser) => {
   const client = await getAccessibleClient(clientId, currentUser);
+  const previousClient = client.toObject();
 
   if (!["super-admin", "admin"].includes(currentUser.role) && (await hasOverduePendingFollowup(client._id))) {
     throw new ApiError(409, "Overdue pending reminder must be completed before saving a new call update", null, {
@@ -96,6 +98,29 @@ export const createCallLog = async (clientId, payload, currentUser) => {
     note: payload.nextAction || payload.discussionSummary,
     createdBy: currentUser._id,
   });
+
+  const refreshedClient = await Client.findById(client._id);
+
+  await Promise.all([
+    recordCallActivity({
+      lead: refreshedClient,
+      callLog,
+      performedBy: currentUser._id,
+      metadata: {
+        callConnected: Boolean(payload.callConnected),
+        reminderType: payload.reminderType,
+      },
+    }),
+    recordLeadChangeActivities({
+      lead: refreshedClient,
+      before: previousClient,
+      after: refreshedClient,
+      performedBy: currentUser._id,
+      metadata: {
+        source: "call-log",
+      },
+    }),
+  ]);
 
   return populateCallLogUsers(CallLog.findById(callLog._id));
 };

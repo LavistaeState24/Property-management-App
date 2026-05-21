@@ -4,6 +4,7 @@ import { SiteVisit } from "../models/SiteVisit.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { buildPagination } from "../utils/query.js";
+import { recordSiteVisitActivity } from "./activityLogService.js";
 
 const toObjectId = (value) => value?._id || value || null;
 const toObjectIdString = (value) => String(toObjectId(value) || "");
@@ -206,6 +207,19 @@ export const createSiteVisit = async (payload, userId, currentUser) => {
     updatedBy: userId,
   });
 
+  await recordSiteVisitActivity({
+    lead: client,
+    siteVisit,
+    performedBy: userId,
+    action: "created",
+    newValues: {
+      project: payload.project,
+      visitDateTime: payload.visitDateTime,
+      visitStatus: payload.visitStatus || "Planned",
+      assignedStaff,
+    },
+  });
+
   return normalizeSiteVisit(await populateSiteVisitUsers(SiteVisit.findById(siteVisit._id)));
 };
 
@@ -251,6 +265,7 @@ export const updateSiteVisit = async (siteVisitId, payload, currentUser) => {
   }
 
   const client = await getAccessibleClient(siteVisit.client, currentUser);
+  const previousSiteVisit = siteVisit.toObject();
   const nextPayload = { ...payload };
 
   if (nextPayload.client && toObjectIdString(nextPayload.client) !== toObjectIdString(siteVisit.client)) {
@@ -269,6 +284,25 @@ export const updateSiteVisit = async (siteVisitId, payload, currentUser) => {
   nextPayload.updatedBy = currentUser._id;
   siteVisit.set(nextPayload);
   await siteVisit.save();
+
+  await recordSiteVisitActivity({
+    lead: client,
+    siteVisit,
+    performedBy: currentUser._id,
+    action: "updated",
+    oldValues: {
+      project: previousSiteVisit.project,
+      visitDateTime: previousSiteVisit.visitDateTime,
+      visitStatus: previousSiteVisit.visitStatus,
+      assignedStaff: previousSiteVisit.assignedStaff,
+    },
+    newValues: {
+      project: siteVisit.project,
+      visitDateTime: siteVisit.visitDateTime,
+      visitStatus: siteVisit.visitStatus,
+      assignedStaff: siteVisit.assignedStaff,
+    },
+  });
 
   return normalizeSiteVisit(await populateSiteVisitUsers(SiteVisit.findById(siteVisit._id)));
 };
