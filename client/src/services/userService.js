@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { toast } from "../utils/toast";
 
 export const userService = {
   list: async () => {
@@ -11,6 +12,7 @@ export const userService = {
   },
   create: async (payload) => {
     const { data } = await api.post("/users", payload);
+    toast.success("User created successfully");
     return data.data;
   },
 };

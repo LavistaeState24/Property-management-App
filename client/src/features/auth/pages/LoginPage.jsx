@@ -6,6 +6,7 @@ import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
 import { useAuth } from "../../../hooks/useAuth";
 import { authService } from "../../../services/authService";
+import { toast } from "../../../utils/toast";
 import {
   applyServerErrors,
   emailRules,
@@ -63,6 +64,7 @@ export default function LoginPage() {
       await login(formValues);
       navigate(destination, { replace: true });
     } catch (requestError) {
+      toast.error(requestError.response?.data?.message || "Unable to sign in");
       applyServerErrors(requestError, setLoginFieldError, setLoginError);
     }
   };
@@ -82,6 +84,7 @@ export default function LoginPage() {
       await login({ email: formValues.email, password: formValues.password });
       navigate(destination, { replace: true });
     } catch (requestError) {
+      toast.error(requestError.response?.data?.message || "Unable to create account");
       applyServerErrors(requestError, setRegisterFieldError, setRegisterError);
     }
   };
