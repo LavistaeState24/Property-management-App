@@ -10,7 +10,7 @@ export default function Badge({ children, tone = "gold" }) {
   };
 
   return (
-    <span className={`rounded-full border px-3 py-1 text-xs font-medium ${tones[tone]}`}>
+    <span className={`rounded-full border px-3 py-2 text-xs font-medium ${tones[tone]}`}>
       {children}
     </span>
   );

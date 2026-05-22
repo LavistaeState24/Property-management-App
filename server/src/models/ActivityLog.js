@@ -55,7 +55,24 @@ const activityLogSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+    action: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    module: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    targetId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
   },
+
   { timestamps: true }
 );
 

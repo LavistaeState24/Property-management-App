@@ -366,7 +366,7 @@ export const recordDealActivity = async ({ lead, deal, performedBy, action = "cr
     relatedModule: "deals",
     relatedId: deal._id || deal,
     metadata,
-  });
+});
 
 export const getClientActivityTimeline = async (clientId, query = {}, currentUser) => {
   const client = await getAccessibleClient(clientId, currentUser);
@@ -438,4 +438,28 @@ export const getClientActivityTimeline = async (clientId, query = {}, currentUse
     },
     lead: client,
   };
+};
+export const createActivityLog = async ({
+  action,
+  module,
+  performedBy,
+  targetId,
+  message,
+  leadId,
+  metadata = {},
+  oldValues = null,
+  newValues = null,
+}) => {
+  return await ActivityLog.create({
+    leadId: leadId || targetId,
+    activityType: action,
+    title: message || action,
+    description: message || "",
+    oldValues,
+    newValues,
+    performedBy,
+    relatedModule: module || "",
+    relatedId: targetId || leadId || null,
+    metadata,
+  });
 };

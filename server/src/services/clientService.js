@@ -1,3 +1,4 @@
+import { hasOverdueReminderForLead } from "./reminderService.js";
 import { Client } from "../models/Client.js";
 import { CallLog } from "../models/CallLog.js";
 import { Followup } from "../models/Followup.js";
@@ -11,10 +12,16 @@ import {
   recordLeadChangeActivities,
   recordLeadCreatedActivity,
   recordShareActivity,
+  createActivityLog,
 } from "./activityLogService.js";
 import { buildClientSafeProjectPayload } from "./projectService.js";
 import { buildClientSafeShareMessage } from "../utils/shareMessage.js";
 import { createFollowup } from "./followupService.js";
+import {
+  buildReminderLockOverrideActivity,
+  createReminderLockError,
+  shouldBlockReminderAction,
+} from "../utils/reminderLock.js";
 import { EMAIL_REGEX, INDIAN_PHONE_REGEX, normalizeString } from "../validators/common.js";
 
 const toObjectId = (value) => value?._id || value || null;
@@ -374,14 +381,14 @@ const buildShareHistoryNote = ({ shareChannel, projectCount, reminderDateTime, c
 const buildSearchFilters = (search) =>
   search
     ? {
-        $or: [
-          { ownerName: { $regex: search, $options: "i" } },
-          { clientPhoneNumber: { $regex: search, $options: "i" } },
-          { premiseName: { $regex: search, $options: "i" } },
-          { premiseArea: { $regex: search, $options: "i" } },
-          { areaPreference: { $regex: search, $options: "i" } },
-        ],
-      }
+      $or: [
+        { ownerName: { $regex: search, $options: "i" } },
+        { clientPhoneNumber: { $regex: search, $options: "i" } },
+        { premiseName: { $regex: search, $options: "i" } },
+        { premiseArea: { $regex: search, $options: "i" } },
+        { areaPreference: { $regex: search, $options: "i" } },
+      ],
+    }
     : {};
 
 const buildBaseClientFilters = (query) => {
@@ -466,13 +473,13 @@ const buildPositiveClientDetails = (client, nextFollowup, latestCallLog, latestS
     lastDiscussionAt: latestCallLog?.createdAt || null,
     nextActiveFollowup: nextFollowup
       ? {
-          _id: nextFollowup._id,
-          note: nextFollowup.note,
-          reminderType: nextFollowup.reminderType,
-          reminderDateTime: nextFollowup.reminderDateTime || nextFollowup.dueDate,
-          status: resolveActiveFollowupStatus(nextFollowup),
-          assignedStaff: nextFollowup.assignedStaff || null,
-        }
+        _id: nextFollowup._id,
+        note: nextFollowup.note,
+        reminderType: nextFollowup.reminderType,
+        reminderDateTime: nextFollowup.reminderDateTime || nextFollowup.dueDate,
+        status: resolveActiveFollowupStatus(nextFollowup),
+        assignedStaff: nextFollowup.assignedStaff || null,
+      }
       : null,
   };
 };
@@ -994,6 +1001,34 @@ export const updateClient = async (clientId, payload, currentUser) => {
 
   await assertClientAccess(client, currentUser);
   const previousClient = client.toObject();
+
+  const isLeadStatusChanging =
+    payload.leadStatus &&
+    payload.leadStatus !== client.leadStatus;
+
+  if (isLeadStatusChanging) {
+    const hasOverdueReminder = await hasOverdueReminderForLead(clientId);
+
+    if (shouldBlockReminderAction(currentUser.role, hasOverdueReminder)) {
+      throw createReminderLockError();
+    }
+
+    if (hasOverdueReminder && currentUser.role === "super-admin") {
+      await createActivityLog(
+        buildReminderLockOverrideActivity({
+          performedBy: currentUser._id,
+          targetId: client._id,
+          module: "reminders",
+          message: "Super Admin bypassed overdue reminder lock",
+          metadata: {
+            source: "lead-status-update",
+            previousStatus: client.leadStatus,
+            newStatus: payload.leadStatus,
+          },
+        })
+      );
+    }
+  }
 
   if (Object.prototype.hasOwnProperty.call(payload, "assignedStaff")) {
     payload.assignedStaff = await assertValidAssignee(payload.assignedStaff, currentUser);
