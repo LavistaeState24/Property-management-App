@@ -13,6 +13,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useCan } from "../../../hooks/useCan";
 import { clientService } from "../../../services/clientService";
 import { userService } from "../../../services/userService";
+import { toast } from "../../../utils/toast";
 import { formatBudgetRange, getInterestLevelTone } from "../clientPipeline";
 import { parseLeadImportFile } from "../leadImportParser";
 
@@ -121,6 +122,7 @@ export default function ClientsPage() {
 
       setImportRows(rows);
     } catch {
+      toast.error("Unable to read this file. Use a valid CSV, XLS, or XLSX file.");
       setImportError("Unable to read this file. Use a valid CSV, XLS, or XLSX file.");
     } finally {
       setIsParsingImport(false);

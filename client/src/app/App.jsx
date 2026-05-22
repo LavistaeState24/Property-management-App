@@ -1,6 +1,11 @@
 import { Outlet } from "react-router-dom";
+import { ToastHost } from "../utils/toast";
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <>
+      <ToastHost />
+      <Outlet />
+    </>
+  );
 }
-

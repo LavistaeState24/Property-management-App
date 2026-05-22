@@ -2,6 +2,7 @@ import { createContext, useEffect, useState } from "react";
 
 import { authService } from "../../services/authService";
 import { authStorage } from "../../utils/storage";
+import { toast } from "../../utils/toast";
 
 export const AuthContext = createContext(null);
 
@@ -39,6 +40,7 @@ export function AuthProvider({ children }) {
     setToken(data.token);
     authStorage.setToken(data.token);
     authStorage.setUser(data.user);
+    toast.success("Logged in successfully");
     return data;
   };
 
@@ -46,6 +48,7 @@ export function AuthProvider({ children }) {
     authStorage.clear();
     setUser(null);
     setToken(null);
+    toast.success("Logged out successfully");
   };
 
   return (

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { authStorage } from "../utils/storage";
+import { getApiErrorMessage, toast } from "../utils/toast";
 
 const normalizeApiBaseUrl = (url) => {
   const fallbackUrl = import.meta.env.DEV ? "http://localhost:5000" : "";
@@ -41,6 +42,12 @@ api.interceptors.response.use(
       if (window.location.pathname !== "/login") {
         window.location.replace("/login");
       }
+    }
+
+    if (error.response?.status !== 401) {
+      const message = getApiErrorMessage(error, "Request failed");
+      const toastId = error.response?.data?.code || `${error.response?.status || "error"}:${error.config?.url || ""}:${message}`;
+      toast.error(message, { id: `api-error:${toastId}` });
     }
 
     return Promise.reject(error);

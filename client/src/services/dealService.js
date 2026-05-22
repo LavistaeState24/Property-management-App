@@ -1,5 +1,6 @@
 import { api } from "./api";
 import { fetchAllPaginated } from "./paginatedList";
+import { toast } from "../utils/toast";
 
 export const dealService = {
   list: async (params) => {
@@ -29,6 +30,7 @@ export const dealService = {
   },
   create: async (payload) => {
     const { data } = await api.post("/deals", payload);
+    toast.success("Deal created successfully");
     return data.data;
   },
   getById: async (id) => {
@@ -37,6 +39,7 @@ export const dealService = {
   },
   update: async (id, payload) => {
     const { data } = await api.put(`/deals/${id}`, payload);
+    toast.success("Deal updated successfully");
     return data.data;
   },
 };
