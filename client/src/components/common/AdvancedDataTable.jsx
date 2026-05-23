@@ -76,8 +76,8 @@ export default function AdvancedDataTable({
   }, [currentPage, totalPages]);
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-white/5 shadow-glass">
-      <div className="flex flex-col gap-4 border-b border-white/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
+    <div className="overflow-hidden rounded-[24px] border border-white/10 bg-white/5 shadow-glass sm:rounded-[28px]">
+      <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-4 md:flex-row md:items-center md:justify-between sm:px-5">
         <label className="relative w-full max-w-md">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold-2" />
           <input
@@ -120,7 +120,7 @@ export default function AdvancedDataTable({
           <thead className="bg-white/5 text-xs uppercase tracking-[0.22em] text-muted">
             <tr>
               {columns.map((column) => (
-                <th key={column.key} className="px-5 py-4 font-medium whitespace-nowrap">
+                <th key={column.key} className="whitespace-nowrap px-4 py-3 font-medium sm:px-5 sm:py-4">
                   {column.label}
                 </th>
               ))}
@@ -131,7 +131,7 @@ export default function AdvancedDataTable({
               Array.from({ length: Math.min(rowsPerPage, 5) }).map((_, index) => (
                 <tr key={`loading-${index}`} className="animate-pulse">
                   {columns.map((column) => (
-                    <td key={column.key} className="px-5 py-4 align-top">
+                    <td key={column.key} className="px-4 py-3 align-top sm:px-5 sm:py-4">
                       <div className="h-4 rounded-full bg-white/10" />
                     </td>
                   ))}
@@ -141,7 +141,7 @@ export default function AdvancedDataTable({
               paginatedRows.map((row, index) => (
                 <tr key={row.id || row._id || index} className="hover:bg-white/[0.03]">
                   {columns.map((column) => (
-                    <td key={column.key} className="px-5 py-4 align-top">
+                    <td key={column.key} className="px-4 py-3 align-top sm:px-5 sm:py-4">
                       {column.render ? column.render(row) : row[column.key]}
                     </td>
                   ))}
@@ -149,7 +149,7 @@ export default function AdvancedDataTable({
               ))
             ) : (
               <tr>
-                <td className="px-5 py-10 text-center text-muted" colSpan={columns.length}>
+                <td className="px-4 py-10 text-center text-muted sm:px-5" colSpan={columns.length}>
                   {searchQuery ? "No matching records found." : emptyMessage}
                 </td>
               </tr>
@@ -158,7 +158,7 @@ export default function AdvancedDataTable({
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-white/10 px-5 py-4 text-sm text-muted md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 border-t border-white/10 px-4 py-4 text-sm text-muted md:flex-row md:items-center md:justify-between sm:px-5">
         <p>
           {loading || totalRows === 0
             ? "Showing 0 to 0 of 0 entries"

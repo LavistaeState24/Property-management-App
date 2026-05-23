@@ -59,7 +59,7 @@ export default function SiteVisitForm({
 
   return (
     <form
-      className="space-y-4"
+      className="space-y-4 sm:space-y-5"
       onSubmit={handleSubmit(async (values) => {
         try {
           await onSubmit(values);
@@ -69,7 +69,7 @@ export default function SiteVisitForm({
       })}
     >
       {hideLead ? <input type="hidden" {...register("leadId")} /> : null}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {!hideLead ? (
           <SelectDropdown
             label="Lead"
@@ -111,7 +111,7 @@ export default function SiteVisitForm({
         />
       </div>
 
-      <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm font-semibold text-ivory">
+      <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-sm font-semibold text-ivory sm:p-4">
         <input type="checkbox" className="h-4 w-4 accent-gold" {...register("pickupRequired")} />
         Pickup required
       </label>
@@ -141,13 +141,13 @@ export default function SiteVisitForm({
         })}
       />
 
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
         {onCancel ? (
-          <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
+          <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={onCancel} disabled={isSaving}>
             Cancel
           </Button>
         ) : null}
-        <Button type="submit" icon={SubmitIcon} disabled={isSaving}>
+        <Button type="submit" className="w-full sm:w-auto" icon={SubmitIcon} disabled={isSaving}>
           {isSaving ? "Saving..." : saveLabel}
         </Button>
       </div>
