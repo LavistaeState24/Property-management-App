@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import AdvancedDataTable from "../../../components/common/AdvancedDataTable";
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
+import PageSkeleton from "../../../components/common/PageSkeleton";
 import StatCard from "../../../components/common/StatCard";
 import ClientCard from "../../../components/cards/ClientCard";
 import { useCan } from "../../../hooks/useCan";
@@ -100,6 +101,10 @@ export default function DashboardPage() {
     },
   ];
 
+  if (isLoading) {
+    return <PageSkeleton variant="dashboard" />;
+  }
+
   return (
     <div className="space-y-6">
       <section className="grid gap-4 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
@@ -171,7 +176,6 @@ export default function DashboardPage() {
               rows={projects}
               totalRecords={totalProjects}
               loading={isLoading}
-              loadingMessage="Loading fresh projects..."
               emptyMessage="No recent projects found."
               searchPlaceholder="Search fresh project additions..."
               defaultRowsPerPage={5}

@@ -38,6 +38,7 @@ export default function AdvancedDataTable({
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(resolvedDefaultRowsPerPage);
+  void loadingMessage;
 
   const filteredRows = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -77,7 +78,7 @@ export default function AdvancedDataTable({
 
   return (
     <div className="overflow-hidden rounded-[24px] border border-white/10 bg-white/5 shadow-glass sm:rounded-[28px]">
-      <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-4 md:flex-row md:items-center md:justify-between sm:px-5">
+      <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between">
         <label className="relative w-full max-w-md">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold-2" />
           <input
@@ -90,13 +91,18 @@ export default function AdvancedDataTable({
         </label>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:justify-end">
-          <div className="text-sm text-muted">
-            {loading
-              ? loadingMessage
-              : searchQuery.trim()
+          {loading ? (
+            <div className="space-y-2">
+              <div className="h-3.5 w-56 max-w-full animate-pulse rounded-full bg-white/10" />
+              <div className="h-3 w-40 animate-pulse rounded-full bg-white/10" />
+            </div>
+          ) : (
+            <div className="text-sm text-muted">
+              {searchQuery.trim()
                 ? `${totalRows} matching record${totalRows === 1 ? "" : "s"} of ${resolvedTotalRecords} total`
                 : `${resolvedTotalRecords} total record${resolvedTotalRecords === 1 ? "" : "s"}`}
-          </div>
+            </div>
+          )}
 
           <label className="flex items-center gap-3 text-sm text-muted">
             <span>Rows</span>

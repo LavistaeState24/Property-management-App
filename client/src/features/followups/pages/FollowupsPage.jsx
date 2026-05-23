@@ -230,7 +230,6 @@ export default function FollowupsPage() {
         rows={followups}
         totalRecords={followups.length}
         loading={isLoading}
-        loadingMessage="Loading reminders..."
         emptyMessage="No reminders found."
         searchPlaceholder="Search reminders..."
         defaultRowsPerPage={10}

@@ -183,7 +183,6 @@ export default function ProjectsPage() {
         rows={projects}
         totalRecords={totalProjects}
         loading={isLoading}
-        loadingMessage="Loading projects..."
         emptyMessage="No projects found."
         searchPlaceholder="Search projects..."
         defaultRowsPerPage={10}

@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
+import PageSkeleton from "../../../components/common/PageSkeleton";
 import { useCan } from "../../../hooks/useCan";
 import { dealService } from "../../../services/dealService";
 import { formatCurrency, formatDate, formatDateTime, getDealStatusTone, getPaymentStatusTone } from "../dealConfig";
@@ -55,7 +56,7 @@ export default function DealDetailsPage() {
   }
 
   if (!deal) {
-    return <p className="text-sm text-muted">Loading deal details...</p>;
+    return <PageSkeleton variant="detail" />;
   }
 
   return (

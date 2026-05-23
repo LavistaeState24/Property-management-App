@@ -28,6 +28,7 @@ import Button from "../../../components/common/Button";
 import DataTable from "../../../components/common/DataTable";
 import FormInput from "../../../components/common/FormInput";
 import Modal from "../../../components/common/Modal";
+import PageSkeleton from "../../../components/common/PageSkeleton";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import {
   interestLevelOptions,
@@ -356,7 +357,7 @@ export default function ClientDetailsPage() {
   }
 
   if (!client) {
-    return <p className="text-sm text-muted">Loading lead details...</p>;
+    return <PageSkeleton variant="detail" />;
   }
 
   return (

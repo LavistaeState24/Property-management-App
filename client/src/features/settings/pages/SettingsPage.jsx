@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
+import PageSkeleton from "../../../components/common/PageSkeleton";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import { assignableRoleOptions, permissionActions, permissionModules, roleOptions } from "../../../constants/permissions";
 import { useCan } from "../../../hooks/useCan";
@@ -216,6 +217,10 @@ export default function SettingsPage() {
       label: `${managedUser.name} (${managedUser.role})`,
     }));
 
+  if (isLoading) {
+    return <PageSkeleton variant="settings" />;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -313,7 +318,7 @@ export default function SettingsPage() {
               </div>
             </div>
           ) : (
-            <p className="mt-6 text-sm text-muted">{isLoading ? "Loading roles..." : "No roles found."}</p>
+            <p className="mt-6 text-sm text-muted">No roles found.</p>
           )}
         </section>
 
@@ -419,7 +424,7 @@ export default function SettingsPage() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted">{isLoading ? "Loading users..." : "No users found."}</p>
+                  <p className="text-sm text-muted">No users found.</p>
                 )}
               </div>
             </div>
