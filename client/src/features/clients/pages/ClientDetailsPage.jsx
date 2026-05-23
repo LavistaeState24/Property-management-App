@@ -379,7 +379,7 @@ export default function ClientDetailsPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-1">
+      <div className="grid gap-6 lg:grid-cols-1 md:grid-cols-1 sm:grid-cols-1">
         <div className="space-y-6">
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
             <div className="flex items-center gap-3">
@@ -387,7 +387,7 @@ export default function ClientDetailsPage() {
               <h3 className="font-display text-2xl">Lead Snapshot</h3>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
               {[
                 ["Assigned Staff", client.assignedStaff?.name, UserCheck],
                 ["Lead Source", client.source, Shapes],
@@ -417,7 +417,7 @@ export default function ClientDetailsPage() {
               <h3 className="font-display text-2xl">Client and Property Profile</h3>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
               {[
                 ["Client Name", client.ownerName, UserRound],
                 ["Phone Number", client.clientPhoneNumber, Phone],
@@ -446,8 +446,7 @@ export default function ClientDetailsPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-1">
-        <div className="space-y-6">
+      <div className="space-y-6">
           <ClientActivityTimeline leadId={client._id} refreshKey={timelineRefreshKey} />
 
           {canShowQuickUpdate ? (
@@ -913,8 +912,8 @@ export default function ClientDetailsPage() {
               refreshTimeline();
             }}
           />
-        </div>
       </div>
+    
       <Modal
         title="Complete Reminder"
         isOpen={Boolean(completionReminder)}
@@ -924,7 +923,7 @@ export default function ClientDetailsPage() {
           }
         }}
       >
-        <div className="space-y-4">
+      <div className="space-y-4">
           <FormInput
             label="Completion Note"
             as="textarea"
@@ -941,7 +940,7 @@ export default function ClientDetailsPage() {
               {isSavingReminder ? "Saving..." : "Complete"}
             </Button>
           </div>
-        </div>
+      </div>
       </Modal>
     </div>
   );

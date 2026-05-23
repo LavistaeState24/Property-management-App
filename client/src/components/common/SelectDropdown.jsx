@@ -5,8 +5,8 @@ const SelectDropdown = forwardRef(function SelectDropdown(
   ref
 ) {
   return (
-    <label className={`flex flex-col gap-2 ${className}`}>
-      <span className="font-semibold text-md text-muted">{label}</span>
+    <label className={`flex flex-col gap-1.5 sm:gap-2 ${className}`}>
+      <span className="text-sm font-semibold text-muted sm:text-md">{label}</span>
 
       <div className="relative">
         {Icon ? (
@@ -16,7 +16,7 @@ const SelectDropdown = forwardRef(function SelectDropdown(
         <select
           ref={ref}
           aria-invalid={Boolean(error)}
-          className={`w-full rounded-2xl border py-3 text-sm text-ivory outline-none transition ${
+          className={`w-full rounded-2xl border py-2.5 text-sm text-ivory outline-none transition sm:py-3 ${
             error
               ? "border-rose-400/70 focus:border-rose-400"
               : "border-white/10 bg-ink-2 focus:border-gold/50"

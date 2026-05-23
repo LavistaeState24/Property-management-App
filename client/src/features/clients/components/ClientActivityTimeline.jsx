@@ -272,12 +272,12 @@ export default function ClientActivityTimeline({ leadId, refreshKey = 0 }) {
   const canLoadMore = meta.totalPages > meta.page;
 
   return (
-    <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-glass sm:rounded-[32px] sm:p-6">
+      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <History className="h-5 w-5 text-gold-2" />
           <div>
-            <h3 className="font-display text-2xl">Activity Timeline</h3>
+            <h3 className="font-display text-xl sm:text-2xl">Activity Timeline</h3>
             <p className="text-sm text-muted">Calls, follow-ups, shares, visits, deals, and lead changes.</p>
           </div>
         </div>
@@ -294,7 +294,7 @@ export default function ClientActivityTimeline({ leadId, refreshKey = 0 }) {
 
       {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
 
-      <div className="mt-5  max-h-[20vh] overflow-y-auto pr-2  space-y-4">
+      <div className=" max-h-[40vh] overflow-y-auto pr-1 sm:mt-5 sm:pr-2">
         {loading && !items.length ? <p className="text-sm text-muted">Loading activity timeline...</p> : null}
 
         {!loading && !items.length ? <p className="text-sm text-muted">No activity recorded for this lead yet.</p> : null}
@@ -319,14 +319,14 @@ export default function ClientActivityTimeline({ leadId, refreshKey = 0 }) {
             : [];
 
           return (
-            <div key={activity._id} className="relative pl-6 sm:pl-8 overflow-y-auto min-h-60vh">
+            <div key={activity._id} className="relative min-h-[30vh] mt-5 overflow-y-auto pl-6 sm:pl-8">
               {/* Timeline dot */}
               <span
                 className={`absolute left-0 top-7 h-3.5 w-3.5 rounded-full border-2 border-black shadow-lg ring-4 ring-white/10 ${style.marker}`}
               />
 
               {/* Timeline card */}
-              <div className="group rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-sm transition hover:border-gold/30 hover:bg-white/[0.05] sm:p-5 ">
+              <div className="group rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-sm transition hover:border-gold/30 hover:bg-white/[0.05] sm:p-5">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex min-w-0 items-start gap-3">
                     {/* Icon */}
@@ -398,6 +398,7 @@ export default function ClientActivityTimeline({ leadId, refreshKey = 0 }) {
           <Button
             type="button"
             variant="secondary"
+            className="w-full sm:w-auto"
             disabled={loadingMore}
             onClick={() => loadTimeline((meta.page || 1) + 1, true)}
           >

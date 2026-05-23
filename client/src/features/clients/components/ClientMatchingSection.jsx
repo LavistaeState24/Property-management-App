@@ -300,12 +300,12 @@ export default function ClientMatchingSection({ client, onClientUpdate }) {
   ];
 
   return (
-    <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-glass sm:rounded-[32px] sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="flex items-center gap-3">
             <Link2 className="h-5 w-5 text-gold-2" />
-            <h3 className="font-display text-2xl">Find Matching Projects</h3>
+            <h3 className="font-display text-xl sm:text-2xl">Find Matching Projects</h3>
           </div>
           <p className="mt-2 text-sm text-muted">
             Match by budget, configuration, area preference, property type, possession, and availability.
@@ -328,16 +328,16 @@ export default function ClientMatchingSection({ client, onClientUpdate }) {
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button type="button" icon={RefreshCw} variant="secondary" onClick={loadMatches} disabled={isLoadingMatches}>
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <Button type="button" icon={RefreshCw} variant="secondary" className="w-full sm:w-auto" onClick={loadMatches} disabled={isLoadingMatches}>
           {isLoadingMatches ? "Finding..." : "Find Matching Projects"}
         </Button>
         <Badge tone="slate">{matchMeta.total || 0} matches</Badge>
         <Badge tone="green">{selectedIds.length} selected</Badge>
-        <Button type="button" icon={Copy} variant="secondary" onClick={() => handleOpenShare("Copy")} disabled={!selectedIds.length}>
+        <Button type="button" icon={Copy} variant="secondary" className="w-full sm:w-auto" onClick={() => handleOpenShare("Copy")} disabled={!selectedIds.length}>
           Copy Client-safe Message
         </Button>
-        <Button type="button" icon={Send} onClick={() => handleOpenShare("WhatsApp")} disabled={!selectedIds.length}>
+        <Button type="button" icon={Send} className="w-full sm:w-auto" onClick={() => handleOpenShare("WhatsApp")} disabled={!selectedIds.length}>
           Share on WhatsApp
         </Button>
       </div>
@@ -358,12 +358,12 @@ export default function ClientMatchingSection({ client, onClientUpdate }) {
       </div>
 
       <div className="mt-8 border-t border-white/10 pt-6">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h4 className="font-display text-xl">Share History</h4>
+            <h4 className="font-display text-lg sm:text-xl">Share History</h4>
             <p className="mt-1 text-sm text-muted">Client-safe messages sent from this lead.</p>
           </div>
-          <Button type="button" variant="secondary" icon={RefreshCw} onClick={loadHistory} disabled={isLoadingHistory}>
+          <Button type="button" variant="secondary" icon={RefreshCw} className="w-full sm:w-auto" onClick={loadHistory} disabled={isLoadingHistory}>
             {isLoadingHistory ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
@@ -394,7 +394,7 @@ export default function ClientMatchingSection({ client, onClientUpdate }) {
         }}
       >
         <div className="space-y-4">
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-muted">
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-sm text-muted sm:p-4">
             <p className="text-ivory">{selectedProjects.length} project(s) selected</p>
             <p className="mt-2 break-words">{selectedProjects.map((project) => project.projectName).join(", ")}</p>
           </div>
@@ -423,7 +423,7 @@ export default function ClientMatchingSection({ client, onClientUpdate }) {
             placeholder="Required before confirming share"
           />
 
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-3 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-ivory">Client-safe preview</p>
               <button type="button" className="inline-flex items-center gap-1 text-xs text-gold-2" onClick={() => handleCopyExistingMessage(previewMessage)}>
@@ -434,17 +434,17 @@ export default function ClientMatchingSection({ client, onClientUpdate }) {
             <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words text-sm text-muted">{previewMessage || "Select projects to preview."}</pre>
           </div>
 
-          <div className="rounded-2xl border border-amber-400/20 bg-amber-500/5 p-4 text-xs text-amber-100">
+          <div className="rounded-2xl border border-amber-400/20 bg-amber-500/5 p-3 text-xs text-amber-100 sm:p-4">
             Private project details, builder information, exact address, commission, internal notes, and backend IDs are excluded.
           </div>
 
           {shareError ? <p className="text-sm text-rose-300">{shareError}</p> : null}
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary" onClick={() => setIsShareOpen(false)} disabled={isSubmittingShare}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={() => setIsShareOpen(false)} disabled={isSubmittingShare}>
               Cancel
             </Button>
-            <Button type="button" icon={shareChannel === "Copy" ? Copy : ExternalLink} onClick={handleShare} disabled={isSubmittingShare}>
+            <Button type="button" className="w-full sm:w-auto" icon={shareChannel === "Copy" ? Copy : ExternalLink} onClick={handleShare} disabled={isSubmittingShare}>
               {isSubmittingShare ? "Sharing..." : shareChannel === "Copy" ? "Copy and Save" : "Open WhatsApp"}
             </Button>
           </div>
