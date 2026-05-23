@@ -305,7 +305,6 @@ export default function SiteVisitsPage() {
           rows={plannedRows}
           totalRecords={plannedRows.length}
           loading={isLoading}
-          loadingMessage="Loading planned site visits..."
           emptyMessage="No planned site visits found."
           searchPlaceholder="Search planned site visits..."
           defaultRowsPerPage={10}
@@ -322,7 +321,6 @@ export default function SiteVisitsPage() {
           rows={doneRows}
           totalRecords={doneRows.length}
           loading={isLoading}
-          loadingMessage="Loading completed site visits..."
           emptyMessage="No completed site visits found."
           searchPlaceholder="Search completed site visits..."
           defaultRowsPerPage={10}

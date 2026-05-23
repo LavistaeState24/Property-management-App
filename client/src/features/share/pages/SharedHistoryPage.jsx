@@ -236,7 +236,6 @@ export default function SharedHistoryPage() {
         columns={columns}
         rows={records}
         loading={isLoading}
-        loadingMessage="Loading shared records..."
         emptyMessage="No shared records found."
         searchPlaceholder="Search shared history..."
         defaultRowsPerPage={10}

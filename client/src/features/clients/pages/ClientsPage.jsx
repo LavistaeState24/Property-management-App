@@ -288,7 +288,6 @@ export default function ClientsPage() {
         rows={filteredClients}
         totalRecords={filteredClients.length}
         loading={isLoading}
-        loadingMessage="Loading leads..."
         emptyMessage="No leads found."
         searchPlaceholder="Search visible leads..."
         defaultRowsPerPage={10}

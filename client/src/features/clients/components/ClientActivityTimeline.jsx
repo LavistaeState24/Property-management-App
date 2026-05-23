@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
 import SelectDropdown from "../../../components/common/SelectDropdown";
+import PageSkeleton from "../../../components/common/PageSkeleton";
 import { clientService } from "../../../services/clientService";
 
 const activityCategoryOptions = [
@@ -295,7 +296,7 @@ export default function ClientActivityTimeline({ leadId, refreshKey = 0 }) {
       {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
 
       <div className=" max-h-[40vh] overflow-y-auto pr-1 sm:mt-5 sm:pr-2">
-        {loading && !items.length ? <p className="text-sm text-muted">Loading activity timeline...</p> : null}
+        {loading && !items.length ? <PageSkeleton variant="table" className="rounded-[32px]" /> : null}
 
         {!loading && !items.length ? <p className="text-sm text-muted">No activity recorded for this lead yet.</p> : null}
 
@@ -402,7 +403,7 @@ export default function ClientActivityTimeline({ leadId, refreshKey = 0 }) {
             disabled={loadingMore}
             onClick={() => loadTimeline((meta.page || 1) + 1, true)}
           >
-            {loadingMore ? "Loading..." : "Load more"}
+            {loadingMore ? "Loading more" : "Load more"}
           </Button>
         </div>
       ) : null}

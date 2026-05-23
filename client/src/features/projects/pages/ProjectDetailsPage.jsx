@@ -7,6 +7,7 @@ import Badge from "../../../components/common/Badge";
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
 import Modal from "../../../components/common/Modal";
+import PageSkeleton from "../../../components/common/PageSkeleton";
 import { useAuth } from "../../../hooks/useAuth";
 import { useCan } from "../../../hooks/useCan";
 import { projectService } from "../../../services/projectService";
@@ -175,7 +176,7 @@ export default function ProjectDetailsPage() {
   };
 
   if (!project) {
-    return null;
+    return <PageSkeleton variant="detail" />;
   }
 
   const brochureUrl = resolveAssetUrl(project.brochure?.url);

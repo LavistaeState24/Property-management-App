@@ -351,7 +351,6 @@ export default function ClientMatchingSection({ client, onClientUpdate }) {
           totalRecords={matchMeta.total}
           loading={isLoadingMatches}
           emptyMessage="No matching projects found for this lead."
-          loadingMessage="Finding matching projects..."
           searchPlaceholder="Search matching projects..."
           defaultRowsPerPage={5}
         />
@@ -376,7 +375,6 @@ export default function ClientMatchingSection({ client, onClientUpdate }) {
             rows={history}
             loading={isLoadingHistory}
             emptyMessage="No share history saved for this lead."
-            loadingMessage="Loading share history..."
             searchPlaceholder="Search share history..."
             defaultRowsPerPage={5}
           />

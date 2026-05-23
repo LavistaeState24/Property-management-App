@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Button from "../../../components/common/Button";
+import PageSkeleton from "../../../components/common/PageSkeleton";
 import { useAuth } from "../../../hooks/useAuth";
 import { dealService } from "../../../services/dealService";
 import { clientService } from "../../../services/clientService";
@@ -137,7 +138,7 @@ export default function DealUpsertPage() {
   );
 
   if (isLoading) {
-    return <p className="text-sm text-muted">Loading deal form...</p>;
+    return <PageSkeleton variant="form" />;
   }
 
   if (loadError) {

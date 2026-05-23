@@ -222,7 +222,6 @@ export default function DealPipelinePage({ title, subtitle, status, statusLabel 
         rows={rows}
         totalRecords={totalRecords}
         loading={isLoading}
-        loadingMessage={`Loading ${statusLabel.toLowerCase()} deals...`}
         emptyMessage={`No ${statusLabel.toLowerCase()} deals found.`}
         searchPlaceholder={`Search ${statusLabel.toLowerCase()} deals...`}
         defaultRowsPerPage={10}

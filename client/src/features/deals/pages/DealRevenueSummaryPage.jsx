@@ -127,7 +127,6 @@ export default function DealRevenueSummaryPage() {
           rows={staffReports}
           totalRecords={staffReports.length}
           loading={isLoading}
-          loadingMessage="Loading staff reports..."
           emptyMessage="No staff closing reports found."
           searchPlaceholder="Search staff reports..."
           defaultRowsPerPage={10}

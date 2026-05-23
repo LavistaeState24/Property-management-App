@@ -266,7 +266,6 @@ export default function PositiveClientsPage() {
         rows={positiveClients}
         totalRecords={positiveClients.length}
         loading={isLoading}
-        loadingMessage="Loading positive clients..."
         emptyMessage="No positive clients found."
         searchPlaceholder="Search visible positive clients..."
         defaultRowsPerPage={10}

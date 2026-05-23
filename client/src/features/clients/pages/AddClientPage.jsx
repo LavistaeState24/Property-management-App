@@ -17,6 +17,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
+import PageSkeleton from "../../../components/common/PageSkeleton";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import {
   interestLevelOptions,
@@ -196,7 +197,7 @@ export default function AddClientPage() {
   };
 
   if (isLoadingPage) {
-    return <p className="text-sm text-muted">Loading lead workspace...</p>;
+    return <PageSkeleton variant="form" />;
   }
 
   if (loadError) {

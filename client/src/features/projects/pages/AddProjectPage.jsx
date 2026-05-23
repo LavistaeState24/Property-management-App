@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
 import MultiSelectDropdown from "../../../components/common/MultiSelectDropdown";
+import PageSkeleton from "../../../components/common/PageSkeleton";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 import UploadBox from "../../../components/common/UploadBox";
 import { projectPropertyTypes, projectStatuses } from "../../../constants/theme";
@@ -300,7 +301,7 @@ export default function AddProjectPage() {
   };
 
   if (isLoadingProject) {
-    return <p className="text-sm text-muted">Loading project details...</p>;
+    return <PageSkeleton variant="form" />;
   }
 
   if (loadError) {
