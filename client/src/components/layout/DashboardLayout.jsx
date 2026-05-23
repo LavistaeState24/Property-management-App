@@ -47,7 +47,7 @@ export default function DashboardLayout() {
 
       <div className={`transition-[padding] duration-300 ${isDesktop && isSidebarOpen ? "lg:pl-64" : "lg:pl-0"}`}>
         <main className="min-h-screen px-4 pb-8 pt-20 sm:px-6 lg:px-4">
-          <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-auto">
             <Outlet />
           </div>
         </main>

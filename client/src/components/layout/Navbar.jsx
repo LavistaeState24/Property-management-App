@@ -8,7 +8,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-4 py-3 shadow-xl">
+      <div className="mx-auto flex h-full max-w-auto items-center justify-between gap-4 px-4 sm:px-6 lg:px-4 py-3 shadow-xl">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
