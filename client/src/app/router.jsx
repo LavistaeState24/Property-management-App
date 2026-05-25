@@ -6,7 +6,7 @@ import DashboardLayout from "../components/layout/DashboardLayout";
 import PermissionRoute from "../components/common/PermissionRoute";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import LoaderScreen from "../components/common/LoaderScreen";
-
+import PageSkeleton from "../components/common/PageSkeleton";
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
 const DashboardPage = lazy(() => import("../features/dashboard/pages/DashboardPage"));
 const ProjectsPage = lazy(() => import("../features/projects/pages/ProjectsPage"));
@@ -28,7 +28,7 @@ const SharedHistoryPage = lazy(() => import("../features/share/pages/SharedHisto
 const SharePreviewPage = lazy(() => import("../features/share/pages/SharePreviewPage"));
 const SettingsPage = lazy(() => import("../features/settings/pages/SettingsPage"));
 
-const withSuspense = (element) => <Suspense fallback={<LoaderScreen />}>{element}</Suspense>;
+const withSuspense = (element) => <Suspense fallback={<PageSkeleton />}>{element}</Suspense>;
 
 export const router = createBrowserRouter([
   {
