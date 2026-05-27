@@ -101,10 +101,23 @@ export default function ProjectsPage() {
     },
     { key: "location", label: "Location" },
     {
+      key: "Requirement Type",
+      label: "Type",
+      searchValue: (row) =>
+        Array.isArray(row.propertyType)
+          ? row.propertyType.join(" ")
+          : row.propertyType || "",
+
+      render: (row) =>
+        Array.isArray(row.propertyType)
+          ? row.propertyType.join(", ")
+          : row.propertyType || "-",
+    },
+    {
       key: "configuration",
       label: "Config",
-      searchValue: (row) => `${row.configuration || ""} ${formatPropertyTypes(row.propertyType)}`,
-      render: (row) => row.configuration || formatPropertyTypes(row.propertyType),
+      searchValue: (row) => `${row.configuration || ""} ${formatPropertyTypes(row.requirementType)}`,
+      render: (row) => row.configuration || formatPropertyTypes(row.requirementType),
     },
     {
       key: "priceRange",
