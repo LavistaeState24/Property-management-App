@@ -375,9 +375,9 @@ export default function AddProjectPage() {
         />
 
         <FormInput
-          label="Requirement Type"
+          label="Configuration"
           icon={Shapes}
-          placeholder="Villa / Apartemnt"
+          placeholder="Apartment / Villa / Plot"
           error={getErrorMessage(errors.configuration)}
           {...register("configuration", textRules("Configuration", { min: 3, max: 60 }))}
         />

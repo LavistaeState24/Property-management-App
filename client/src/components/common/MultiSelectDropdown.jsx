@@ -47,7 +47,7 @@ const MultiSelectDropdown = forwardRef(function MultiSelectDropdown(
 
   return (
     <label className={`flex flex-col gap-2 ${className}`}>
-      <span className="font-semibold text-md text-muted">{label}</span>
+      <span className="font-semibold text-sm text-muted">{label}</span>
       <div ref={containerRef} className="relative">
         <button
           ref={ref}
