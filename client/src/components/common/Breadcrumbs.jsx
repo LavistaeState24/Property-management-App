@@ -1,0 +1,72 @@
+import { Link, useLocation } from "react-router-dom";
+import { ChevronRight, Home } from "lucide-react";
+
+const labelMap = {
+  dashboard: "Dashboard",
+  projects: "Projects",
+  clients: "Clients",
+  leads: "Leads",
+  followups: "Follow-ups",
+  reminders: "Reminders",
+  reports: "Reports",
+  settings: "Settings",
+  users: "Users",
+  add: "Add",
+  edit: "Edit",
+  details: "Details",
+};
+
+const formatLabel = (value) => {
+  if (!value) return "";
+  if (labelMap[value]) return labelMap[value];
+
+  // hide MongoDB ids / long dynamic ids
+  if (value.length > 16) return "Details";
+
+  return value
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+export default function Breadcrumbs() {
+  const location = useLocation();
+
+  const pathnames = location.pathname.split("/").filter(Boolean);
+
+  if (pathnames.length === 0) return null;
+
+  return (
+    <nav className="mb-4 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-muted shadow-xl backdrop-blur-lg">
+      <Link
+        to="/dashboard"
+        className="flex items-center gap-3 text-white/60 transition hover:text-gold-2"
+      >
+        <Home className="h-4 w-4 text-gold-2" />
+        Dashboard
+      </Link>
+
+      {pathnames.map((name, index) => {
+        if (name === "dashboard") return null;
+
+        const routeTo = `/${pathnames.slice(0, index + 1).join("/")}`;
+        const isLast = index === pathnames.length - 1;
+
+        return (
+          <div key={routeTo} className="flex items-center">
+            <ChevronRight className="mx-2 h-4 w-4 text-white/20" />
+
+            {isLast ? (
+              <span className="font-medium text-ivory">
+                {formatLabel(name)}
+              </span>
+            ) : (
+              <Link to={routeTo} className="text-white/60 transition hover:text-gold-2">
+                {formatLabel(name)}
+              </Link>
+            )}
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
