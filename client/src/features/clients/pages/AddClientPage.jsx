@@ -422,7 +422,7 @@ export default function AddClientPage() {
             icon={Building2}
             placeholder="Enter premise or project name"
             error={getErrorMessage(errors.premiseName)}
-            {...register("premiseName", textRules("Premise name", { min: 2, max: 100 }))}
+            {...register("premiseName", textRules("Premise name", {  min: 0, max: 100, required: false}))}
           />
 
           <FormInput

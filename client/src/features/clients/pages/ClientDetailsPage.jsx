@@ -388,7 +388,7 @@ export default function ClientDetailsPage() {
               <h3 className="font-display text-2xl">Lead Snapshot</h3>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div className="mt-5 grid gap-4  lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
               {[
                 ["Assigned Staff", client.assignedStaff?.name, UserCheck],
                 ["Lead Source", client.source, Shapes],
@@ -418,7 +418,7 @@ export default function ClientDetailsPage() {
               <h3 className="font-display text-2xl">Client and Property Profile</h3>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div className="mt-5 grid gap-4 lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
               {[
                 ["Client Name", client.ownerName, UserRound],
                 ["Phone Number", client.clientPhoneNumber, Phone],
@@ -537,7 +537,7 @@ export default function ClientDetailsPage() {
                   Call connected
                 </label>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
                   <SelectDropdown
                     label="Lead Status"
                     options={leadStatusOptions}
@@ -579,7 +579,7 @@ export default function ClientDetailsPage() {
                   error={callErrors.objection}
                 />
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
                   <FormInput
                     label="Next Action"
                     value={callForm.nextAction}
@@ -682,7 +682,7 @@ export default function ClientDetailsPage() {
 
               {canCreateFollowups ? (
                 <div className="mt-5 grid gap-4">
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
                     <SelectDropdown
                       label="Assigned Staff"
                       options={staffOptions}
