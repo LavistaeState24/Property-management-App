@@ -3,7 +3,7 @@ const clientSchema = new mongoose.Schema(
   {
     ownerName: { type: String, required: true, trim: true, minlength: 3, maxlength: 80 },
     address: { type: String, required: true, trim: true, minlength: 5, maxlength: 200 },
-    premiseName: { type: String, required: true, trim: true, minlength: 2, maxlength: 100 },
+    premiseName: { type: String, trim: true,  maxlength: 100 },
     premiseArea: { type: String, required: true, trim: true, minlength: 2, maxlength: 80 },
     sourceOfProperty: {
       type: String,

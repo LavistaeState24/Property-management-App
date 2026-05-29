@@ -93,7 +93,7 @@ export const validateClientInput = (payload, options = {}) => {
       ? { address: validateRequiredText(errors, "address", payload.address, { label: "Address", min: 5, max: 200 }) }
       : {}),
     ...(shouldValidateField("premiseName")
-      ? { premiseName: validateRequiredText(errors, "premiseName", payload.premiseName, { label: "Premise name", min: 2, max: 100 }) }
+      ? { premiseName: validateOptionalText(errors, "premiseName", payload.premiseName, { label: "Premise name", required: false,  max: 100 }) }
       : {}),
     ...(shouldValidateField("premiseArea")
       ? { premiseArea: validateRequiredText(errors, "premiseArea", payload.premiseArea, { label: "Premise area", min: 2, max: 80 }) }
