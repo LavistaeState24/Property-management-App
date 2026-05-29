@@ -372,7 +372,7 @@ export default function AddClientPage() {
         <section className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2">
           <div className="lg:col-span-2">
             <p className="text-xs uppercase tracking-[0.3em] text-gold">Client Profile</p>
-            <h3 className="mt-2 font-display text-2xl">Contact and property intake details</h3>
+            <h3 className="mt-2 font-display text-2xl">Client Details</h3>
           </div>
 
           <FormInput
@@ -465,7 +465,7 @@ export default function AddClientPage() {
               type="number"
               placeholder="Enter owner price"
               error={getErrorMessage(errors.ownerPrice)}
-              {...register("ownerPrice", numberRules("Owner price", { required: true, min: 0 }))}
+              {...register("ownerPrice", numberRules("Owner price", { min: 0 }))}
             />
             {formatCompactPrice(ownerPrice) ? (
               <div className="inline-flex rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-medium text-gold-2">
@@ -491,9 +491,9 @@ export default function AddClientPage() {
 
           <FormInput
             label="Size of Property"
-            placeholder="e.g. 1450 sq ft"
+            placeholder="e.g. 1450 sq ft (optional)"
             error={getErrorMessage(errors.propertySize)}
-            {...register("propertySize", textRules("Size of property", { min: 1, max: 80 }))}
+            {...register("propertySize", textRules("Size of property", { min: 0, max: 80, required: false }))}
           />
 
           <FormInput

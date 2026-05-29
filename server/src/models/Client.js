@@ -17,7 +17,7 @@ const clientSchema = new mongoose.Schema(
       trim: true,
       maxlength: 40,
     },
-    ownerPrice: { type: Number, required: true, min: 0 },
+    ownerPrice: { type: Number, min: 0 },
     propertyCondition: {
       type: String,
       required: true,
@@ -25,7 +25,7 @@ const clientSchema = new mongoose.Schema(
       maxlength: 40,
     },
     propertyAge: { type: String, required: true, trim: true, minlength: 1, maxlength: 80 },
-    propertySize: { type: String, required: true, trim: true, minlength: 1, maxlength: 80 },
+    propertySize: { type: String, trim: true, maxlength: 80, default: "" },
     clientPhoneNumber: { type: String, required: true, trim: true, match: /^[6-9]\d{9}$/ },
     email: { type: String, trim: true, lowercase: true, maxlength: 120, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
     internalNotes: { type: String, trim: true, maxlength: 500, default: "" },

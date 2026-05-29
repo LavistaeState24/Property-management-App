@@ -108,7 +108,7 @@ export const validateClientInput = (payload, options = {}) => {
       ? { propertyType: validateEnum(errors, "propertyType", payload.propertyType, { label: "Property type", values: propertyTypes }) }
       : {}),
     ...(shouldValidateField("ownerPrice")
-      ? { ownerPrice: validateNumber(errors, "ownerPrice", payload.ownerPrice, { label: "Owner price", required: true, min: 0 }) }
+      ? { ownerPrice: validateNumber(errors, "ownerPrice", payload.ownerPrice, { label: "Owner price", required: false, min: 0 }) }
       : {}),
     ...(shouldValidateField("propertyCondition")
       ? { propertyCondition: validateEnum(errors, "propertyCondition", payload.propertyCondition, {
@@ -120,7 +120,7 @@ export const validateClientInput = (payload, options = {}) => {
       ? { propertyAge: validateRequiredText(errors, "propertyAge", payload.propertyAge, { label: "Property age", min: 1, max: 80 }) }
       : {}),
     ...(shouldValidateField("propertySize")
-      ? { propertySize: validateRequiredText(errors, "propertySize", payload.propertySize, { label: "Size of property", min: 1, max: 80 }) }
+      ? { propertySize: validateOptionalText(errors, "propertySize", payload.propertySize, { label: "Size of property", max: 80 }) }
       : {}),
     ...(shouldValidateField("clientPhoneNumber")
       ? { clientPhoneNumber: validatePhone(errors, "clientPhoneNumber", payload.clientPhoneNumber, {
