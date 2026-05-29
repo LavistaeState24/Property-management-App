@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigation } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
 
 const labelMap = {
@@ -30,13 +30,30 @@ const formatLabel = (value) => {
 
 export default function Breadcrumbs() {
   const location = useLocation();
+  const navigation = useNavigation();
 
   const pathnames = location.pathname.split("/").filter(Boolean);
+  const isLoading = navigation.state !== "idle";
 
   if (pathnames.length === 0) return null;
 
+  if (isLoading) {
+    return (
+      <nav
+        aria-label="breadcrumb"
+        className="mb-4 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm shadow-xl backdrop-blur-lg"
+      >
+        <div className="h-4 w-16 animate-pulse rounded-full bg-white/10" />
+        <ChevronRight className="mx-2 h-4 w-4 text-white/20" />
+        <div className="h-4 w-24 animate-pulse rounded-full bg-white/10" />
+        <ChevronRight className="mx-2 h-4 w-4 text-white/20" />
+        <div className="h-4 w-20 animate-pulse rounded-full bg-white/10" />
+      </nav>
+    );
+  }
+
   return (
-    <nav className="mb-4 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-muted shadow-xl backdrop-blur-lg">
+    <nav aria-label="breadcrumb" className="mb-4 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-muted shadow-xl backdrop-blur-lg">
       <Link
         to="/dashboard"
         className="flex items-center gap-3 text-white/60 transition hover:text-gold-2"
