@@ -208,6 +208,16 @@ const renderSettingsSkeleton = () => (
   </div>
 );
 
+const renderBreadcrumbSkeleton = () => (
+  <div className="mb-4 flex items-center gap-2">
+    <SkeletonLine className="h-4 w-16" />
+    <SkeletonLine className="h-4 w-4 rounded-full" />
+    <SkeletonLine className="h-4 w-24" />
+    <SkeletonLine className="h-4 w-4 rounded-full" />
+    <SkeletonLine className="h-4 w-20" />
+  </div>
+);
+
 export default function PageSkeleton({ variant = "page", className = "" }) {
   const variants = {
     app: (
@@ -225,12 +235,48 @@ export default function PageSkeleton({ variant = "page", className = "" }) {
         </div>
       </div>
     ),
-    dashboard: renderDashboardSkeleton(),
-    detail: renderDetailSkeleton(),
-    form: renderFormSkeleton(),
-    page: renderDetailSkeleton(),
-    settings: renderSettingsSkeleton(),
-    table: renderTableSkeleton(),
+
+    dashboard: (
+      <div className="space-y-4">
+        {renderBreadcrumbSkeleton()}
+        {renderDashboardSkeleton()}
+      </div>
+    ),
+
+    detail: (
+      <div className="space-y-4">
+        {renderBreadcrumbSkeleton()}
+        {renderDetailSkeleton()}
+      </div>
+    ),
+
+    form: (
+      <div className="space-y-4">
+        {renderBreadcrumbSkeleton()}
+        {renderFormSkeleton()}
+      </div>
+    ),
+
+    page: (
+      <div className="space-y-4">
+        {renderBreadcrumbSkeleton()}
+        {renderDetailSkeleton()}
+      </div>
+    ),
+
+    settings: (
+      <div className="space-y-4">
+        {renderBreadcrumbSkeleton()}
+        {renderSettingsSkeleton()}
+      </div>
+    ),
+
+    table: (
+      <div className="space-y-4">
+        {renderBreadcrumbSkeleton()}
+        {renderTableSkeleton()}
+      </div>
+    ),
   };
 
   return <div className={className}>{variants[variant] || variants.page}</div>;
