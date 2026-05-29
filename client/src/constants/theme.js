@@ -24,19 +24,49 @@ export const interestLevelOptions = ["Hot", "Warm", "Cold"];
 
 export const leadPurposeOptions = ["Buy", "Rent", "Lease", "Investment"];
 
-export const requirementTypeOptions = ["Apartment", "Residential", "Commercial", "Plot", "Rental"];
+export const requirementTypeOptions = [
+  "1BHK",
+  "2BHK",
+  "2.5BHK",
+  "3BHK",
+  "4BHK",
+  "5BHK",
+  "6BHK",
+  "Villa",
+  "Plot",
+  "Land",
+  "Bunglow",
+  "Raw House",
+  "Tenament",
+  "Penthouse",
+  "Commercial",
+  "Apartment",
+  "Residential",
+  "Rental"
+,];
 
 export const propertySourceOptions = ["Owner", "Broker"];
 
+// lead form dropdown
 export const propertyTypes = [
-  "1BHK",
+ "1BHK",
   "2BHK",
+  "2.5BHK",
   "3BHK",
   "4BHK",
-  "Penthouse",
+  "5BHK",
+  "6BHK",
+  "Villa",
+  "Plot",
+  "Land",
+  "Bunglow",
   "Raw House",
   "Tenament",
-  "Bungalow",
+  "Penthouse",
+  "Commercial",
+  "Apartment",
+  "Residential",
+  "Rental"
 ];
 
 export const propertyConditionOptions = [
@@ -54,6 +84,7 @@ export const propertyStatusOptions = [
   "Not Available",
 ];
 
+// project form dropdown
 export const projectPropertyTypes = [
   "1BHK",
   "2BHK",
