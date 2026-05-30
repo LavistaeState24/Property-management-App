@@ -11,7 +11,7 @@ const expandPropertyTypeCategory = (value) => {
 
   switch (normalized) {
     case "apartment":
-      return ["1bhk", "2bhk", "3bhk", "4bhk", "5bhk", "1 bhk", "2 bhk", "3 bhk", "4 bhk"];
+      return ["1bhk", "2bhk", "2.5bhk", "3bhk", "4bhk", "5bhk", "1 bhk", "2 bhk", "2.5 bhk", "3 bhk", "4 bhk"];
     case "villa":
       return ["bungalow", "raw house", "tenament", "penthouse"];
     case "plot":

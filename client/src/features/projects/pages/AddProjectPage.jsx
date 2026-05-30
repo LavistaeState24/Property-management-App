@@ -51,6 +51,7 @@ const MAX_BROCHURE_SIZE_BYTES = 1000 * 1024 * 1024;
 const legacyPropertyTypeMap = {
   "1 BHK": "1BHK",
   "2 BHK": "2BHK",
+  "2.5 BHK": "2.5BHK",
   "3 BHK": "3BHK",
   "4 BHK": "4BHK",
 };
