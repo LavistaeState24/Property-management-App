@@ -9,13 +9,19 @@ import {
   validateRequiredText,
 } from "./common.js";
 
-const propertyTypes = ["1BHK", "2BHK", "3BHK", "4BHK", "5BHK", "1 BHK", "2 BHK", "3 BHK", "4 BHK", "office", "showroom"];
+const propertyTypes = ["1BHK", "2BHK", "2.5BHK", "3BHK", "4BHK", "5BHK", "6BHK","Villa","Plot", "Commercial"];
 const projectStatuses = ["active", "sold out", "upcoming"];
 const propertyTypeMap = {
   "1 BHK": "1BHK",
   "2 BHK": "2BHK",
+  "2.5 BHK": "2.5BHK",
   "3 BHK": "3BHK",
   "4 BHK": "4BHK",
+  "5 BHK": "5BHK",
+  "6 BHK": "6BHK",
+  "Villa": "Villa",
+  "Plot": "Plot",
+  "Commercial": "Commercial",
 };
 
 const normalizePropertyTypes = (value) => {

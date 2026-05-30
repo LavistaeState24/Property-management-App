@@ -15,7 +15,7 @@ const projectSchema = new mongoose.Schema(
     location: { type: String, required: true, trim: true, minlength: 2, maxlength: 100 },
     area: { type: String, required: true, trim: true, minlength: 2, maxlength: 80 },
     propertyType: {
-      type: [{ type: String, enum: ["1BHK", "2BHK", "3BHK", "4BHK", "5BHK", "1 BHK", "2 BHK", "3 BHK", "4 BHK", "office", "showroom"] }],
+      type: [{ type: String, enum: ["1BHK", "2BHK", "2.5BHK", "3BHK", "4BHK", "5BHK", "6BHK","Villa","Plot", "Commercial",] }],
       default: [],
     },
     configuration: { type: String, required: true, trim: true, minlength: 2, maxlength: 50 },
