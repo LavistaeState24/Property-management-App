@@ -1,13 +1,17 @@
+import mongoose from "mongoose";
+
 import { hasOverdueReminderForLead } from "./reminderService.js";
 import { Client } from "../models/Client.js";
 import { CallLog } from "../models/CallLog.js";
 import { Followup } from "../models/Followup.js";
+import { ActivityLog } from "../models/ActivityLog.js";
 import { Project } from "../models/Project.js";
 import { ShareRecord } from "../models/ShareRecord.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { applyScopedFilter, getModuleScope } from "../utils/accessControl.js";
 import { buildPagination, buildProjectFilters } from "../utils/query.js";
+import { validateClientInput } from "../validators/clientValidator.js";
 import {
   recordLeadChangeActivities,
   recordLeadCreatedActivity,
@@ -50,13 +54,82 @@ const normalizeClients = (clients) => clients.map((client) => normalizeAssignedS
 const getAssignedUserId = (client) => toObjectId(client.assignedStaff) || toObjectId(client.assignedTo) || null;
 
 const normalizeImportPhone = (value) => {
-  const digits = normalizeString(value).replace(/\D/g, "");
+  const digits = String(value ?? "").replace(/\D/g, "");
+
+  if (!digits) {
+    return "";
+  }
 
   if (digits.length === 12 && digits.startsWith("91")) {
     return digits.slice(2);
   }
 
+  if (digits.length === 11 && digits.startsWith("0")) {
+    return digits.slice(1);
+  }
+
   return digits;
+};
+
+const normalizeImportPropertyType = (value) => {
+  const normalized = normalizeString(value);
+  const compact = normalized.toLowerCase().replace(/\s+/g, "");
+
+  switch (compact) {
+    case "1bhk":
+      return "1BHK";
+    case "2bhk":
+      return "2BHK";
+    case "2.5bhk":
+      return "2.5BHK";
+    case "3bhk":
+      return "3BHK";
+    case "4bhk":
+      return "4BHK";
+    case "5bhk":
+      return "5BHK";
+    case "6bhk":
+      return "6BHK";
+    case "villa":
+      return "Villa";
+    case "plot":
+      return "Plot";
+    case "land":
+      return "Land";
+    case "bunglow":
+      return "Bunglow";
+    case "rawhouse":
+      return "Raw House";
+    case "tenament":
+      return "Tenament";
+    case "penthouse":
+      return "Penthouse";
+    case "commercial":
+      return "Commercial";
+    case "apartment":
+      return "Apartment";
+    case "residential":
+      return "Residential";
+    case "rental":
+      return "Rental";
+    case "office":
+      return "Office";
+    case "showroom":
+      return "Showroom";
+    default:
+      return normalized;
+  }
+};
+
+const normalizeEnumValue = (value, allowedValues, fallback) => {
+  const normalized = normalizeString(value);
+
+  if (!normalized) {
+    return fallback;
+  }
+
+  const matchedValue = allowedValues.find((item) => String(item).toLowerCase() === normalized.toLowerCase());
+  return matchedValue || fallback || normalized;
 };
 
 const parseBudgetValue = (value) => {
@@ -513,24 +586,54 @@ export const importClients = async (payload, currentUser) => {
     throw new ApiError(400, "Import supports up to 1000 rows at a time");
   }
 
+  const importSource = normalizeString(payload?.source) || "Import";
+  const duplicateHandling = payload?.duplicateHandling === "mark" ? "mark" : "skip";
+  const assignmentMode = ["file", "single", "roundRobin"].includes(payload?.assignmentMode) ? payload.assignmentMode : "file";
+  const fileName = normalizeString(payload?.fileName);
   const resolveAssignee = await buildAssigneeResolver(currentUser);
+  const selectedSingleAssignee =
+    assignmentMode === "single"
+      ? await assertValidAssignee(payload.assignedUserId || payload.assignedStaff || currentUser._id, currentUser)
+      : null;
+  const roundRobinCandidates =
+    assignmentMode === "roundRobin"
+      ? (Array.isArray(payload.roundRobinUserIds) && payload.roundRobinUserIds.length
+        ? payload.roundRobinUserIds
+        : (await getAssignableUsersForImport(currentUser)).map((user) => user._id))
+      : [];
+  const resolvedRoundRobinUsers =
+    assignmentMode === "roundRobin"
+      ? await Promise.all(roundRobinCandidates.map((userId) => assertValidAssignee(userId, currentUser)))
+      : [];
+  const importBatchId = new mongoose.Types.ObjectId().toString();
   const seenPhones = new Set();
   const candidates = [];
   const invalidRows = [];
   const duplicateRows = [];
+  let roundRobinIndex = 0;
 
   rows.forEach((row, index) => {
     const rowNumber = Number(row.rowNumber || index + 2);
-    const ownerName = normalizeString(row.clientName || row.ownerName);
-    const clientPhoneNumber = normalizeImportPhone(row.phone || row.clientPhoneNumber);
+    const clientName = normalizeString(row.clientName || row.ownerName || row.name || row.leadName);
+    const clientPhoneNumber = normalizeImportPhone(row.phone || row.clientPhoneNumber || row.mobile || row.clientPhone || row.phoneNumber);
     const email = normalizeString(row.email).toLowerCase();
-    const source = normalizeString(row.source);
-    const requirementType = normalizeString(row.requirementType);
-    const areaPreference = normalizeString(row.areaPreference);
-    const assignedStaff = resolveAssignee(row.assignedStaff);
+    const explicitBudgetRange =
+      row.budgetRange ||
+      row.budget ||
+      row.property_budget ||
+      [row.budgetMin, row.budgetMax];
+    const { budgetMin: parsedBudgetMin, budgetMax: parsedBudgetMax } = parseBudgetRange(explicitBudgetRange);
+    const requirementType = normalizeString(row.requirementType || row.requirement || row.propertyRequirement);
+    const areaPreference = normalizeString(row.areaPreference || row.area || row.preferredArea || row.location);
+    const notes = normalizeString(row.notes || row.internalNotes || row.comment || row.comments);
+    const source = normalizeString(row.source) || importSource;
+    const leadStatus = normalizeEnumValue(row.leadStatus || row.status, ["New Lead", "Call Pending", "Connected", "Requirement Taken", "Details Sent", "Follow-up Pending", "Positive", "Site Visit Planned", "Negotiation", "Booking", "Closed", "Lost"], "New Lead");
+    const interestLevel = normalizeEnumValue(row.interestLevel || row.interest, ["Hot", "Warm", "Cold"], "Warm");
+    const assignedFromFile = normalizeString(row.assignedStaff || row.assignedTo || row.staff || row.assignedUser);
+    const resolvedAssignedFromFile = assignedFromFile ? resolveAssignee(assignedFromFile) : currentUser._id;
     const rowErrors = [];
 
-    if (!ownerName || ownerName.length < 3 || ownerName.length > 80) {
+    if (!clientName || clientName.length < 3 || clientName.length > 80) {
       rowErrors.push("Client name must be 3-80 characters");
     }
 
@@ -554,53 +657,119 @@ export const importClients = async (payload, currentUser) => {
       rowErrors.push("Area preference must be at most 120 characters");
     }
 
-    if (!assignedStaff) {
+    if (assignedFromFile && !resolvedAssignedFromFile) {
       rowErrors.push("Assigned staff was not found or is not assignable");
     }
 
     if (seenPhones.has(clientPhoneNumber)) {
-      duplicateRows.push({ rowNumber, phone: clientPhoneNumber, clientName: ownerName, reason: "Duplicate phone in import file" });
+      duplicateRows.push({
+        rowNumber,
+        phone: clientPhoneNumber,
+        clientName,
+        email: email || "",
+        propertyType: normalizeImportPropertyType(row.propertyType || row.bhk || "2BHK"),
+        requirementType,
+        budgetMin: parsedBudgetMin,
+        budgetMax: parsedBudgetMax,
+        areaPreference,
+        source,
+        assignedStaff: assignedFromFile || "",
+        leadStatus,
+        interestLevel,
+        notes,
+        reason: "Duplicate phone in import file",
+      });
+
+
       return;
     }
 
     if (rowErrors.length) {
-      invalidRows.push({ rowNumber, phone: clientPhoneNumber, clientName: ownerName, errors: rowErrors });
+      invalidRows.push({
+        rowNumber,
+        phone: clientPhoneNumber,
+        clientName,
+        email: email || "",
+        propertyType: normalizeImportPropertyType(row.propertyType || row.bhk || "2BHK"),
+        requirementType,
+        budgetMin: parsedBudgetMin,
+        budgetMax: parsedBudgetMax,
+        areaPreference,
+        source,
+        assignedStaff: assignedFromFile || "",
+        leadStatus,
+        interestLevel,
+        notes,
+        errors: rowErrors,
+      });
       return;
     }
 
     seenPhones.add(clientPhoneNumber);
-    const hasBudgetRange = Object.prototype.hasOwnProperty.call(row, "budgetMin") || Object.prototype.hasOwnProperty.call(row, "budgetMax");
-    const explicitBudgetRange = hasBudgetRange ? [row.budgetMin, row.budgetMax] : row.budget;
-    const { budgetMin, budgetMax } = parseBudgetRange(explicitBudgetRange);
-    const fallbackLocation = areaPreference || "Imported lead";
+    let resolvedAssignedStaff = currentUser._id;
+
+    if (assignmentMode === "single") {
+      resolvedAssignedStaff = selectedSingleAssignee || currentUser._id;
+    } else if (assignmentMode === "roundRobin" && resolvedRoundRobinUsers.length) {
+      resolvedAssignedStaff = resolvedRoundRobinUsers[roundRobinIndex % resolvedRoundRobinUsers.length];
+      roundRobinIndex += 1;
+    } else if (assignmentMode === "file") {
+      resolvedAssignedStaff = resolvedAssignedFromFile || currentUser._id;
+    }
+
+    const assignedStaffId = String(resolvedAssignedStaff || currentUser._id);
+    const rawPayload = {
+      ownerName: clientName,
+      address: areaPreference || requirementType || `Imported from ${importSource}`,
+      premiseName: requirementType || clientName || "Imported lead",
+      premiseArea: areaPreference || importSource || "Imported area",
+      sourceOfProperty: normalizeEnumValue(row.sourceOfProperty, ["Owner", "Broker"], "Owner"),
+      propertyType: normalizeImportPropertyType(row.propertyType || row.bhk || "2BHK"),
+      ownerPrice: parsedBudgetMax || parsedBudgetMin || 0,
+      propertyCondition: normalizeEnumValue(row.propertyCondition, ["Unfurnished", "Semi Furnished", "Furnished", "Fully Furnished"], "Unfurnished"),
+      propertyAge: normalizeString(row.propertyAge || row.age || "Not specified") || "Not specified",
+      propertySize: normalizeString(row.propertySize || row.size || "Not specified") || "Not specified",
+      clientPhoneNumber,
+      email: email || undefined,
+      internalNotes: normalizeString(row.internalNotes || "") || undefined,
+      notes: notes || undefined,
+      propertyStatus: normalizeEnumValue(row.propertyStatus, ["Available", "Hold", "Sold", "Rent Out", "Not Available"], "Available"),
+      dateOfAddingProperty: new Date(),
+      assignedStaff: assignedStaffId,
+      leadStatus,
+      interestLevel,
+      source,
+      purpose: normalizeString(row.purpose || ""),
+      budgetMin: parsedBudgetMin,
+      budgetMax: parsedBudgetMax,
+      requirementType,
+      areaPreference,
+      lastCallStatus: normalizeString(row.lastCallStatus || ""),
+      nextFollowUpDate: null,
+    };
+
+    let sanitized;
+
+    try {
+      sanitized = validateClientInput(rawPayload);
+    } catch (validationError) {
+      invalidRows.push({
+        rowNumber,
+        phone: clientPhoneNumber,
+        clientName,
+        source,
+        errors: validationError.errors ? Object.values(validationError.errors) : [validationError.message || "Validation failed"],
+      });
+      return;
+    }
 
     candidates.push({
       rowNumber,
       phone: clientPhoneNumber,
       document: {
-        ownerName,
-        clientPhoneNumber,
-        email: email || undefined,
-        source,
-        requirementType,
-        areaPreference,
-        assignedStaff,
-        assignedTo: assignedStaff,
-        leadStatus: "New Lead",
-        interestLevel: "Warm",
-        budgetMin,
-        budgetMax,
-        address: fallbackLocation,
-        premiseName: requirementType || "Imported lead",
-        premiseArea: fallbackLocation,
-        sourceOfProperty: "Owner",
-        propertyType: "2BHK",
-        ownerPrice: budgetMax || budgetMin || 0,
-        propertyCondition: "Unfurnished",
-        propertyAge: "Not specified",
-        propertySize: "Not specified",
-        propertyStatus: "Available",
-        dateOfAddingProperty: new Date(),
+        ...sanitized,
+        assignedStaff: assignedStaffId,
+        assignedTo: assignedStaffId,
         createdBy: currentUser._id,
       },
     });
@@ -620,7 +789,18 @@ export const importClients = async (payload, currentUser) => {
         rowNumber: candidate.rowNumber,
         phone: candidate.phone,
         clientName: candidate.document.ownerName,
+        email: candidate.document.email || "",
+        propertyType: candidate.document.propertyType || "",
+        requirementType: candidate.document.requirementType || "",
+        budgetMin: candidate.document.budgetMin ?? null,
+        budgetMax: candidate.document.budgetMax ?? null,
+        areaPreference: candidate.document.areaPreference || "",
         existingClientName: existingClient.ownerName,
+        source: candidate.document.source || importSource,
+        assignedStaff: candidate.document.assignedStaff || "",
+        leadStatus: candidate.document.leadStatus || "New Lead",
+        interestLevel: candidate.document.interestLevel || "Warm",
+        notes: candidate.document.notes || "",
         reason: "Phone already exists",
       });
       return;
@@ -639,11 +819,34 @@ export const importClients = async (payload, currentUser) => {
           performedBy: currentUser._id,
           metadata: {
             imported: true,
+            importBatchId,
+            fileName: fileName || undefined,
+            importSource,
+            duplicateHandling,
+            assignmentMode,
+            importSummary: {
+              imported: insertable.length,
+              duplicates: duplicateRows.length,
+              invalid: invalidRows.length,
+              skipped: duplicateRows.length + invalidRows.length,
+              totalRows: rows.length,
+            },
           },
         })
       )
     );
   }
+
+  const failedRows = [
+    ...duplicateRows.map((row) => ({
+      ...row,
+      status: "duplicate",
+    })),
+    ...invalidRows.map((row) => ({
+      ...row,
+      status: "failed",
+    })),
+  ];
 
   return {
     imported: insertedClients.length,
@@ -651,8 +854,88 @@ export const importClients = async (payload, currentUser) => {
     duplicates: duplicateRows.length,
     invalid: invalidRows.length,
     totalRows: rows.length,
+    batchId: importBatchId,
+    source: importSource,
+    duplicateHandling,
+    assignmentMode,
     duplicateRows,
     invalidRows,
+    failedRows,
+    importedBy: currentUser.name,
+  };
+};
+
+const getImportHistoryActorIds = async (currentUser) => {
+  if (["super-admin", "admin"].includes(currentUser.role)) {
+    return null;
+  }
+
+  if (currentUser.role === "manager") {
+    const users = await User.find({
+      isActive: true,
+      $or: [{ _id: currentUser._id }, { role: "sales", managerId: currentUser._id }],
+    }).select("_id");
+
+    return users.map((user) => user._id);
+  }
+
+  return [currentUser._id];
+};
+
+export const getClientImportHistory = async (query, currentUser) => {
+  const { page, limit, skip } = buildPagination(query);
+  const actorIds = await getImportHistoryActorIds(currentUser);
+  const filters = {
+    activityType: "lead.created",
+    "metadata.importBatchId": { $exists: true, $ne: null },
+  };
+
+  if (actorIds?.length) {
+    filters.performedBy = { $in: actorIds };
+  }
+
+  const activities = await ActivityLog.find(filters)
+    .sort({ createdAt: -1 })
+    .populate("performedBy", "name role")
+    .populate("leadId", "ownerName clientPhoneNumber leadStatus assignedStaff assignedTo createdBy");
+
+  const groupedHistory = [];
+  const seenBatchIds = new Set();
+
+  for (const activity of activities) {
+    const batchId = activity.metadata?.importBatchId;
+
+    if (!batchId || seenBatchIds.has(batchId)) {
+      continue;
+    }
+
+    seenBatchIds.add(batchId);
+    const summary = activity.metadata?.importSummary || {};
+
+    groupedHistory.push({
+      batchId,
+      fileName: activity.metadata?.fileName || "",
+      source: activity.metadata?.importSource || "Import",
+      duplicateHandling: activity.metadata?.duplicateHandling || "skip",
+      assignmentMode: activity.metadata?.assignmentMode || "file",
+      imported: summary.imported ?? 0,
+      duplicates: summary.duplicates ?? 0,
+      invalid: summary.invalid ?? 0,
+      skipped: summary.skipped ?? 0,
+      totalRows: summary.totalRows ?? 0,
+      importedAt: activity.createdAt,
+      importedBy: activity.performedBy,
+    });
+  }
+
+  return {
+    items: groupedHistory.slice(skip, skip + limit),
+    meta: {
+      page,
+      limit,
+      total: groupedHistory.length,
+      totalPages: Math.ceil(groupedHistory.length / limit) || 1,
+    },
   };
 };
 

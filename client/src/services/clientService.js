@@ -23,6 +23,10 @@ export const clientService = {
     toast.success("Leads imported successfully");
     return data.data;
   },
+  getImportHistory: async (params) => {
+    const { data } = await api.get("/clients/import-history", { params });
+    return data.data;
+  },
   getById: async (id) => {
     const { data } = await api.get(`/clients/${id}`);
     return data.data;

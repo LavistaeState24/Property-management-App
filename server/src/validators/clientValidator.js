@@ -11,7 +11,28 @@ import {
 } from "./common.js";
 
 const sourceOfPropertyValues = ["Owner", "Broker"];
-const propertyTypes = ["1BHK", "2BHK", "3BHK", "4BHK", "Penthouse", "Raw House", "Tenament", "Bungalow"];
+const propertyTypes = [
+  "1BHK",
+  "2BHK",
+  "2.5BHK",
+  "3BHK",
+  "4BHK",
+  "5BHK",
+  "6BHK",
+  "Villa",
+  "Plot",
+  "Land",
+  "Bunglow",
+  "Raw House",
+  "Tenament",
+  "Penthouse",
+  "Commercial",
+  "Apartment",
+  "Residential",
+  "Rental",
+  "Office",
+  "Showroom",
+];
 const propertyConditionValues = ["Unfurnished", "Semi Furnished", "Furnished", "Fully Furnished"];
 const propertyStatusValues = ["Available", "Hold", "Sold", "Rent Out", "Not Available"];
 const leadStatusValues = [
