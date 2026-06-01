@@ -4,6 +4,7 @@ import {
   getClientById,
   getPositiveClients,
   getClientShareHistory,
+  getClientImportHistory,
   getClients,
   getMatchingProjectsForClient,
   importClients,
@@ -31,6 +32,11 @@ export const listPositiveClientsHandler = asyncHandler(async (req, res) => {
 export const importClientsHandler = asyncHandler(async (req, res) => {
   const summary = await importClients(req.body, req.user);
   res.status(201).json({ success: true, data: summary });
+});
+
+export const getClientImportHistoryHandler = asyncHandler(async (req, res) => {
+  const history = await getClientImportHistory(req.query, req.user);
+  res.json({ success: true, data: history });
 });
 
 export const getClientHandler = asyncHandler(async (req, res) => {
