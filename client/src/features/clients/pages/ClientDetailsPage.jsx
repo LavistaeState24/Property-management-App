@@ -261,6 +261,7 @@ export default function ClientDetailsPage() {
   };
 
   const updateReminderForm = (field, value) => {
+    console.log(field, value);
     setReminderForm((current) => ({ ...current, [field]: value }));
     setReminderErrors((current) => {
       const nextErrors = { ...current };
