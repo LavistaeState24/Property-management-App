@@ -2,8 +2,8 @@ import { api } from "./api";
 import { toast } from "../utils/toast";
 
 export const followupService = {
-  list: async (params) => {
-    const { data } = await api.get("/followups", { params });
+  list: async (params, requestConfig = {}) => {
+    const { data } = await api.get("/followups", { params, ...requestConfig });
     return data.data;
   },
   counts: async () => {

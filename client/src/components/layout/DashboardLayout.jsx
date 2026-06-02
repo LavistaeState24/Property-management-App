@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Breadcrumbs from "../common/Breadcrumbs.jsx";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import ReminderToastNotifier from "../../features/notifications/ReminderToastNotifier";
 
 export default function DashboardLayout() {
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
@@ -33,6 +34,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-ink bg-glow text-ivory">
+      <ReminderToastNotifier />
       <Navbar isSidebarOpen={isSidebarOpen} onToggleSidebar={toggleSidebar} />
       <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
 
