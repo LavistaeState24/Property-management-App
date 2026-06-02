@@ -100,6 +100,60 @@ export default function ClientsPage() {
     });
   }, [clients, filters]);
 
+
+  const formatLeadAge = (createdAt) => {
+    if (!createdAt) return "-";
+
+    const diffMs = Date.now() - new Date(createdAt).getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMin < 1) return "Just now";
+    if (diffMin < 60) return `${diffMin} min ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    return `${diffDays} days old`;
+  };
+
+  // to show the color in days of leads
+  const getLeadAgeToneClass = (createdAt) => {
+    if (!createdAt) {
+      return "border-white/10 bg-white/5 text-muted";
+    }
+
+    const diffMs = Date.now() - new Date(createdAt).getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 3) {
+      return "border-emerald-400/30 bg-emerald-500/10 text-emerald-300";
+    }
+
+    if (diffDays <= 7) {
+      return "border-yellow-400/30 bg-yellow-500/10 text-yellow-300";
+    }
+
+    if (diffDays <= 15) {
+      return "border-orange-400/30 bg-orange-500/10 text-orange-300";
+    }
+
+    return "border-rose-400/30 bg-rose-500/10 text-rose-300";
+  };
+
+  const formatLeadDate = (createdAt) => {
+    if (!createdAt) return "-";
+
+    const date = new Date(createdAt);
+
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = String(date.getFullYear()).slice(-2);
+
+    const hours = String(date.getHours()).padStart(2, "0");
+    const mins = String(date.getMinutes()).padStart(2, "0");
+
+    return `${day}/${month}/${year} ${hours}:${mins}`;
+  };
+
   const actionButtonClassName =
     "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2";
   const deleteActionButtonClassName =
@@ -124,7 +178,29 @@ export default function ClientsPage() {
       render: (row) => <Badge tone={getInterestLevelTone(row.interestLevel)}>{row.interestLevel || "Warm"}</Badge>,
     },
     { key: "purpose", label: "Purpose", render: (row) => row.purpose || "Not added" },
-    { key: "areaPreference", label: "Area ", render: (row) => row.areaPreference || row.premiseArea || "Not added" },
+    {
+      key: "areaPreference",
+      label: "Area",
+      render: (row) => row.areaPreference || row.premiseArea || "Not added",
+    },
+    {
+      key: "createdAt",
+      label: "Lead Added",
+      render: (row) => formatLeadDate(row.createdAt),
+    },
+    {
+      key: "leadAge",
+      label: "Lead Age",
+      render: (row) => (
+        <span
+          className={`inline-flex rounded-full border px-2 py-2 text-xs font-medium ${getLeadAgeToneClass(
+            row.createdAt
+          )}`}
+        >
+          {formatLeadAge(row.createdAt)}
+        </span>
+      ),
+    },
     {
       key: "budget",
       label: "Budget",
