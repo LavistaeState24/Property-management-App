@@ -12,6 +12,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { applyScopedFilter, getModuleScope } from "../utils/accessControl.js";
 import { buildPagination, buildProjectFilters } from "../utils/query.js";
 import { validateClientInput } from "../validators/clientValidator.js";
+import { SiteVisit } from "../models/SiteVisit.js";
 import {
   recordLeadChangeActivities,
   recordLeadCreatedActivity,
@@ -242,6 +243,49 @@ const assertValidAssignee = async (assignedStaff, currentUser) => {
   }
 
   return user._id;
+};
+
+const getPendingWorkSummary = async (userId) => {
+  const now = new Date();
+
+  const [pendingFollowups, overdueFollowups, pendingSiteVisits] = await Promise.all([
+    Followup.countDocuments({ assignedStaff: userId, status: "Pending" }),
+    Followup.countDocuments({
+      assignedStaff: userId,
+      status: "Pending",
+      $or: [{ reminderDateTime: { $lt: now } }, { dueDate: { $lt: now } }],
+    }),
+    SiteVisit.countDocuments({
+      assignedStaff: userId,
+      visitStatus: { $in: ["Planned", "Rescheduled"] },
+    }),
+  ]);
+
+  return {
+    pendingFollowups,
+    overdueFollowups,
+    pendingSiteVisits,
+    total: pendingFollowups + pendingSiteVisits,
+  };
+};
+
+const assertNoPendingWorkBeforeAssignment = async (assignedStaff, currentUser) => {
+  if (!assignedStaff || currentUser.role === "super-admin") return;
+
+  const targetUser = await User.findById(assignedStaff).select("_id role");
+
+  if (!targetUser || targetUser.role !== "sales") return;
+
+  const summary = await getPendingWorkSummary(assignedStaff);
+
+  if (summary.total > 0) {
+    throw new ApiError(
+      400,
+      "This user has pending follow-ups/site visits. Complete them before assigning new leads.",
+      null,
+      summary
+    );
+  }
 };
 
 const buildClientVisibilityFilter = async (currentUser) => {
@@ -558,9 +602,15 @@ const buildPositiveClientDetails = (client, nextFollowup, latestCallLog, latestS
 };
 
 export const createClient = async (payload, currentUser) => {
+  const assignedStaff =
+    (await assertValidAssignee(payload.assignedStaff || currentUser._id, currentUser)) ||
+    currentUser._id;
+
+  await assertNoPendingWorkBeforeAssignment(assignedStaff, currentUser);
+
   const client = await Client.create({
     ...payload,
-    assignedStaff: (await assertValidAssignee(payload.assignedStaff || currentUser._id, currentUser)) || currentUser._id,
+    assignedStaff,
     createdBy: currentUser._id,
   });
 
@@ -591,20 +641,56 @@ export const importClients = async (payload, currentUser) => {
   const assignmentMode = ["file", "single", "roundRobin"].includes(payload?.assignmentMode) ? payload.assignmentMode : "file";
   const fileName = normalizeString(payload?.fileName);
   const resolveAssignee = await buildAssigneeResolver(currentUser);
+
   const selectedSingleAssignee =
     assignmentMode === "single"
       ? await assertValidAssignee(payload.assignedUserId || payload.assignedStaff || currentUser._id, currentUser)
       : null;
+
   const roundRobinCandidates =
     assignmentMode === "roundRobin"
       ? (Array.isArray(payload.roundRobinUserIds) && payload.roundRobinUserIds.length
         ? payload.roundRobinUserIds
         : (await getAssignableUsersForImport(currentUser)).map((user) => user._id))
       : [];
+
   const resolvedRoundRobinUsers =
     assignmentMode === "roundRobin"
       ? await Promise.all(roundRobinCandidates.map((userId) => assertValidAssignee(userId, currentUser)))
       : [];
+
+  let availableRoundRobinUsers = resolvedRoundRobinUsers;
+
+  if (assignmentMode === "roundRobin") {
+    const availableUsers = [];
+
+    for (const userId of resolvedRoundRobinUsers) {
+      try {
+        await assertNoPendingWorkBeforeAssignment(userId, currentUser);
+        availableUsers.push(userId);
+      } catch (_error) {
+        // Skip users who have pending work
+      }
+    }
+
+    if (!availableUsers.length) {
+      throw new ApiError(
+        400,
+        "All selected users have pending follow-ups/site visits. Complete pending work before assigning new leads."
+      );
+    }
+
+    availableRoundRobinUsers = availableUsers;
+  }
+
+  // Single user assignment check
+  if (selectedSingleAssignee) {
+    await assertNoPendingWorkBeforeAssignment(
+      selectedSingleAssignee,
+      currentUser
+    );
+  }
+
   const importBatchId = new mongoose.Types.ObjectId().toString();
   const seenPhones = new Set();
   const candidates = [];
@@ -711,10 +797,33 @@ export const importClients = async (payload, currentUser) => {
     if (assignmentMode === "single") {
       resolvedAssignedStaff = selectedSingleAssignee || currentUser._id;
     } else if (assignmentMode === "roundRobin" && resolvedRoundRobinUsers.length) {
-      resolvedAssignedStaff = resolvedRoundRobinUsers[roundRobinIndex % resolvedRoundRobinUsers.length];
+      resolvedAssignedStaff = availableRoundRobinUsers[roundRobinIndex % availableRoundRobinUsers.length];
       roundRobinIndex += 1;
     } else if (assignmentMode === "file") {
       resolvedAssignedStaff = resolvedAssignedFromFile || currentUser._id;
+    }
+
+    try {
+      assertNoPendingWorkBeforeAssignment(resolvedAssignedStaff, currentUser);
+    } catch (lockError) {
+      invalidRows.push({
+        rowNumber,
+        phone: clientPhoneNumber,
+        clientName,
+        email: email || "",
+        propertyType: normalizeImportPropertyType(row.propertyType || row.bhk || "2BHK"),
+        requirementType,
+        budgetMin: parsedBudgetMin,
+        budgetMax: parsedBudgetMax,
+        areaPreference,
+        source,
+        assignedStaff: assignedFromFile || String(resolvedAssignedStaff || ""),
+        leadStatus,
+        interestLevel,
+        notes,
+        errors: [lockError.message],
+      });
+      return;
     }
 
     const assignedStaffId = String(resolvedAssignedStaff || currentUser._id);
@@ -1314,7 +1423,16 @@ export const updateClient = async (clientId, payload, currentUser) => {
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, "assignedStaff")) {
-    payload.assignedStaff = await assertValidAssignee(payload.assignedStaff, currentUser);
+    const newAssignedStaff = await assertValidAssignee(payload.assignedStaff, currentUser);
+
+    const currentAssignedStaffId = toObjectIdString(client.assignedStaff || client.assignedTo);
+    const newAssignedStaffId = toObjectIdString(newAssignedStaff);
+
+    if (newAssignedStaffId && newAssignedStaffId !== currentAssignedStaffId) {
+      await assertNoPendingWorkBeforeAssignment(newAssignedStaff, currentUser);
+    }
+
+    payload.assignedStaff = newAssignedStaff;
   }
 
   client.set(payload);
