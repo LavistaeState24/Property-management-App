@@ -1,6 +1,6 @@
 import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import AdvancedDataTable from "../../../components/common/AdvancedDataTable";
 import Badge from "../../../components/common/Badge";
@@ -82,10 +82,44 @@ export default function ProjectsPage() {
     }
   };
 
+  const getSavedProjectsTableState = () => {
+    try {
+      return JSON.parse(sessionStorage.getItem("projectsTableState")) || {};
+    } catch {
+      return {};
+    }
+  };
+
+  const [searchParams] = useSearchParams();
+
+  const savedTableState = getSavedProjectsTableState();
+
+  const initialTablePage =
+    Number(searchParams.get("page")) ||
+    savedTableState.page ||
+    1;
+
+  const initialTableRows =
+    Number(searchParams.get("rows")) ||
+    savedTableState.rowsPerPage ||
+    10;
+
+  const handleProjectsTableStateChange = (state) => {
+    sessionStorage.setItem("projectsTableState", JSON.stringify(state));
+  };
+
   const actionButtonClassName =
     "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2";
   const deleteActionButtonClassName =
     "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-300";
+
+  const getProjectsReturnPath = () => {
+    const state = JSON.parse(sessionStorage.getItem("projectsTableState") || "{}");
+    const page = state.page || 1;
+    const rows = state.rowsPerPage || 10;
+
+    return `/projects?page=${page}&rows=${rows}`;
+  };
 
   const columns = [
     {
@@ -135,13 +169,17 @@ export default function ProjectsPage() {
       label: "Actions",
       render: (row) => (
         <div className="flex items-center gap-2 whitespace-nowrap">
-          <Link to={`/projects/${row._id}`}>
+          <Link
+            to={`/projects/${row._id}?returnTo=${encodeURIComponent(getProjectsReturnPath())}`}
+          >
             <button type="button" className={actionButtonClassName} title="View project" aria-label="View project">
               <Eye className="h-3.5 w-3.5" />
             </button>
           </Link>
           {canUpdateProjects ? (
-            <Link to={`/projects/${row._id}/edit`}>
+            <Link
+              to={`/projects/${row._id}/edit?returnTo=${encodeURIComponent(getProjectsReturnPath())}`}
+            >
               <button type="button" className={actionButtonClassName} title="Edit project" aria-label="Edit project">
                 <Pencil className="h-3.5 w-3.5" />
               </button>
@@ -199,6 +237,9 @@ export default function ProjectsPage() {
         emptyMessage="No projects found."
         searchPlaceholder="Search projects..."
         defaultRowsPerPage={10}
+        initialPage={initialTablePage}
+        initialRowsPerPage={initialTableRows}
+        onTableStateChange={handleProjectsTableStateChange}
       />
 
       <Modal

@@ -30,8 +30,9 @@ const formatLabel = (value) => {
 
 export default function Breadcrumbs() {
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
   const navigation = useNavigation();
-
+  console.log("BREADCRUMB STATE:", location.state);
   const pathnames = location.pathname.split("/").filter(Boolean);
   const isLoading = navigation.state !== "idle";
 
@@ -51,6 +52,14 @@ export default function Breadcrumbs() {
       </nav>
     );
   }
+
+  const getBreadcrumbTarget = (routeTo) => {
+    if (routeTo === "/projects") {
+    return searchParams.get("returnTo") || "/projects";
+  }
+
+    return routeTo;
+  };
 
   return (
     <nav aria-label="breadcrumb" className="mb-4 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-muted shadow-xl backdrop-blur-lg">
@@ -77,7 +86,7 @@ export default function Breadcrumbs() {
                 {formatLabel(name)}
               </span>
             ) : (
-              <Link to={routeTo} className="text-white/60 transition hover:text-gold-2">
+              <Link to={getBreadcrumbTarget(routeTo)} className="text-white/60 transition hover:text-gold-2">
                 {formatLabel(name)}
               </Link>
             )}

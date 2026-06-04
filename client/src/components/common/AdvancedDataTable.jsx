@@ -31,14 +31,28 @@ export default function AdvancedDataTable({
   searchPlaceholder = "Search records...",
   rowsPerPageOptions = defaultRowsPerPageOptions,
   defaultRowsPerPage = 10,
+  initialPage = 1,
+  initialRowsPerPage,
+  onTableStateChange,
 }) {
   const resolvedDefaultRowsPerPage = rowsPerPageOptions.includes(defaultRowsPerPage)
     ? defaultRowsPerPage
     : rowsPerPageOptions[0];
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(resolvedDefaultRowsPerPage);
-  void loadingMessage;
+  const [currentPage, setCurrentPage] = useState(initialPage || 1);
+  const [rowsPerPage, setRowsPerPage] = useState(
+    initialRowsPerPage || resolvedDefaultRowsPerPage
+  );
+
+  const updateTableState = (page, rows = rowsPerPage) => {
+    setCurrentPage(page);
+    setRowsPerPage(rows);
+    onTableStateChange?.({
+      page,
+      rowsPerPage: rows,
+    });
+  };
+
 
   const filteredRows = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -67,14 +81,16 @@ export default function AdvancedDataTable({
   const paginatedRows = filteredRows.slice(pageStartIndex, pageEndIndex);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, rowsPerPage]);
+    if (searchQuery.trim()) {
+      updateTableState(1, rowsPerPage);
+    }
+  }, [searchQuery]);
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+    if (!loading && currentPage > totalPages) {
+      updateTableState(totalPages, rowsPerPage);
     }
-  }, [currentPage, totalPages]);
+  }, [currentPage, loading, totalPages, rowsPerPage]);
 
   return (
     <div className="overflow-hidden rounded-[24px] border border-white/10 bg-white/5 shadow-glass sm:rounded-[28px]">
@@ -108,7 +124,7 @@ export default function AdvancedDataTable({
             <span>Rows</span>
             <select
               value={rowsPerPage}
-              onChange={(event) => setRowsPerPage(Number(event.target.value))}
+              onChange={(event) => updateTableState(1, Number(event.target.value))}
               className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-ivory outline-none transition focus:border-gold/50"
             >
               {rowsPerPageOptions.map((option) => (
@@ -176,7 +192,7 @@ export default function AdvancedDataTable({
         <div className="flex items-center gap-2 self-end md:self-auto">
           <button
             type="button"
-            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            onClick={() => updateTableState(Math.max(1, currentPage - 1))}
             disabled={loading || currentPage === 1}
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-ivory transition hover:border-gold/50 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -190,7 +206,7 @@ export default function AdvancedDataTable({
 
           <button
             type="button"
-            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            onClick={() => updateTableState(Math.min(totalPages, currentPage + 1))}
             disabled={loading || currentPage === totalPages}
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-ivory transition hover:border-gold/50 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
           >

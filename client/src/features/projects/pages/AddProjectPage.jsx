@@ -2,7 +2,7 @@ import { Building2, CalendarDays, MapPin, Save, Shapes, Wallet } from "lucide-re
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
-
+import { useLocation } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import FormInput from "../../../components/common/FormInput";
 import MultiSelectDropdown from "../../../components/common/MultiSelectDropdown";
@@ -48,25 +48,78 @@ const initialState = {
 
 const MAX_BROCHURE_SIZE_BYTES = 1000 * 1024 * 1024;
 
+const normalizePropertyTypeKey = (value) =>
+  String(value || "")
+    .trim()
+    .replace(/\s+/g, "")
+    .toUpperCase();
+
+const projectPropertyTypeValueMap = new Map(
+  projectPropertyTypes.map((option) => [normalizePropertyTypeKey(option), option])
+);
+
 const legacyPropertyTypeMap = {
   "1 BHK": "1BHK",
   "2 BHK": "2BHK",
-  "2.5 BHK": "2.5BHK",
+  "2bhk": "2BHK",
+  "2 bhk": "2BHK",
   "3 BHK": "3BHK",
+  "3bhk": "3BHK",
+  "3 bhk": "3BHK",
   "4 BHK": "4BHK",
+  "4bhk": "4BHK",
+  "4 bhk": "4BHK",
+};
+
+const normalizeProjectTypeItem = (item) => {
+  const raw = String(item || "").trim();
+
+  if (!raw) return "";
+
+  const compact = raw.toLowerCase().replace(/\s+/g, "");
+
+  const bhkMap = {
+    "1bhk": "1BHK",
+    "2bhk": "2BHK",
+    "2.5bhk": "2.5BHK",
+    "3bhk": "3BHK",
+    "4bhk": "4BHK",
+    "5bhk": "5BHK",
+    "6bhk": "6BHK",
+  };
+
+  return bhkMap[compact] || raw;
 };
 
 const normalizePropertyTypeValue = (value) => {
   if (Array.isArray(value)) {
-    return value.map((item) => legacyPropertyTypeMap[item] || item).filter(Boolean);
+    return value.map(normalizeProjectTypeItem).filter(Boolean);
   }
 
   if (typeof value === "string") {
     return value
       .split(",")
-      .map((item) => item.trim())
-      .map((item) => legacyPropertyTypeMap[item] || item)
+      .map(normalizeProjectTypeItem)
       .filter(Boolean);
+  }
+
+  return [];
+};
+
+const getProjectPropertyTypeSource = (project) => {
+  const propertyTypeValue = project?.propertyType;
+
+  if (Array.isArray(propertyTypeValue) && propertyTypeValue.length) {
+    return propertyTypeValue;
+  }
+
+  if (typeof propertyTypeValue === "string" && propertyTypeValue.trim()) {
+    return propertyTypeValue;
+  }
+
+  const legacyConfiguration = String(project?.configuration || "").trim();
+  if (legacyConfiguration && /(\d+(?:\.\d+)?\s*BHK)|villa|plot|commercial/i.test(legacyConfiguration)) {
+    return legacyConfiguration;
   }
 
   return [];
@@ -112,37 +165,43 @@ const formatCompactPrice = (value) => {
   return amount.toString();
 };
 
-const mapProjectToForm = (project) => ({
-  projectName: project.projectName || "",
-  publicAlias: project.publicAlias || "",
-  location: project.location || "",
-  area: project.area || "",
-  propertyType: normalizePropertyTypeValue(project.propertyType),
-  configuration: project.configuration || "",
-  sizeRange: {
-    label: project.sizeRange?.label || "",
-    min: project.sizeRange?.min?.toString() || "",
-    max: project.sizeRange?.max?.toString() || "",
-    unit: project.sizeRange?.unit || "sqft",
-  },
-  priceRange: {
-    min: project.priceRange?.min?.toString() || "",
-    max: project.priceRange?.max?.toString() || "",
-    currencyLabel: project.priceRange?.currencyLabel || "INR",
-  },
-  totalPlotSize: project.totalPlotSize || "",
-  totalBlocks: project.totalBlocks?.toString() || "",
-  totalUnits: project.totalUnits?.toString() || "",
-  availableUnits: project.availableUnits?.toString() || "",
-  possessionDate: project.possessionDate ? new Date(project.possessionDate).toISOString().slice(0, 10) : "",
-  amenities: Array.isArray(project.amenities) ? project.amenities.join(", ") : "",
-  hasSampleVideo: project.hasSampleVideo ? "true" : "false",
-  sampleVideoUrl: project.sampleVideoUrl || "",
-  internalNotes: project.internalNotes || "",
-  builderDetails: project.builderDetails || "",
-  status: project.status || "active",
-  brochure: project.brochure || null,
-});
+const mapProjectToForm = (project) => (
+
+  console.log(
+    "FORM PROPERTY TYPE:",
+    normalizePropertyTypeValue(project.propertyType)
+  ),
+  {
+    projectName: project.projectName || "",
+    publicAlias: project.publicAlias || "",
+    location: project.location || "",
+    area: project.area || "",
+    propertyType: normalizePropertyTypeValue(getProjectPropertyTypeSource(project)),
+    configuration: project.configuration || "",
+    sizeRange: {
+      label: project.sizeRange?.label || "",
+      min: project.sizeRange?.min?.toString() || "",
+      max: project.sizeRange?.max?.toString() || "",
+      unit: project.sizeRange?.unit || "sqft",
+    },
+    priceRange: {
+      min: project.priceRange?.min?.toString() || "",
+      max: project.priceRange?.max?.toString() || "",
+      currencyLabel: project.priceRange?.currencyLabel || "INR",
+    },
+    totalPlotSize: project.totalPlotSize || "",
+    totalBlocks: project.totalBlocks?.toString() || "",
+    totalUnits: project.totalUnits?.toString() || "",
+    availableUnits: project.availableUnits?.toString() || "",
+    possessionDate: project.possessionDate ? new Date(project.possessionDate).toISOString().slice(0, 10) : "",
+    amenities: Array.isArray(project.amenities) ? project.amenities.join(", ") : "",
+    hasSampleVideo: project.hasSampleVideo ? "true" : "false",
+    sampleVideoUrl: project.sampleVideoUrl || "",
+    internalNotes: project.internalNotes || "",
+    builderDetails: project.builderDetails || "",
+    status: project.status || "active",
+    brochure: project.brochure || null,
+  });
 
 const normalizeBrochureAsset = (brochure) => {
   if (!brochure?.url) {
@@ -162,6 +221,12 @@ const normalizeBrochureAsset = (brochure) => {
 
 export default function AddProjectPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+
+  const goBackToProjects = () => {
+    navigate(searchParams.get("returnTo") || "/projects");
+  };
   const { id } = useParams();
   const isEditMode = Boolean(id);
   const [formError, setFormError] = useState("");
@@ -182,7 +247,7 @@ export default function AddProjectPage() {
     reset,
   } = useForm({
     mode: "onBlur",
-    shouldUnregister: true,
+    shouldUnregister: false,
     defaultValues: initialState,
   });
 
@@ -290,12 +355,12 @@ export default function AddProjectPage() {
 
       if (isEditMode) {
         await projectService.update(id, payload);
-        navigate(`/projects/${id}`);
+        goBackToProjects();
         return;
       }
 
       await projectService.create(payload);
-      navigate("/projects");
+      goBackToProjects();
     } catch (requestError) {
       applyServerErrors(requestError, setError, setFormError);
     }
@@ -363,6 +428,7 @@ export default function AddProjectPage() {
         <Controller
           control={control}
           name="propertyType"
+          defaultValue={[]}
           render={({ field }) => (
             <MultiSelectDropdown
               label="Property Type"
@@ -370,7 +436,10 @@ export default function AddProjectPage() {
               options={projectPropertyTypes}
               placeholder="Select property types"
               error={getErrorMessage(errors.propertyType)}
-              {...field}
+              value={field.value || []}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              name={field.name}
             />
           )}
         />
@@ -579,7 +648,7 @@ export default function AddProjectPage() {
 
         <div className="flex justify-end gap-3 text-right lg:col-span-2">
           {isEditMode ? (
-            <Button type="button" variant="secondary" onClick={() => navigate(`/projects/${id}`)}>
+            <Button type="button" variant="secondary" onClick={goBackToProjects}>
               Cancel
             </Button>
           ) : null}
