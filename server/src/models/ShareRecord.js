@@ -76,7 +76,10 @@ const shareRecordSchema = new mongoose.Schema(
       enum: ["shared", "interested", "follow-up", "site-visit", "closed", "not-interested"],
       default: "shared",
     },
-    followUpDate: Date,
+    followUpDate: {
+      type: Date,
+      default: null,
+    },
     notes: { type: String, trim: true, maxlength: 1000 },
   },
   { timestamps: true }

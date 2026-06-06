@@ -32,7 +32,6 @@ export default function Breadcrumbs() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const navigation = useNavigation();
-  console.log("BREADCRUMB STATE:", location.state);
   const pathnames = location.pathname.split("/").filter(Boolean);
   const isLoading = navigation.state !== "idle";
 

@@ -7,8 +7,8 @@ export const shareRecordService = {
     toast.success("Share record created successfully");
     return data.data;
   },
-  list: async () => {
-    const { data } = await api.get("/share-records",);
+  list: async (requestConfig = {}) => {
+    const { data } = await api.get("/share-records", requestConfig);
     return data.data;
   },
   listByClientPhone: async (clientPhone) => {

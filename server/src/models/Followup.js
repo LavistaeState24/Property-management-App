@@ -37,6 +37,8 @@ const followupSchema = new mongoose.Schema(
       enum: ["Pending", "Completed", "Overdue", "Cancelled"],
       default: "Pending",
     },
+    relatedModule: { type: String, enum: ["shareRecord"], default: undefined },
+    relatedId: { type: mongoose.Schema.Types.ObjectId, default: undefined },
     completed: { type: Boolean, default: false },
     completedAt: { type: Date, default: null },
     completedBy: {

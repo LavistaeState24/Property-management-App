@@ -10,11 +10,31 @@ import SelectDropdown from "../../../components/common/SelectDropdown";
 import { shareRecordStatuses } from "../../../constants/theme";
 import { useCan } from "../../../hooks/useCan";
 import { shareRecordService } from "../../../services/shareRecordService";
-import { dateRules, getErrorMessage, textRules } from "../../../utils/validation";
+import { getErrorMessage, textRules } from "../../../utils/validation";
 
 const formatWhatsAppPhone = (phone) => {
   const digits = String(phone || "").replace(/\D/g, "");
   return digits.length === 10 ? `91${digits}` : digits;
+};
+
+const toLocalDateTimeInputValue = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const pad = (number) => String(number).padStart(2, "0");
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 export default function SharedHistoryPage() {
@@ -63,7 +83,7 @@ export default function SharedHistoryPage() {
     reset({
       status: record.status || "shared",
       notes: record.notes || "",
-      followUpDate: record.followUpDate ? new Date(record.followUpDate).toISOString().slice(0, 10) : "",
+      followUpDate: toLocalDateTimeInputValue(record.followUpDate),
     });
   };
 
@@ -284,10 +304,12 @@ export default function SharedHistoryPage() {
             )}
 
             <FormInput
-              label="Follow-up Date"
-              type="date"
+              label="Follow-up Date & Time"
+              type="datetime-local"
               error={getErrorMessage(errors.followUpDate)}
-              {...register("followUpDate", dateRules("Follow-up date"))}
+              {...register("followUpDate", {
+                required: "Follow-up date and time is required",
+              })}
             />
 
             {actionError ? <p className="text-sm text-rose-300">{actionError}</p> : null}
