@@ -1,5 +1,5 @@
 import { api } from "./api";
-import { toast } from "../utils/toast";
+import { toast } from "../utils/toast"; 
 
 export const followupService = {
   list: async (params, requestConfig = {}) => {
@@ -30,4 +30,8 @@ export const followupService = {
     toast.success("Reminder cancelled successfully");
     return data.data;
   },
+  getPendingWorkSummary: async () => {
+  const { data } = await api.get("/followups/pending-work/summary");
+  return data.data;
+},
 };

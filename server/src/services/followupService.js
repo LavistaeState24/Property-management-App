@@ -1,4 +1,5 @@
 import { Client } from "../models/Client.js";
+import { SiteVisit } from "../models/SiteVisit.js";
 import { Followup } from "../models/Followup.js";
 import { Project } from "../models/Project.js";
 import { User } from "../models/User.js";
@@ -472,4 +473,24 @@ export const createFollowupFromCallLog = async ({ client, assignedStaff, reminde
   });
 
   return followup;
+};
+
+export const getPendingWorkSummary = async (currentUser) => {
+  const userId = currentUser._id;
+
+  const pendingFollowups = await Followup.countDocuments({
+    assignedStaff: userId,
+    status: { $in: ["Pending", "Overdue"] },
+  });
+
+  const pendingSiteVisits = await SiteVisit.countDocuments({
+    assignedStaff: userId,
+    visitStatus: { $in: ["Planned", "Rescheduled"] },
+  });
+
+  return {
+    pendingFollowups,
+    pendingSiteVisits,
+    total: pendingFollowups + pendingSiteVisits,
+  };
 };
