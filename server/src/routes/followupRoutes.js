@@ -7,6 +7,7 @@ import {
   getFollowupCountsHandler,
   listFollowupsHandler,
   updateFollowupHandler,
+  getPendingWorkSummary,
 } from "../controllers/followupController.js";
 import { authorize, protect } from "../middlewares/authMiddleware.js";
 
@@ -19,5 +20,11 @@ router.put("/:id", protect, authorize("followups", "update"), updateFollowupHand
 router.patch("/:id/complete", protect, authorize("followups", "update"), completeFollowupHandler);
 router.patch("/:id/cancel", protect, authorize("followups", "update"), cancelFollowupHandler);
 router.delete("/:id", protect, authorize("followups", "delete"), cancelFollowupHandler);
+router.get(
+  "/pending-work/summary",
+  protect,
+  authorize("followups", "view"),
+  getPendingWorkSummary
+);
 
 export default router;

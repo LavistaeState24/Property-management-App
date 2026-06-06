@@ -5,7 +5,9 @@ import {
   getFollowupCounts,
   listFollowups,
   updateFollowup,
+  getPendingWorkSummary as getPendingWorkSummaryService,
 } from "../services/followupService.js";
+import * as followupService from "../services/followupService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { validateFollowupCompletionInput, validateFollowupInput, validateFollowupUpdateInput } from "../validators/followupValidator.js";
 
@@ -41,3 +43,12 @@ export const cancelFollowupHandler = asyncHandler(async (req, res) => {
   const followup = await cancelFollowup(req.params.id, req.user);
   res.json({ success: true, data: followup });
 });
+
+export const getPendingWorkSummary = async (req, res) => {
+  const data = await getPendingWorkSummaryService(req.user);
+
+  res.json({
+    success: true,
+    data,
+  });
+};

@@ -4,6 +4,7 @@ import Breadcrumbs from "../common/Breadcrumbs.jsx";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import ReminderToastNotifier from "../../features/notifications/ReminderToastNotifier";
+import PendingWorkGuard from "../../features/notifications/PendingWorkGuard";
 
 export default function DashboardLayout() {
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
@@ -35,6 +36,7 @@ export default function DashboardLayout() {
   return (
     <div className="min-h-screen bg-ink bg-glow text-ivory">
       <ReminderToastNotifier />
+       <PendingWorkGuard />
       <Navbar isSidebarOpen={isSidebarOpen} onToggleSidebar={toggleSidebar} />
       <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
 
