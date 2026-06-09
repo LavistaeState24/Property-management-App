@@ -32,20 +32,33 @@ export const buildProjectFilters = (query) => {
   }
 
   if (query.propertyType) {
-    const propertyTypeValues = expandPropertyTypeCategory(query.propertyType);
-    filters.propertyType = {
-      $in: propertyTypeValues.map((value) => new RegExp(`^${escapeRegex(value)}$`, "i")),
+    console.log("SELECTED CATEGORY:", query.propertyType);
+
+    const categoryMap = {
+      Apartment: ["Apartment"],
+      Villa: ["Villa", "Villa / Bungalow"],
+      Plot: ["Plot"],
+      Commercial: ["Commercial", "Office", "Showroom"],
+      Duplex: ["Duplex"],
+      Penthouse: ["Penthouse", "Penthouse + Duplex", "penthouse"],
+    };
+
+    const values = categoryMap[query.propertyType] || [query.propertyType];
+
+    filters.configuration = {
+      $in: values.map(
+        (value) => new RegExp(`^${escapeRegex(value)}$`, "i")
+      ),
     };
   }
 
   if (query.bhk) {
     const bhkPattern = escapeRegex(query.bhk);
-    filters.$and = [
-      ...(filters.$and || []),
-      {
-        $or: [{ configuration: { $regex: bhkPattern, $options: "i" } }, { propertyType: { $regex: bhkPattern, $options: "i" } }],
-      },
-    ];
+
+    filters.propertyType = {
+      $regex: bhkPattern,
+      $options: "i",
+    };
   }
 
   if (query.status) {

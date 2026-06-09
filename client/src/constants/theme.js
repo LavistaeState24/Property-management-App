@@ -105,7 +105,6 @@ export const projectSearchTypeOptions = [
   "Commercial",
   "Duplex",
   "Penthouse",
-  "Plot",
 ];
 
 export const projectStatuses = ["active", "sold out", "upcoming"];

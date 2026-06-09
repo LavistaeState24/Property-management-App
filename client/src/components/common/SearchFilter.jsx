@@ -81,10 +81,10 @@ export default function SearchFilter({
         })}
       />
       <SelectDropdown
-        label="Type"
+        label="Category"
         icon={Building2}
         options={propertyTypeOptions}
-        placeholder="Select type"
+        placeholder="Select category"
         error={getErrorMessage(errors.propertyType)}
         {...register("propertyType")}
       />
