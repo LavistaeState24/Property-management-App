@@ -438,7 +438,11 @@ export const hasOverduePendingFollowup = async (clientId) =>
     })
   );
 
-export const createFollowupFromCallLog = async ({ client, assignedStaff, reminderType, reminderDateTime, note, createdBy }) => {
+export const createFollowupFromCallLog = async ({ client, assignedStaff, leadStatus, reminderType, reminderDateTime, note, createdBy }) => {
+  if (["Lost", "Closed"].includes(leadStatus)) {
+    return null;
+  }
+
   if (!reminderDateTime || !reminderType || reminderType === "None") {
     return null;
   }

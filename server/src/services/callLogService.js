@@ -62,6 +62,12 @@ export const createCallLog = async (clientId, payload, currentUser) => {
   const client = await getAccessibleClient(clientId, currentUser);
   const previousClient = client.toObject();
   const hasOverdueReminder = await hasOverduePendingFollowup(client._id);
+  const isTerminalLeadStatus = ["Lost", "Closed"].includes(payload.leadStatus);
+  const normalizedPayload = {
+    ...payload,
+    nextFollowupDateTime: isTerminalLeadStatus ? null : payload.nextFollowupDateTime || null,
+    reminderType: isTerminalLeadStatus ? "None" : payload.reminderType,
+  };
 
   if (shouldBlockReminderAction(currentUser.role, hasOverdueReminder)) {
     throw createReminderLockError();
@@ -80,23 +86,23 @@ export const createCallLog = async (clientId, payload, currentUser) => {
   }
 
   const callLog = await CallLog.create({
-    ...payload,
+    ...normalizedPayload,
     client: client._id,
     createdBy: currentUser._id,
   });
 
   const clientUpdates = {
-    leadStatus: payload.leadStatus,
-    lastCallStatus: payload.discussionSummary,
-    nextFollowUpDate: payload.nextFollowupDateTime,
+    leadStatus: normalizedPayload.leadStatus,
+    lastCallStatus: normalizedPayload.discussionSummary,
+    nextFollowUpDate: normalizedPayload.nextFollowupDateTime,
   };
 
-  if (payload.interestLevel) {
-    clientUpdates.interestLevel = payload.interestLevel;
+  if (normalizedPayload.interestLevel) {
+    clientUpdates.interestLevel = normalizedPayload.interestLevel;
   }
 
-  if (payload.requirementNote) {
-    clientUpdates.notes = [client.notes, payload.requirementNote].filter(Boolean).join("\n\n");
+  if (normalizedPayload.requirementNote) {
+    clientUpdates.notes = [client.notes, normalizedPayload.requirementNote].filter(Boolean).join("\n\n");
   }
 
   client.set(clientUpdates);
@@ -105,9 +111,10 @@ export const createCallLog = async (clientId, payload, currentUser) => {
   await createFollowupFromCallLog({
     client: client._id,
     assignedStaff: getAssignedUserId(client) || currentUser._id,
-    reminderType: payload.reminderType,
-    reminderDateTime: payload.nextFollowupDateTime,
-    note: payload.nextAction || payload.discussionSummary,
+    leadStatus: normalizedPayload.leadStatus,
+    reminderType: normalizedPayload.reminderType,
+    reminderDateTime: normalizedPayload.nextFollowupDateTime,
+    note: normalizedPayload.nextAction || normalizedPayload.discussionSummary,
     createdBy: currentUser._id,
   });
 
@@ -120,7 +127,8 @@ export const createCallLog = async (clientId, payload, currentUser) => {
       performedBy: currentUser._id,
       metadata: {
         callConnected: Boolean(payload.callConnected),
-        reminderType: payload.reminderType,
+        reminderType: normalizedPayload.reminderType,
+        lostReason: normalizedPayload.lostReason || "",
       },
     }),
     recordLeadChangeActivities({

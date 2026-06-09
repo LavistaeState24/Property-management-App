@@ -96,15 +96,6 @@ export const getProjects = async (query, currentUser) => {
     Project.countDocuments(scopedFilters),
   ]);
 
-  console.log(
-  "PROJECT TYPES:",
-  items.map((p) => ({
-    name: p.projectName,
-    propertyType: p.propertyType,
-    configuration: p.configuration,
-  }))
-);
-
   return {
     items,
     meta: {
@@ -196,14 +187,6 @@ export const getDashboardSummary = async (currentUser) => {
   });
 
   const [totalProjects, activeProjects, upcomingProjects] = await Promise.all([
-    console.log(
-      "PROJECT TYPES:",
-      items.map((p) => ({
-        name: p.projectName,
-        propertyType: p.propertyType,
-        configuration: p.configuration,
-      }))
-    ),
   Project.countDocuments(projectFilters),
     Project.countDocuments({ ...projectFilters, status: "active" }),
     Project.countDocuments({ ...projectFilters, status: "upcoming" }),

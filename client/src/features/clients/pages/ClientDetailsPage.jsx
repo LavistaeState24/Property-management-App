@@ -232,10 +232,20 @@ export default function ClientDetailsPage() {
     setIsSavingCall(true);
 
     try {
+      if (callForm.leadStatus === "Lost" && !String(callForm.lostReason || "").trim()) {
+        setCallErrors({ lostReason: "Lost reason is required when lead status is Lost" });
+        return;
+      }
+
       const payload = {
         ...callForm,
         callDuration: callForm.callDuration ? Number(callForm.callDuration) : undefined,
-        nextFollowupDateTime: callForm.nextFollowupDateTime || null,
+        nextFollowupDateTime: isTerminalLeadStatus
+          ? null
+          : callForm.nextFollowupDateTime || null,
+        reminderType: isTerminalLeadStatus
+          ? "None"
+          : callForm.reminderType,
       };
       const savedCallLog = await clientService.createCallLog(id, payload);
       const [updatedClient, reminderData] = await Promise.all([
@@ -346,6 +356,8 @@ export default function ClientDetailsPage() {
     return "gold";
   };
 
+  const isTerminalLeadStatus = ["Lost", "Closed"].includes(callForm.leadStatus);
+
   if (loadError) {
     return (
       <div className="space-y-4">
@@ -449,144 +461,145 @@ export default function ClientDetailsPage() {
       </div>
 
       <div className="space-y-6">
-          <ClientActivityTimeline leadId={client._id} refreshKey={timelineRefreshKey} />
+        <ClientActivityTimeline leadId={client._id} refreshKey={timelineRefreshKey} />
 
-          {canShowQuickUpdate ? (
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-              <div className="flex items-center gap-3">
-                <ClipboardList className="h-5 w-5 text-gold-2" />
-                <h3 className="font-display text-2xl">Quick Pipeline Update</h3>
+        {canShowQuickUpdate ? (
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+            <div className="flex items-center gap-3">
+              <ClipboardList className="h-5 w-5 text-gold-2" />
+              <h3 className="font-display text-2xl">Quick Pipeline Update</h3>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              {!isSalesUser ? (
+                <SelectDropdown
+                  label="Assigned Staff"
+                  options={staffOptions}
+                  placeholder="Auto assign to creator"
+                  value={quickEdit.assignedStaff}
+                  onChange={(event) => setQuickEdit((current) => ({ ...current, assignedStaff: event.target.value }))}
+                />
+              ) : null}
+              <SelectDropdown
+                label="Lead Status"
+                options={leadStatusOptions}
+                value={quickEdit.leadStatus}
+                onChange={(event) => setQuickEdit((current) => ({ ...current, leadStatus: event.target.value }))}
+              />
+              <SelectDropdown
+                label="Interest Level"
+                options={interestLevelOptions}
+                value={quickEdit.interestLevel}
+                onChange={(event) => setQuickEdit((current) => ({ ...current, interestLevel: event.target.value }))}
+              />
+              <FormInput
+                label="Last Call Status"
+                placeholder="Answered, no response, busy..."
+                value={quickEdit.lastCallStatus}
+                onChange={(event) => setQuickEdit((current) => ({ ...current, lastCallStatus: event.target.value }))}
+              />
+              <FormInput
+                label="Next Follow-up Date"
+                type="date"
+                value={quickEdit.nextFollowUpDate}
+                onChange={(event) => setQuickEdit((current) => ({ ...current, nextFollowUpDate: event.target.value }))}
+              />
+              <FormInput
+                label="Lead Notes"
+                as="textarea"
+                rows={4}
+                className="lg:col-span-2"
+                value={quickEdit.notes}
+                onChange={(event) => setQuickEdit((current) => ({ ...current, notes: event.target.value }))}
+              />
+              <FormInput
+                label="Internal Notes"
+                as="textarea"
+                rows={4}
+                className="lg:col-span-2"
+                value={quickEdit.internalNotes}
+                onChange={(event) => setQuickEdit((current) => ({ ...current, internalNotes: event.target.value }))}
+              />
+
+              {updateError ? <p className="text-sm text-rose-300">{updateError}</p> : null}
+
+              <div className="flex justify-end">
+                <Button type="button" onClick={handleQuickUpdate} disabled={isSaving}>
+                  {isSaving ? "Saving..." : "Save Update"}
+                </Button>
               </div>
+            </div>
+          </div>
+        ) : null}
 
-              <div className="mt-5 space-y-4">
-                {!isSalesUser ? (
-                  <SelectDropdown
-                    label="Assigned Staff"
-                    options={staffOptions}
-                    placeholder="Auto assign to creator"
-                    value={quickEdit.assignedStaff}
-                    onChange={(event) => setQuickEdit((current) => ({ ...current, assignedStaff: event.target.value }))}
-                  />
-                ) : null}
+        {canShowQuickUpdate ? (
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+            <div className="flex items-center gap-3">
+              <Phone className="h-5 w-5 text-gold-2" />
+              <h3 className="font-display text-2xl">Call Update</h3>
+            </div>
+
+            <div className="mt-5 grid gap-4">
+              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm font-semibold text-ivory">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-gold"
+                  checked={callForm.callConnected}
+                  onChange={(event) => updateCallForm("callConnected", event.target.checked)}
+                />
+                Call connected
+              </label>
+
+              <div className="grid gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
                 <SelectDropdown
                   label="Lead Status"
                   options={leadStatusOptions}
-                  value={quickEdit.leadStatus}
-                  onChange={(event) => setQuickEdit((current) => ({ ...current, leadStatus: event.target.value }))}
+                  value={callForm.leadStatus}
+                  onChange={(event) => updateCallForm("leadStatus", event.target.value)}
+                  error={callErrors.leadStatus}
                 />
                 <SelectDropdown
                   label="Interest Level"
                   options={interestLevelOptions}
-                  value={quickEdit.interestLevel}
-                  onChange={(event) => setQuickEdit((current) => ({ ...current, interestLevel: event.target.value }))}
+                  value={callForm.interestLevel}
+                  onChange={(event) => updateCallForm("interestLevel", event.target.value)}
+                  error={callErrors.interestLevel}
                 />
-                <FormInput
-                  label="Last Call Status"
-                  placeholder="Answered, no response, busy..."
-                  value={quickEdit.lastCallStatus}
-                  onChange={(event) => setQuickEdit((current) => ({ ...current, lastCallStatus: event.target.value }))}
-                />
-                <FormInput
-                  label="Next Follow-up Date"
-                  type="date"
-                  value={quickEdit.nextFollowUpDate}
-                  onChange={(event) => setQuickEdit((current) => ({ ...current, nextFollowUpDate: event.target.value }))}
-                />
-                <FormInput
-                  label="Lead Notes"
-                  as="textarea"
-                  rows={4}
-                  className="lg:col-span-2"
-                  value={quickEdit.notes}
-                  onChange={(event) => setQuickEdit((current) => ({ ...current, notes: event.target.value }))}
-                />
-                <FormInput
-                  label="Internal Notes"
-                  as="textarea"
-                  rows={4}
-                  className="lg:col-span-2"
-                  value={quickEdit.internalNotes}
-                  onChange={(event) => setQuickEdit((current) => ({ ...current, internalNotes: event.target.value }))}
-                />
-
-                {updateError ? <p className="text-sm text-rose-300">{updateError}</p> : null}
-
-                <div className="flex justify-end">
-                  <Button type="button" onClick={handleQuickUpdate} disabled={isSaving}>
-                    {isSaving ? "Saving..." : "Save Update"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {canShowQuickUpdate ? (
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-              <div className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-gold-2" />
-                <h3 className="font-display text-2xl">Call Update</h3>
               </div>
 
-              <div className="mt-5 grid gap-4">
-                <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm font-semibold text-ivory">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-gold"
-                    checked={callForm.callConnected}
-                    onChange={(event) => updateCallForm("callConnected", event.target.checked)}
-                  />
-                  Call connected
-                </label>
+              <FormInput
+                label="Discussion Summary"
+                as="textarea"
+                rows={4}
+                value={callForm.discussionSummary}
+                onChange={(event) => updateCallForm("discussionSummary", event.target.value)}
+                error={callErrors.discussionSummary}
+              />
+              <FormInput
+                label="Requirement Note"
+                as="textarea"
+                rows={3}
+                value={callForm.requirementNote}
+                onChange={(event) => updateCallForm("requirementNote", event.target.value)}
+                error={callErrors.requirementNote}
+              />
+              <FormInput
+                label="Objection"
+                as="textarea"
+                rows={3}
+                value={callForm.objection}
+                onChange={(event) => updateCallForm("objection", event.target.value)}
+                error={callErrors.objection}
+              />
 
-                <div className="grid gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
-                  <SelectDropdown
-                    label="Lead Status"
-                    options={leadStatusOptions}
-                    value={callForm.leadStatus}
-                    onChange={(event) => updateCallForm("leadStatus", event.target.value)}
-                    error={callErrors.leadStatus}
-                  />
-                  <SelectDropdown
-                    label="Interest Level"
-                    options={interestLevelOptions}
-                    value={callForm.interestLevel}
-                    onChange={(event) => updateCallForm("interestLevel", event.target.value)}
-                    error={callErrors.interestLevel}
-                  />
-                </div>
-
+              <div className="grid gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
                 <FormInput
-                  label="Discussion Summary"
-                  as="textarea"
-                  rows={4}
-                  value={callForm.discussionSummary}
-                  onChange={(event) => updateCallForm("discussionSummary", event.target.value)}
-                  error={callErrors.discussionSummary}
+                  label="Next Action"
+                  value={callForm.nextAction}
+                  onChange={(event) => updateCallForm("nextAction", event.target.value)}
+                  error={callErrors.nextAction}
                 />
-                <FormInput
-                  label="Requirement Note"
-                  as="textarea"
-                  rows={3}
-                  value={callForm.requirementNote}
-                  onChange={(event) => updateCallForm("requirementNote", event.target.value)}
-                  error={callErrors.requirementNote}
-                />
-                <FormInput
-                  label="Objection"
-                  as="textarea"
-                  rows={3}
-                  value={callForm.objection}
-                  onChange={(event) => updateCallForm("objection", event.target.value)}
-                  error={callErrors.objection}
-                />
-
-                <div className="grid gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
-                  <FormInput
-                    label="Next Action"
-                    value={callForm.nextAction}
-                    onChange={(event) => updateCallForm("nextAction", event.target.value)}
-                    error={callErrors.nextAction}
-                  />
+                {!isTerminalLeadStatus ? (
                   <FormInput
                     label="Next Follow-up"
                     type="datetime-local"
@@ -594,140 +607,55 @@ export default function ClientDetailsPage() {
                     onChange={(event) => updateCallForm("nextFollowupDateTime", event.target.value)}
                     error={callErrors.nextFollowupDateTime}
                   />
-                  <SelectDropdown
-                    label="Reminder Type"
-                    options={["None", ...reminderTypes]}
-                    value={callForm.reminderType}
-                    onChange={(event) => updateCallForm("reminderType", event.target.value)}
-                    error={callErrors.reminderType}
-                  />
-                  <FormInput
-                    label="Call Duration (minutes)"
-                    type="number"
-                    min="0"
-                    value={callForm.callDuration}
-                    onChange={(event) => updateCallForm("callDuration", event.target.value)}
-                    error={callErrors.callDuration}
-                  />
-                </div>
-
-                {callForm.leadStatus === "Lost" ? (
-                  <FormInput
-                    label="Lost Reason"
-                    as="textarea"
-                    rows={3}
-                    value={callForm.lostReason}
-                    onChange={(event) => updateCallForm("lostReason", event.target.value)}
-                    error={callErrors.lostReason}
-                  />
                 ) : null}
-
-                {callError ? <p className="text-sm text-rose-300">{callError}</p> : null}
-
-                <div className="flex justify-end">
-                  <Button type="button" icon={Clock} onClick={handleCallUpdate} disabled={isSavingCall}>
-                    {isSavingCall ? "Saving..." : "Save Call Update"}
-                  </Button>
-                </div>
+                <SelectDropdown
+                  label="Reminder Type"
+                  options={["None", ...reminderTypes]}
+                  value={callForm.reminderType}
+                  onChange={(event) => updateCallForm("reminderType", event.target.value)}
+                  error={callErrors.reminderType}
+                />
+                <FormInput
+                  label="Call Duration (minutes)"
+                  type="number"
+                  min="0"
+                  value={callForm.callDuration}
+                  onChange={(event) => updateCallForm("callDuration", event.target.value)}
+                  error={callErrors.callDuration}
+                />
               </div>
 
-              <div className="mt-6 border-t border-white/10 pt-5">
-                <div className="flex items-center gap-3">
-                  <History className="h-5 w-5 text-gold-2" />
-                  <h3 className="font-display text-2xl">Call History</h3>
-                </div>
-
-                <div className="mt-4 overflow-auto rounded-2xl border border-white/10">
-                  <table className="w-full min-w-[720px] text-left text-sm">
-                    <thead className="bg-white/5 text-xs uppercase tracking-[0.16em] text-muted">
-                      <tr>
-                        {["Date", "Status", "Connected", "Summary", "Next Follow-up", "By"].map((heading) => (
-                          <th key={heading} className="px-3 py-2 font-semibold">
-                            {heading}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {callLogs.length ? (
-                        callLogs.map((callLog) => (
-                          <tr key={callLog._id} className="border-t border-white/10 align-top">
-                            <td className="px-3 py-3 text-muted">{formatDateTime(callLog.createdAt)}</td>
-                            <td className="px-3 py-3 text-ivory">{callLog.leadStatus}</td>
-                            <td className="px-3 py-3 text-muted">{callLog.callConnected ? "Yes" : "No"}</td>
-                            <td className="max-w-xs px-3 py-3 text-muted">{callLog.discussionSummary}</td>
-                            <td className="px-3 py-3 text-muted">{formatDateTime(callLog.nextFollowupDateTime)}</td>
-                            <td className="px-3 py-3 text-muted">{callLog.createdBy?.name || "-"}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td className="px-3 py-6 text-center text-muted" colSpan={6}>
-                            No call updates saved yet.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {canViewFollowups ? (
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-              <div className="flex items-center gap-3">
-                <Bell className="h-5 w-5 text-gold-2" />
-                <h3 className="font-display text-2xl">Reminders</h3>
-              </div>
-
-              {canCreateFollowups ? (
-                <div className="mt-5 grid gap-4">
-                  <div className="grid gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
-                    <SelectDropdown
-                      label="Assigned Staff"
-                      options={staffOptions}
-                      value={reminderForm.assignedStaff}
-                      onChange={(event) => updateReminderForm("assignedStaff", event.target.value)}
-                      error={reminderErrors.assignedStaff}
-                    />
-                    <SelectDropdown
-                      label="Reminder Type"
-                      options={reminderTypes}
-                      value={reminderForm.reminderType}
-                      onChange={(event) => updateReminderForm("reminderType", event.target.value)}
-                      error={reminderErrors.reminderType}
-                    />
-                    <FormInput
-                      label="Reminder Date/Time"
-                      type="datetime-local"
-                      value={reminderForm.reminderDateTime}
-                      onChange={(event) => updateReminderForm("reminderDateTime", event.target.value)}
-                      error={reminderErrors.reminderDateTime}
-                    />
-                    <FormInput
-                      label="Reminder Note"
-                      value={reminderForm.note}
-                      onChange={(event) => updateReminderForm("note", event.target.value)}
-                      error={reminderErrors.note}
-                    />
-                  </div>
-
-                  {reminderError ? <p className="text-sm text-rose-300">{reminderError}</p> : null}
-
-                  <div className="flex justify-end">
-                    <Button type="button" icon={Bell} disabled={isSavingReminder} onClick={handleCreateReminder}>
-                      {isSavingReminder ? "Saving..." : "Create Reminder"}
-                    </Button>
-                  </div>
-                </div>
+              {callForm.leadStatus === "Lost" ? (
+                <FormInput
+                  label="Lost Reason"
+                  as="textarea"
+                  rows={3}
+                  value={callForm.lostReason}
+                  onChange={(event) => updateCallForm("lostReason", event.target.value)}
+                  error={callErrors.lostReason}
+                />
               ) : null}
 
-              <div className="mt-6 overflow-auto rounded-2xl border border-white/10">
-                <table className="w-full min-w-[720px] text-left text-sm">
+              {callError ? <p className="text-sm text-rose-300">{callError}</p> : null}
+
+              <div className="flex justify-end">
+                <Button type="button" icon={Clock} onClick={handleCallUpdate} disabled={isSavingCall}>
+                  {isSavingCall ? "Saving..." : "Save Call Update"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-white/10 pt-5">
+              <div className="flex items-center gap-3">
+                <History className="h-5 w-5 text-gold-2" />
+                <h3 className="font-display text-2xl">Call History</h3>
+              </div>
+
+              <div className="mt-4 overflow-auto rounded-2xl border border-white/10">
+                <table className="w-full min-w-[840px] text-left text-sm">
                   <thead className="bg-white/5 text-xs uppercase tracking-[0.16em] text-muted">
                     <tr>
-                      {["Reminder", "Type", "Assigned", "Note", "Status", "Action"].map((heading) => (
+                      {["Date", "Status", "Connected", "Summary", "Lost Reason", "Next Follow-up", "By"].map((heading) => (
                         <th key={heading} className="px-3 py-2 font-semibold">
                           {heading}
                         </th>
@@ -735,43 +663,22 @@ export default function ClientDetailsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {reminders.length ? (
-                      reminders.map((reminder) => (
-                        <tr key={reminder._id} className="border-t border-white/10 align-top">
-                          <td className={`px-3 py-3 ${reminder.status === "Overdue" ? "font-semibold text-rose-300" : "text-muted"}`}>
-                            {formatDateTime(reminder.reminderDateTime)}
-                          </td>
-                          <td className="px-3 py-3 text-ivory">{reminder.reminderType}</td>
-                          <td className="px-3 py-3 text-muted">{reminder.assignedStaff?.name || "-"}</td>
-                          <td className="max-w-xs px-3 py-3 text-muted">{reminder.note}</td>
-                          <td className="px-3 py-3">
-                            <Badge tone={getReminderStatusTone(reminder.status)}>{reminder.status}</Badge>
-                          </td>
-                          <td className="px-3 py-3">
-                            {canUpdateFollowups && !["Completed", "Cancelled"].includes(reminder.status) ? (
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                icon={CheckCircle2}
-                                disabled={isSavingReminder}
-                                onClick={() => {
-                                  setReminderError("");
-                                  setCompletionNote("");
-                                  setCompletionReminder(reminder);
-                                }}
-                              >
-                                Complete
-                              </Button>
-                            ) : (
-                              "-"
-                            )}
-                          </td>
+                    {callLogs.length ? (
+                      callLogs.map((callLog) => (
+                        <tr key={callLog._id} className="border-t border-white/10 align-top">
+                          <td className="px-3 py-3 text-muted">{formatDateTime(callLog.createdAt)}</td>
+                          <td className="px-3 py-3 text-ivory">{callLog.leadStatus}</td>
+                          <td className="px-3 py-3 text-muted">{callLog.callConnected ? "Yes" : "No"}</td>
+                          <td className="max-w-xs px-3 py-3 text-muted">{callLog.discussionSummary}</td>
+                          <td className="max-w-xs px-3 py-3 text-muted">{callLog.lostReason || "-"}</td>
+                          <td className="px-3 py-3 text-muted">{formatDateTime(callLog.nextFollowupDateTime)}</td>
+                          <td className="px-3 py-3 text-muted">{callLog.createdBy?.name || "-"}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td className="px-3 py-6 text-center text-muted" colSpan={6}>
-                          No reminders saved yet.
+                        <td className="px-3 py-6 text-center text-muted" colSpan={7}>
+                          No call updates saved yet.
                         </td>
                       </tr>
                     )}
@@ -779,143 +686,251 @@ export default function ClientDetailsPage() {
                 </table>
               </div>
             </div>
-          ) : null}
+          </div>
+        ) : null}
 
-          {canViewSiteVisits ? (
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-              <div className="flex items-center gap-3">
-                <CalendarDays className="h-5 w-5 text-gold-2" />
-                <h3 className="font-display text-2xl">Site Visits</h3>
-              </div>
-
-              {canCreateSiteVisits ? (
-                <div className="mt-5">
-                  <SiteVisitForm
-                    initialValues={{
-                      leadId: client._id,
-                      assignedStaff: client.assignedStaff?._id || client.assignedStaff || "",
-                      visitStatus: "Planned",
-                    }}
-                    hideLead
-                    lockLead
-                    projectOptions={projectOptions}
-                    staffOptions={staffOptions}
-                    isSaving={isSavingSiteVisit}
-                    saveLabel="Create Site Visit"
-                    submitIcon={CalendarPlus}
-                    onSubmit={handleCreateSiteVisit}
-                  />
-                  {siteVisitError ? <p className="mt-3 text-sm text-rose-300">{siteVisitError}</p> : null}
-                </div>
-              ) : null}
-
-              <div className="mt-6">
-                <DataTable
-                  columns={[
-                    {
-                      key: "project",
-                      label: "Project",
-                      searchValue: (row) => `${row.project?.projectName || ""} ${row.project?.publicAlias || ""}`,
-                      render: (row) => (
-                        <div>
-                          <p className="font-medium text-ivory">{row.project?.projectName || "-"}</p>
-                          <p className="text-xs text-muted">{row.project?.publicAlias || ""}</p>
-                        </div>
-                      ),
-                    },
-                    {
-                      key: "visitDateTime",
-                      label: "Visit Time",
-                      render: (row) => formatSiteVisitDateTime(row.visitDateTime),
-                    },
-                    {
-                      key: "assignedStaff",
-                      label: "Assigned",
-                      render: (row) => row.assignedStaff?.name || "-",
-                    },
-                    {
-                      key: "visitStatus",
-                      label: "Status",
-                      render: (row) => <Badge tone={getSiteVisitStatusTone(row.visitStatus)}>{row.visitStatus}</Badge>,
-                    },
-                    {
-                      key: "postVisitResult",
-                      label: "Result",
-                      render: (row) => row.postVisitResult || "-",
-                    },
-                    {
-                      key: "actions",
-                      label: "Actions",
-                      searchable: false,
-                      render: (row) => (
-                        <div className="flex flex-wrap gap-2">
-                          <button type="button" className="text-xs text-gold-2" onClick={() => handleCopySiteVisitMessage(row)}>
-                            <Copy className="mr-1 inline h-3.5 w-3.5" />
-                            Copy
-                          </button>
-                          <button
-                            type="button"
-                            className="text-xs text-gold-2"
-                            onClick={() => window.open(getSiteVisitWhatsAppUrl(row), "_blank", "noopener,noreferrer")}
-                          >
-                            <ExternalLink className="mr-1 inline h-3.5 w-3.5" />
-                            WhatsApp
-                          </button>
-                        </div>
-                      ),
-                    },
-                  ]}
-                  rows={siteVisits}
-                  totalRecords={siteVisits.length}
-                  loading={false}
-                  emptyMessage="No site visits saved for this lead."
-                  searchPlaceholder="Search site visits..."
-                  defaultRowsPerPage={5}
-                />
-              </div>
-            </div>
-          ) : null}
-
+        {canViewFollowups ? (
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
             <div className="flex items-center gap-3">
-              <ScrollText className="h-5 w-5 text-gold-2" />
-              <h3 className="font-display text-2xl">Notes</h3>
+              <Bell className="h-5 w-5 text-gold-2" />
+              <h3 className="font-display text-2xl">Reminders</h3>
             </div>
 
-            <div className="mt-5 space-y-4">
-              <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Lead Notes</p>
-                <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">{client.notes || "No lead notes added."}</p>
-              </div>
+            {canCreateFollowups ? (
+              <div className="mt-5 grid gap-4">
+                <div className="grid gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
+                  <SelectDropdown
+                    label="Assigned Staff"
+                    options={staffOptions}
+                    value={reminderForm.assignedStaff}
+                    onChange={(event) => updateReminderForm("assignedStaff", event.target.value)}
+                    error={reminderErrors.assignedStaff}
+                  />
+                  <SelectDropdown
+                    label="Reminder Type"
+                    options={reminderTypes}
+                    value={reminderForm.reminderType}
+                    onChange={(event) => updateReminderForm("reminderType", event.target.value)}
+                    error={reminderErrors.reminderType}
+                  />
+                  <FormInput
+                    label="Reminder Date/Time"
+                    type="datetime-local"
+                    value={reminderForm.reminderDateTime}
+                    onChange={(event) => updateReminderForm("reminderDateTime", event.target.value)}
+                    error={reminderErrors.reminderDateTime}
+                  />
+                  <FormInput
+                    label="Reminder Note"
+                    value={reminderForm.note}
+                    onChange={(event) => updateReminderForm("note", event.target.value)}
+                    error={reminderErrors.note}
+                  />
+                </div>
 
-              <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Internal Notes</p>
-                <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">
-                  {client.internalNotes || "No internal notes added."}
-                </p>
-              </div>
+                {reminderError ? <p className="text-sm text-rose-300">{reminderError}</p> : null}
 
-              <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Follow-up</p>
-                <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">
-                  {client.lastCallStatus || "No call status added."}
-                </p>
-                <p className="mt-2 text-sm text-muted">
-                  Next follow-up: {client.nextFollowUpDate ? new Date(client.nextFollowUpDate).toLocaleDateString("en-IN") : "-"}
-                </p>
+                <div className="flex justify-end">
+                  <Button type="button" icon={Bell} disabled={isSavingReminder} onClick={handleCreateReminder}>
+                    {isSavingReminder ? "Saving..." : "Create Reminder"}
+                  </Button>
+                </div>
               </div>
+            ) : null}
+
+            <div className="mt-6 overflow-auto rounded-2xl border border-white/10">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="bg-white/5 text-xs uppercase tracking-[0.16em] text-muted">
+                  <tr>
+                    {["Reminder", "Type", "Assigned", "Note", "Status", "Action"].map((heading) => (
+                      <th key={heading} className="px-3 py-2 font-semibold">
+                        {heading}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {reminders.length ? (
+                    reminders.map((reminder) => (
+                      <tr key={reminder._id} className="border-t border-white/10 align-top">
+                        <td className={`px-3 py-3 ${reminder.status === "Overdue" ? "font-semibold text-rose-300" : "text-muted"}`}>
+                          {formatDateTime(reminder.reminderDateTime)}
+                        </td>
+                        <td className="px-3 py-3 text-ivory">{reminder.reminderType}</td>
+                        <td className="px-3 py-3 text-muted">{reminder.assignedStaff?.name || "-"}</td>
+                        <td className="max-w-xs px-3 py-3 text-muted">{reminder.note}</td>
+                        <td className="px-3 py-3">
+                          <Badge tone={getReminderStatusTone(reminder.status)}>{reminder.status}</Badge>
+                        </td>
+                        <td className="px-3 py-3">
+                          {canUpdateFollowups && !["Completed", "Cancelled"].includes(reminder.status) ? (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              icon={CheckCircle2}
+                              disabled={isSavingReminder}
+                              onClick={() => {
+                                setReminderError("");
+                                setCompletionNote("");
+                                setCompletionReminder(reminder);
+                              }}
+                            >
+                              Complete
+                            </Button>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td className="px-3 py-6 text-center text-muted" colSpan={6}>
+                        No reminders saved yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
+        ) : null}
 
-          <ClientMatchingSection
-            client={client}
-            onClientUpdate={(nextClient) => {
-              syncClientState(nextClient);
-              refreshTimeline();
-            }}
-          />
+        {canViewSiteVisits ? (
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+            <div className="flex items-center gap-3">
+              <CalendarDays className="h-5 w-5 text-gold-2" />
+              <h3 className="font-display text-2xl">Site Visits</h3>
+            </div>
+
+            {canCreateSiteVisits ? (
+              <div className="mt-5">
+                <SiteVisitForm
+                  initialValues={{
+                    leadId: client._id,
+                    assignedStaff: client.assignedStaff?._id || client.assignedStaff || "",
+                    visitStatus: "Planned",
+                  }}
+                  hideLead
+                  lockLead
+                  projectOptions={projectOptions}
+                  staffOptions={staffOptions}
+                  isSaving={isSavingSiteVisit}
+                  saveLabel="Create Site Visit"
+                  submitIcon={CalendarPlus}
+                  onSubmit={handleCreateSiteVisit}
+                />
+                {siteVisitError ? <p className="mt-3 text-sm text-rose-300">{siteVisitError}</p> : null}
+              </div>
+            ) : null}
+
+            <div className="mt-6">
+              <DataTable
+                columns={[
+                  {
+                    key: "project",
+                    label: "Project",
+                    searchValue: (row) => `${row.project?.projectName || ""} ${row.project?.publicAlias || ""}`,
+                    render: (row) => (
+                      <div>
+                        <p className="font-medium text-ivory">{row.project?.projectName || "-"}</p>
+                        <p className="text-xs text-muted">{row.project?.publicAlias || ""}</p>
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "visitDateTime",
+                    label: "Visit Time",
+                    render: (row) => formatSiteVisitDateTime(row.visitDateTime),
+                  },
+                  {
+                    key: "assignedStaff",
+                    label: "Assigned",
+                    render: (row) => row.assignedStaff?.name || "-",
+                  },
+                  {
+                    key: "visitStatus",
+                    label: "Status",
+                    render: (row) => <Badge tone={getSiteVisitStatusTone(row.visitStatus)}>{row.visitStatus}</Badge>,
+                  },
+                  {
+                    key: "postVisitResult",
+                    label: "Result",
+                    render: (row) => row.postVisitResult || "-",
+                  },
+                  {
+                    key: "actions",
+                    label: "Actions",
+                    searchable: false,
+                    render: (row) => (
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" className="text-xs text-gold-2" onClick={() => handleCopySiteVisitMessage(row)}>
+                          <Copy className="mr-1 inline h-3.5 w-3.5" />
+                          Copy
+                        </button>
+                        <button
+                          type="button"
+                          className="text-xs text-gold-2"
+                          onClick={() => window.open(getSiteVisitWhatsAppUrl(row), "_blank", "noopener,noreferrer")}
+                        >
+                          <ExternalLink className="mr-1 inline h-3.5 w-3.5" />
+                          WhatsApp
+                        </button>
+                      </div>
+                    ),
+                  },
+                ]}
+                rows={siteVisits}
+                totalRecords={siteVisits.length}
+                loading={false}
+                emptyMessage="No site visits saved for this lead."
+                searchPlaceholder="Search site visits..."
+                defaultRowsPerPage={5}
+              />
+            </div>
+          </div>
+        ) : null}
+
+        <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+          <div className="flex items-center gap-3">
+            <ScrollText className="h-5 w-5 text-gold-2" />
+            <h3 className="font-display text-2xl">Notes</h3>
+          </div>
+
+          <div className="mt-5 space-y-4">
+            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Lead Notes</p>
+              <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">{client.notes || "No lead notes added."}</p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Internal Notes</p>
+              <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">
+                {client.internalNotes || "No internal notes added."}
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Follow-up</p>
+              <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">
+                {client.lastCallStatus || "No call status added."}
+              </p>
+              <p className="mt-2 text-sm text-muted">
+                Next follow-up: {client.nextFollowUpDate ? new Date(client.nextFollowUpDate).toLocaleDateString("en-IN") : "-"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <ClientMatchingSection
+          client={client}
+          onClientUpdate={(nextClient) => {
+            syncClientState(nextClient);
+            refreshTimeline();
+          }}
+        />
       </div>
-    
+
       <Modal
         title="Complete Reminder"
         isOpen={Boolean(completionReminder)}
@@ -925,7 +940,7 @@ export default function ClientDetailsPage() {
           }
         }}
       >
-      <div className="space-y-4">
+        <div className="space-y-4">
           <FormInput
             label="Completion Note"
             as="textarea"
@@ -942,7 +957,7 @@ export default function ClientDetailsPage() {
               {isSavingReminder ? "Saving..." : "Complete"}
             </Button>
           </div>
-      </div>
+        </div>
       </Modal>
     </div>
   );

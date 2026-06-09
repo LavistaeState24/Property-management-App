@@ -46,7 +46,15 @@ const callLogSchema = new mongoose.Schema(
       default: "",
     },
     callDuration: { type: Number, min: 0, default: null },
-    lostReason: { type: String, trim: true, maxlength: 1000, default: "" },
+    lostReason: {
+      type: String,
+      trim: true,
+      maxlength: 1000,
+      default: "",
+      required: function () {
+        return this.leadStatus === "Lost";
+      },
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

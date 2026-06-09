@@ -277,6 +277,7 @@ export const recordCallActivity = async ({ lead, callLog, performedBy, metadata 
       leadStatus: callLog.leadStatus || lead.leadStatus || "",
       nextFollowupDateTime: callLog.nextFollowupDateTime || null,
       interestLevel: callLog.interestLevel || "",
+      lostReason: callLog.lostReason || "",
     },
     performedBy,
     relatedModule: "callLogs",
