@@ -431,10 +431,10 @@ export default function AddProjectPage() {
           defaultValue={[]}
           render={({ field }) => (
             <MultiSelectDropdown
-              label="Property Type"
+              label="BHK / Unit Type"
               icon={Shapes}
               options={projectPropertyTypes}
-              placeholder="Select property types"
+              placeholder="Select BHK"
               error={getErrorMessage(errors.propertyType)}
               value={field.value || []}
               onChange={field.onChange}
@@ -445,11 +445,11 @@ export default function AddProjectPage() {
         />
 
         <FormInput
-          label="Configuration"
+          label="Property Category"
           icon={Shapes}
           placeholder="Apartment / Villa / Plot"
           error={getErrorMessage(errors.configuration)}
-          {...register("configuration", textRules("Configuration", { min: 3, max: 60 }))}
+          {...register("configuration", textRules(" Property Category", { min: 3, max: 60 }))}
         />
 
         <FormInput

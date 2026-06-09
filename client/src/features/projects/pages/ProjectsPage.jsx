@@ -135,8 +135,8 @@ export default function ProjectsPage() {
     },
     { key: "location", label: "Location" },
     {
-      key: "Requirement Type",
-      label: "Type",
+      key: "propertyType",
+      label: "BHK",
       searchValue: (row) =>
         Array.isArray(row.propertyType)
           ? row.propertyType.join(" ")
@@ -149,7 +149,7 @@ export default function ProjectsPage() {
     },
     {
       key: "configuration",
-      label: "Config",
+      label: "Category",
       searchValue: (row) => `${row.configuration || ""} ${formatPropertyTypes(row.requirementType)}`,
       render: (row) => row.configuration || formatPropertyTypes(row.requirementType),
     },
