@@ -278,10 +278,10 @@ const assertNoPendingWorkBeforeAssignment = async (assignedStaff, currentUser) =
 
   const summary = await getPendingWorkSummary(assignedStaff);
 
-  if (summary.total > 0) {
+  if (summary.overdueFollowups > 0) {
     throw new ApiError(
       400,
-      "This user has pending follow-ups/site visits. Complete them before assigning new leads.",
+      "Please complete your due reminder first.",
       null,
       summary
     );
@@ -662,34 +662,16 @@ export const importClients = async (payload, currentUser) => {
   let availableRoundRobinUsers = resolvedRoundRobinUsers;
 
   if (assignmentMode === "roundRobin") {
-    const availableUsers = [];
-
-    for (const userId of resolvedRoundRobinUsers) {
-      try {
-        await assertNoPendingWorkBeforeAssignment(userId, currentUser);
-        availableUsers.push(userId);
-      } catch (_error) {
-        // Skip users who have pending work
-      }
-    }
-
-    if (!availableUsers.length) {
-      throw new ApiError(
-        400,
-        "All selected users have pending follow-ups/site visits. Complete pending work before assigning new leads."
-      );
-    }
-
-    availableRoundRobinUsers = availableUsers;
+    availableRoundRobinUsers = resolvedRoundRobinUsers;
   }
 
   // Single user assignment check
-  if (selectedSingleAssignee) {
-    await assertNoPendingWorkBeforeAssignment(
-      selectedSingleAssignee,
-      currentUser
-    );
-  }
+  // if (selectedSingleAssignee) {
+  //   await assertNoPendingWorkBeforeAssignment(
+  //     selectedSingleAssignee,
+  //     currentUser
+  //   );
+  // }
 
   const importBatchId = new mongoose.Types.ObjectId().toString();
   const seenPhones = new Set();
@@ -803,28 +785,32 @@ export const importClients = async (payload, currentUser) => {
       resolvedAssignedStaff = resolvedAssignedFromFile || currentUser._id;
     }
 
-    try {
-      assertNoPendingWorkBeforeAssignment(resolvedAssignedStaff, currentUser);
-    } catch (lockError) {
-      invalidRows.push({
-        rowNumber,
-        phone: clientPhoneNumber,
-        clientName,
-        email: email || "",
-        propertyType: normalizeImportPropertyType(row.propertyType || row.bhk || "2BHK"),
-        requirementType,
-        budgetMin: parsedBudgetMin,
-        budgetMax: parsedBudgetMax,
-        areaPreference,
-        source,
-        assignedStaff: assignedFromFile || String(resolvedAssignedStaff || ""),
-        leadStatus,
-        interestLevel,
-        notes,
-        errors: [lockError.message],
-      });
-      return;
+    if (newAssignedStaffId && newAssignedStaffId !== currentAssignedStaffId) {
+      // Reassignment allowed. Reminder lock is handled only for call/status updates.
     }
+
+    // try {
+    //   assertNoPendingWorkBeforeAssignment(resolvedAssignedStaff, currentUser);
+    // } catch (lockError) {
+    //   invalidRows.push({
+    //     rowNumber,
+    //     phone: clientPhoneNumber,
+    //     clientName,
+    //     email: email || "",
+    //     propertyType: normalizeImportPropertyType(row.propertyType || row.bhk || "2BHK"),
+    //     requirementType,
+    //     budgetMin: parsedBudgetMin,
+    //     budgetMax: parsedBudgetMax,
+    //     areaPreference,
+    //     source,
+    //     assignedStaff: assignedFromFile || String(resolvedAssignedStaff || ""),
+    //     leadStatus,
+    //     interestLevel,
+    //     notes,
+    //     errors: [lockError.message],
+    //   });
+    //   return;
+    // }
 
     const assignedStaffId = String(resolvedAssignedStaff || currentUser._id);
     const rawPayload = {
@@ -1423,17 +1409,13 @@ export const updateClient = async (clientId, payload, currentUser) => {
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, "assignedStaff")) {
-    const newAssignedStaff = await assertValidAssignee(payload.assignedStaff, currentUser);
+  const newAssignedStaff = await assertValidAssignee(
+    payload.assignedStaff,
+    currentUser
+  );
 
-    const currentAssignedStaffId = toObjectIdString(client.assignedStaff || client.assignedTo);
-    const newAssignedStaffId = toObjectIdString(newAssignedStaff);
-
-    if (newAssignedStaffId && newAssignedStaffId !== currentAssignedStaffId) {
-      await assertNoPendingWorkBeforeAssignment(newAssignedStaff, currentUser);
-    }
-
-    payload.assignedStaff = newAssignedStaff;
-  }
+  payload.assignedStaff = newAssignedStaff;
+}
 
   client.set(payload);
   await client.save();
