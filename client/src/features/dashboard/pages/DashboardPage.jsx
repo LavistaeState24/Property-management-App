@@ -14,6 +14,7 @@ import { projectService } from "../../../services/projectService";
 import { clientService } from "../../../services/clientService";
 import { followupService } from "../../../services/followupService";
 import DealSummaryCards from "../../deals/components/DealSummaryCards";
+import { useAuth } from "../../../hooks/useAuth";
 
 const formatPropertyTypes = (value) => (Array.isArray(value) ? value.join(", ") : value || "-");
 const formatPrice = (value) => {
@@ -28,7 +29,10 @@ const formatPrice = (value) => {
   return `${value.min.toLocaleString("en-IN")} - ${value.max.toLocaleString("en-IN")}`;
 };
 
+
+
 export default function DashboardPage() {
+  const { user } = useAuth();
   const canViewProjects = useCan("projects", "view");
   const canViewClients = useCan("clients", "view");
   const canViewFollowups = useCan("followups", "view");
@@ -107,7 +111,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-5">
         <StatCard label="Total Projects" value={summary?.totalProjects ?? "--"} accent="gold" meta="Inventory" icon={FolderKanban} />
         <StatCard label="Active Projects" value={summary?.activeProjects ?? "--"} accent="green" meta="Live" icon={TrendingUp} />
         <StatCard
@@ -119,6 +123,7 @@ export default function DashboardPage() {
         />
         <StatCard label="Today Reminders" value={canViewFollowups ? reminderCounts.today : "--"} accent="gold" meta="Due today" icon={CalendarClock} />
         <StatCard label="Overdue Reminders" value={canViewFollowups ? reminderCounts.overdue : "--"} accent="rose" meta="Overdue" icon={CalendarClock} />
+        
       </section>
 
       {canViewDealReports ? (
@@ -132,7 +137,7 @@ export default function DashboardPage() {
       ) : null}
 
       <section className="grid gap-6 grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1">
-      
+
         {canViewClients ? (
           <div className="space-y-6">
             <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
