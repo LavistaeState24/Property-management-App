@@ -54,6 +54,8 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    lastLoginAt: { type: Date, default: null },
+    lastSeenAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

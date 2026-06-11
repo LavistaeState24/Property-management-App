@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 
 import { authService } from "../../services/authService";
 import { authStorage } from "../../utils/storage";
@@ -11,6 +11,15 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(authStorage.getToken());
   const [loading, setLoading] = useState(Boolean(authStorage.getToken()));
 
+  const syncUser = (nextUser) => {
+    setUser(nextUser);
+    if (nextUser) {
+      authStorage.setUser(nextUser);
+    } else {
+      authStorage.clear();
+    }
+  };
+
   useEffect(() => {
     const bootstrap = async () => {
       if (!token) {
@@ -20,11 +29,9 @@ export function AuthProvider({ children }) {
 
       try {
         const currentUser = await authService.me();
-        setUser(currentUser);
-        authStorage.setUser(currentUser);
+        syncUser(currentUser);
       } catch (_error) {
-        authStorage.clear();
-        setUser(null);
+        syncUser(null);
         setToken(null);
       } finally {
         setLoading(false);
@@ -36,20 +43,34 @@ export function AuthProvider({ children }) {
 
   const login = async (payload) => {
     const data = await authService.login(payload);
-    setUser(data.user);
+    syncUser(data.user);
     setToken(data.token);
     authStorage.setToken(data.token);
-    authStorage.setUser(data.user);
     toast.success("Logged in successfully");
     return data;
   };
 
   const logout = () => {
-    authStorage.clear();
-    setUser(null);
+    syncUser(null);
     setToken(null);
     toast.success("Logged out successfully");
   };
+
+  const touchLastSeen = useCallback((lastSeenAt = new Date().toISOString()) => {
+    setUser((currentUser) => {
+      if (!currentUser) {
+        return currentUser;
+      }
+
+      const nextUser = {
+        ...currentUser,
+        lastSeenAt,
+      };
+
+      authStorage.setUser(nextUser);
+      return nextUser;
+    });
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -60,6 +81,7 @@ export function AuthProvider({ children }) {
         isAuthenticated: Boolean(token),
         login,
         logout,
+        touchLastSeen,
       }}
     >
       {children}

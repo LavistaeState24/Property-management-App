@@ -1,24 +1,16 @@
-import { KeyRound, Mail, Phone, Save, ShieldCheck, UserPlus, UserRound } from "lucide-react";
+import { Save, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-
 import Button from "../../../components/common/Button";
-import FormInput from "../../../components/common/FormInput";
+
 import PageSkeleton from "../../../components/common/PageSkeleton";
 import SelectDropdown from "../../../components/common/SelectDropdown";
-import { assignableRoleOptions, permissionActions, permissionModules, roleOptions } from "../../../constants/permissions";
+import { permissionActions, permissionModules, roleOptions } from "../../../constants/permissions";
 import { useCan } from "../../../hooks/useCan";
 import { permissionService } from "../../../services/permissionService";
 import { userService } from "../../../services/userService";
-import {
-  applyServerErrors,
-  emailRules,
-  getErrorMessage,
-  passwordRules,
-  phoneRules,
-  selectRules,
-  textRules,
-} from "../../../utils/validation";
+import { applyServerErrors } from "../../../utils/validation";
+import UsersPage from "./UsersPage";
 
 const clonePermissions = (permissions = {}) => JSON.parse(JSON.stringify(permissions));
 
@@ -339,95 +331,19 @@ export default function SettingsPage() {
           </div>
 
           {canViewUsers ? (
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-              <div className="flex items-center gap-3">
-                <UserPlus className="h-5 w-5 text-gold-2" />
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-gold">Team Access</p>
-                  <h3 className="mt-2 font-display text-2xl">Create and review users</h3>
-                </div>
-              </div>
-
-              {canCreateUsers ? (
-                <form className="mt-5 space-y-4" onSubmit={handleSubmit(handleCreateUser)}>
-                  <FormInput
-                    label="Full Name"
-                    icon={UserRound}
-                    error={getErrorMessage(errors.name)}
-                    {...register("name", textRules("Name", { min: 3, max: 60 }))}
-                  />
-                  <FormInput
-                    label="Email"
-                    type="email"
-                    icon={Mail}
-                    error={getErrorMessage(errors.email)}
-                    {...register("email", emailRules())}
-                  />
-                  <FormInput
-                    label="Phone"
-                    type="tel"
-                    icon={Phone}
-                    error={getErrorMessage(errors.phone)}
-                    {...register("phone", phoneRules())}
-                  />
-                  <FormInput
-                    label="Password"
-                    type="password"
-                    icon={KeyRound}
-                    error={getErrorMessage(errors.password)}
-                    {...register("password", passwordRules())}
-                  />
-                  <SelectDropdown
-                    label="Role"
-                    options={assignableRoleOptions}
-                    error={getErrorMessage(errors.role)}
-                    {...register("role", selectRules("Role"))}
-                  />
-                  {selectedUserRole === "sales" ? (
-                    <SelectDropdown
-                      label="Reporting Manager"
-                      options={managerOptions}
-                      placeholder="Select manager"
-                      error={getErrorMessage(errors.managerId)}
-                      {...register("managerId")}
-                    />
-                  ) : null}
-
-                  {userError ? <p className="text-sm text-rose-300">{userError}</p> : null}
-                  {userSuccess ? <p className="text-sm text-emerald-300">{userSuccess}</p> : null}
-
-                  <div className="flex justify-end">
-                    <Button disabled={isSubmitting} icon={UserPlus}>
-                      {isSubmitting ? "Creating..." : "Create User"}
-                    </Button>
-                  </div>
-                </form>
-              ) : (
-                <p className="mt-5 text-sm text-muted">You can review users here, but only Super Admin can create new accounts.</p>
-              )}
-
-              <div className="mt-6 space-y-3">
-                {users.length ? (
-                  users.map((managedUser) => (
-                    <div key={managedUser.id} className="rounded-3xl border border-white/10 bg-black/20 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="font-medium text-ivory">{managedUser.name}</p>
-                          <p className="mt-1 text-sm text-muted">{managedUser.email}</p>
-                        </div>
-                        <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-gold-2">
-                          {managedUser.role}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm text-muted">{managedUser.phone}</p>
-                      {managedUser.managerName ? <p className="mt-1 text-sm text-muted">Reports to {managedUser.managerName}</p> : null}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted">No users found.</p>
-                )}
-              </div>
-            </div>
+            <UsersPage
+              users={users}
+              canCreateUsers={canCreateUsers}
+              userError={userError}
+              userSuccess={userSuccess}
+              errors={errors}
+              register={register}
+              handleSubmit={handleSubmit}
+              handleCreateUser={handleCreateUser}
+              isSubmitting={isSubmitting}
+              selectedUserRole={selectedUserRole}
+              managerOptions={managerOptions}
+            />
           ) : null}
         </section>
       </div>

@@ -10,11 +10,36 @@ const sanitizeUser = (user) => ({
   isActive: user.isActive,
   managerId: user.managerId?._id || user.managerId || null,
   managerName: user.managerId?.name || "",
+  lastLoginAt: user.lastLoginAt || null,
+  lastSeenAt: user.lastSeenAt || null,
+  isOnline:
+    user.lastSeenAt &&
+    Date.now() - new Date(user.lastSeenAt).getTime() < 5 * 60 * 1000,
 });
 
 export const listManagedUsers = async (currentUser) => {
-  const filters = currentUser.role === "super-admin" ? {} : { role: { $ne: "super-admin" } };
-  const users = await User.find(filters).select("-password").populate("managerId", "name").sort({ createdAt: -1 });
+  let filters = {};
+
+  if (currentUser.role === "manager") {
+    filters = {
+      role: "sales",
+      managerId: currentUser._id,
+    };
+  } else if (currentUser.role === "admin") {
+    filters = {};
+  } else if (currentUser.role === "super-admin") {
+    filters = {};
+  } else {
+    filters = {
+      _id: currentUser._id,
+    };
+  }
+
+  const users = await User.find(filters)
+    .select("-password")
+    .populate("managerId", "name")
+    .sort({ createdAt: -1 });
+
   return users.map(sanitizeUser);
 };
 

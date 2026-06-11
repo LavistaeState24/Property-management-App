@@ -13,4 +13,8 @@ export const authService = {
     const { data } = await api.get("/auth/me");
     return data.data;
   },
+  updateLastSeen: async () => {
+    await api.patch("/auth/last-seen");
+  },
+
 };

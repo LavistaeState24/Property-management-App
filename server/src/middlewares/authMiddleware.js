@@ -24,6 +24,11 @@ export const protect = async (req, _res, next) => {
 
     user.permissions = await getResolvedPermissionsForRole(user.role);
     req.user = user;
+
+    User.findByIdAndUpdate(user._id, {
+      lastSeenAt: new Date(),
+    }).catch(() => { });
+
     next();
   } catch (_error) {
     next(new ApiError(401, "Invalid or expired token"));
@@ -32,21 +37,21 @@ export const protect = async (req, _res, next) => {
 
 export const authorize =
   (moduleKey, actionKey) =>
-  (req, _res, next) => {
-    if (!req.user) {
-      return next(new ApiError(401, "Authentication required"));
-    }
+    (req, _res, next) => {
+      if (!req.user) {
+        return next(new ApiError(401, "Authentication required"));
+      }
 
-    const hasDirectPermission = hasPermission(req.user.permissions, moduleKey, actionKey);
-    const isSalesAssignedClientUpdate =
-      moduleKey === "clients" &&
-      actionKey === "update" &&
-      req.user.role === "sales" &&
-      getPermissionScope(req.user.permissions, "clients") === "assigned";
+      const hasDirectPermission = hasPermission(req.user.permissions, moduleKey, actionKey);
+      const isSalesAssignedClientUpdate =
+        moduleKey === "clients" &&
+        actionKey === "update" &&
+        req.user.role === "sales" &&
+        getPermissionScope(req.user.permissions, "clients") === "assigned";
 
-    if (!hasDirectPermission && !isSalesAssignedClientUpdate) {
-      return next(new ApiError(403, "You do not have access to this resource"));
-    }
+      if (!hasDirectPermission && !isSalesAssignedClientUpdate) {
+        return next(new ApiError(403, "You do not have access to this resource"));
+      }
 
-    next();
-  };
+      next();
+    };
