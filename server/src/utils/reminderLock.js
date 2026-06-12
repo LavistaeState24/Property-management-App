@@ -2,6 +2,8 @@ import { ApiError } from "./ApiError.js";
 
 export const shouldBlockReminderAction = (role, hasOverdueReminder) => hasOverdueReminder && role !== "super-admin";
 
+export const shouldBlockReminderCreation = (role, hasOverdueReminder) => hasOverdueReminder && role !== "super-admin";
+
 export const buildReminderLockOverrideActivity = ({
   performedBy,
   targetId,
