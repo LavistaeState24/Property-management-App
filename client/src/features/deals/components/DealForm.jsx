@@ -13,6 +13,7 @@ export default function DealForm({
   projectOptions = [],
   closerOptions = [],
   isSaving = false,
+  isLocked = false,
   saveLabel = "Save Deal",
   submitIcon,
   onCancel,
@@ -112,7 +113,7 @@ export default function DealForm({
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
           Cancel
         </Button>
-        <Button type="submit" icon={submitIcon} disabled={isSaving}>
+        <Button type="submit" icon={submitIcon} disabled={isSaving || isLocked}>
           {isSaving ? "Saving..." : saveLabel}
         </Button>
       </div>

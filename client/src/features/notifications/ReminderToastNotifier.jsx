@@ -5,12 +5,15 @@ import { useCan } from "../../hooks/useCan";
 import { followupService } from "../../services/followupService";
 import { shareRecordService } from "../../services/shareRecordService";
 import { toast } from "../../utils/toast";
+import {
+  buildReminderToastMessage,
+  buildShareRecordToastMessage,
+  getReminderToastStage,
+  getShareRecordToastStage,
+} from "./reminderToastUtils";
 
 const POLL_INTERVAL_MS = 10000;
 const STORAGE_PREFIX = "pmcrm_reminder_toasts_v1";
-
-const formatDateTime = (value) =>
-  value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "";
 
 const getCacheKey = (userId) => `${STORAGE_PREFIX}:${userId || "anonymous"}`;
 
@@ -47,66 +50,12 @@ const writeNotifiedIds = (userId, value) => {
   }
 };
 
-const getReminderIntervalKey = (reminder) => {
-  const dueValue = reminder.reminderDateTime || reminder.dueDate;
-  if (!dueValue) return null;
-
-  const dueTime = new Date(dueValue).getTime();
-  if (Number.isNaN(dueTime)) return null;
-
-  const diffMinutes = Math.floor((Date.now() - dueTime) / 60000);
-
-  if (diffMinutes < 0) return null;
-  if (diffMinutes < 15) return "due";
-  if (diffMinutes < 30) return "15m";
-  if (diffMinutes < 60) return "30m";
-
-  const hourBucket = Math.floor(diffMinutes / 60);
-  return `hour-${hourBucket}`;
-};
-
-const getShareRecordIntervalKey = (record) => {
-  const dueValue = record?.followUpDate;
-  if (!dueValue) return null;
-
-  const dueTime = new Date(dueValue).getTime();
-  if (Number.isNaN(dueTime)) return null;
-
-  const diffMinutes = Math.floor((Date.now() - dueTime) / 60000);
-
-  if (diffMinutes < 0) return null;
-  if (diffMinutes < 15) return "due";
-  if (diffMinutes < 30) return "15m";
-  if (diffMinutes < 60) return "30m";
-
-  const hourBucket = Math.floor(diffMinutes / 60);
-  return `hour-${hourBucket}`;
-};
-
 const getReminderOrigin = (reminder) => {
   if (reminder?.relatedModule === "shareRecord" && reminder.relatedId) {
     return { source: "shareRecord", originId: String(reminder.relatedId) };
   }
 
   return { source: "followup", originId: String(reminder?._id || "") };
-};
-
-const buildShareRecordToastMessage = (record) => {
-  const leadName = record?.clientName || "Lead";
-  const type = String(record?.shareChannel || "WhatsApp") === "Copy" ? "Details Send" : "WhatsApp";
-  const dueAt = formatDateTime(record?.followUpDate);
-  const note = " - Follow up after shared project details";
-
-  return `${type} reminder due for ${leadName} at ${dueAt}${note}`;
-};
-
-const buildToastMessage = (reminder) => {
-  const leadName = reminder.client?.ownerName || "Lead";
-  const type = reminder.reminderType || "Reminder";
-  const dueAt = formatDateTime(reminder.reminderDateTime || reminder.dueDate);
-  const note = reminder.note ? ` - ${reminder.note}` : "";
-
-  return `${type} reminder due for ${leadName} at ${dueAt}${note}`;
 };
 
 export default function ReminderToastNotifier() {
@@ -144,7 +93,7 @@ export default function ReminderToastNotifier() {
           canViewFollowups
             ? followupService.list(
                 {
-                  overdue: "true",
+                  status: "Pending",
                   limit: 100,
                 },
                 {
@@ -168,25 +117,25 @@ export default function ReminderToastNotifier() {
 
         for (const reminder of followupResult.items || []) {
           const { source, originId } = getReminderOrigin(reminder);
-          const intervalKey = getReminderIntervalKey(reminder);
-          if (!reminder?._id || !intervalKey) {
+          const stage = getReminderToastStage(reminder);
+          if (!reminder?._id || !stage) {
             continue;
           }
 
-          const notificationKey = `${source}:${originId}:${intervalKey}`;
+          const notificationKey = `${source}:${originId}:${stage}`;
 
           if (notifiedIds[notificationKey]) {
             continue;
           }
 
-          toast.info(buildToastMessage(reminder), {
-            id: `reminder-due:${source}:${originId}`,
+          toast.info(buildReminderToastMessage(reminder, stage), {
+            id: `reminder-due:${source}:${originId}:${stage}`,
             duration: 10000,
           });
 
           notifiedIds[notificationKey] = {
             reminderId: reminder._id,
-            intervalKey,
+            stage,
             dueAt: reminder.reminderDateTime || reminder.dueDate || null,
             remindedAt: Date.now(),
           };
@@ -198,25 +147,25 @@ export default function ReminderToastNotifier() {
             continue;
           }
 
-          const intervalKey = getShareRecordIntervalKey(record);
-          if (!intervalKey) {
+          const stage = getShareRecordToastStage(record);
+          if (!stage) {
             continue;
           }
 
-          const notificationKey = `shareRecord:${record._id}:${intervalKey}`;
+          const notificationKey = `shareRecord:${record._id}:${stage}`;
 
           if (notifiedIds[notificationKey]) {
             continue;
           }
 
-          toast.info(buildShareRecordToastMessage(record), {
-            id: `reminder-due:shareRecord:${record._id}`,
+          toast.info(buildShareRecordToastMessage(record, stage), {
+            id: `reminder-due:shareRecord:${record._id}:${stage}`,
             duration: 10000,
           });
 
           notifiedIds[notificationKey] = {
             reminderId: record._id,
-            intervalKey,
+            stage,
             dueAt: record.followUpDate || null,
             remindedAt: Date.now(),
           };

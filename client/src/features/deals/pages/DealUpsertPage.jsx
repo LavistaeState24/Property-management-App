@@ -52,6 +52,7 @@ export default function DealUpsertPage() {
   const [leadOptions, setLeadOptions] = useState([]);
   const [projectOptions, setProjectOptions] = useState([]);
   const [closerOptions, setCloserOptions] = useState([]);
+  const [selectedLead, setSelectedLead] = useState(null);
   const [formError, setFormError] = useState("");
   const [loadError, setLoadError] = useState("");
   const {
@@ -65,6 +66,7 @@ export default function DealUpsertPage() {
     mode: "onBlur",
     defaultValues: initialValues,
   });
+  const selectedLeadId = watch("leadId");
 
   useEffect(() => {
     const loadDependencies = async () => {
@@ -106,6 +108,35 @@ export default function DealUpsertPage() {
     loadDependencies();
   }, [id, isEditMode, reset, user?.id]);
 
+  useEffect(() => {
+    if (isEditMode || !selectedLeadId) {
+      setSelectedLead(null);
+      return;
+    }
+
+    let active = true;
+
+    const loadSelectedLead = async () => {
+      try {
+        const data = await clientService.getById(selectedLeadId);
+
+        if (active) {
+          setSelectedLead(data);
+        }
+      } catch (_error) {
+        if (active) {
+          setSelectedLead(null);
+        }
+      }
+    };
+
+    loadSelectedLead();
+
+    return () => {
+      active = false;
+    };
+  }, [isEditMode, selectedLeadId]);
+
   const onSubmit = async (formValues) => {
     setFormError("");
 
@@ -136,6 +167,7 @@ export default function DealUpsertPage() {
     () => (isEditMode ? "Update deal closing details" : "Create a new deal closing record"),
     [isEditMode],
   );
+  const isLeadReminderLocked = Boolean(selectedLead?.hasOverdueReminder) && user?.role !== "super-admin";
 
   if (isLoading) {
     return <PageSkeleton variant="form" />;
@@ -160,6 +192,15 @@ export default function DealUpsertPage() {
         <p className="mt-2 text-sm text-muted">Keep negotiation, booking, and closure data in one place.</p>
       </div>
 
+      {!isEditMode && isLeadReminderLocked ? (
+        <div className="rounded-[28px] border border-amber-400/30 bg-amber-500/10 px-5 py-4 text-amber-50 shadow-glass">
+          <p className="text-xs uppercase tracking-[0.24em] text-amber-200">Reminder lock active</p>
+          <p className="mt-2 text-sm leading-6">
+            This lead has an overdue reminder. Complete the reminder with a discussion note before creating a deal.
+          </p>
+        </div>
+      ) : null}
+
       <form className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass" onSubmit={handleSubmit(onSubmit)}>
         <DealForm
           register={register}
@@ -169,6 +210,7 @@ export default function DealUpsertPage() {
           projectOptions={projectOptions}
           closerOptions={closerOptions}
           isSaving={isSubmitting}
+          isLocked={!isEditMode && isLeadReminderLocked}
           saveLabel={isEditMode ? "Update Deal" : "Create Deal"}
           submitIcon={Save}
           onCancel={() => navigate(isEditMode ? `/deals/${id}` : "/deals/negotiation")}

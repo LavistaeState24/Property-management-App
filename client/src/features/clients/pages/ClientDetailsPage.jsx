@@ -349,6 +349,8 @@ export default function ClientDetailsPage() {
   };
 
   const formatDateTime = (value) => (value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "-");
+  const overdueReminder = reminders.find((reminder) => reminder.status === "Overdue") || null;
+  const isReminderLocked = Boolean(client?.hasOverdueReminder || overdueReminder) && user?.role !== "super-admin";
   const getReminderStatusTone = (status) => {
     if (status === "Completed") return "green";
     if (status === "Overdue") return "rose";
@@ -392,6 +394,15 @@ export default function ClientDetailsPage() {
           ) : null}
         </div>
       </div>
+
+      {isReminderLocked ? (
+        <div className="rounded-[28px] border border-amber-400/30 bg-amber-500/10 px-5 py-4 text-amber-50 shadow-glass">
+          <p className="text-xs uppercase tracking-[0.24em] text-amber-200">Reminder lock active</p>
+          <p className="mt-2 text-sm leading-6">
+            This lead has an overdue reminder. Complete the reminder with a discussion note before saving status, call, site visit, or deal actions.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-1 md:grid-cols-1 sm:grid-cols-1">
         <div className="space-y-6">
@@ -524,7 +535,7 @@ export default function ClientDetailsPage() {
               {updateError ? <p className="text-sm text-rose-300">{updateError}</p> : null}
 
               <div className="flex justify-end">
-                <Button type="button" onClick={handleQuickUpdate} disabled={isSaving}>
+                <Button type="button" onClick={handleQuickUpdate} disabled={isSaving || isReminderLocked}>
                   {isSaving ? "Saving..." : "Save Update"}
                 </Button>
               </div>
@@ -639,7 +650,7 @@ export default function ClientDetailsPage() {
               {callError ? <p className="text-sm text-rose-300">{callError}</p> : null}
 
               <div className="flex justify-end">
-                <Button type="button" icon={Clock} onClick={handleCallUpdate} disabled={isSavingCall}>
+                <Button type="button" icon={Clock} onClick={handleCallUpdate} disabled={isSavingCall || isReminderLocked}>
                   {isSavingCall ? "Saving..." : "Save Call Update"}
                 </Button>
               </div>
@@ -813,6 +824,7 @@ export default function ClientDetailsPage() {
                   }}
                   hideLead
                   lockLead
+                  disabled={isReminderLocked}
                   projectOptions={projectOptions}
                   staffOptions={staffOptions}
                   isSaving={isSavingSiteVisit}

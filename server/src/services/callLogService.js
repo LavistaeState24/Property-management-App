@@ -4,7 +4,8 @@ import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { buildReminderLockOverrideActivity, createReminderLockError, shouldBlockReminderAction } from "../utils/reminderLock.js";
 import { createActivityLog, recordCallActivity, recordLeadChangeActivities } from "./activityLogService.js";
-import { createFollowupFromCallLog, hasOverduePendingFollowup } from "./followupService.js";
+import { createFollowupFromCallLog } from "./followupService.js";
+import { hasOverdueReminderForLead } from "./reminderService.js";
 
 const toObjectId = (value) => value?._id || value || null;
 const toObjectIdString = (value) => String(toObjectId(value) || "");
@@ -61,7 +62,7 @@ export const listCallLogs = async (clientId, currentUser) => {
 export const createCallLog = async (clientId, payload, currentUser) => {
   const client = await getAccessibleClient(clientId, currentUser);
   const previousClient = client.toObject();
-  const hasOverdueReminder = await hasOverduePendingFollowup(client._id);
+  const hasOverdueReminder = await hasOverdueReminderForLead(client._id);
   const isTerminalLeadStatus = ["Lost", "Closed"].includes(payload.leadStatus);
   const normalizedPayload = {
     ...payload,

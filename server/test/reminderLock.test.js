@@ -5,12 +5,40 @@ import {
   createReminderLockError,
   shouldBlockReminderAction,
 } from "../src/utils/reminderLock.js";
+import { Followup } from "../src/models/Followup.js";
+import { hasOverdueReminderForLead } from "../src/services/reminderService.js";
 
 const tests = [
   ["Sales users are blocked by the reminder lock", () => assert.equal(shouldBlockReminderAction("sales", true), true)],
   ["Managers are blocked by the reminder lock", () => assert.equal(shouldBlockReminderAction("manager", true), true)],
   ["Admins are blocked by the reminder lock", () => assert.equal(shouldBlockReminderAction("admin", true), true)],
   ["Super Admin can bypass the reminder lock", () => assert.equal(shouldBlockReminderAction("super-admin", true), false)],
+  [
+    "Overdue reminder lookup is scoped to the current lead",
+    async () => {
+      const originalExists = Followup.exists;
+      const overdueLeadIds = new Set(["lead-a"]);
+
+      Followup.exists = async (query) => {
+        const clientId = String(query.client || "");
+        return overdueLeadIds.has(clientId) ? { _id: `reminder-${clientId}` } : null;
+      };
+
+      try {
+        const results = await Promise.all([
+          hasOverdueReminderForLead("lead-a"),
+          hasOverdueReminderForLead("lead-b"),
+          hasOverdueReminderForLead("lead-c"),
+          hasOverdueReminderForLead("lead-d"),
+          hasOverdueReminderForLead("lead-e"),
+        ]);
+
+        assert.deepEqual(results, [true, false, false, false, false]);
+      } finally {
+        Followup.exists = originalExists;
+      }
+    },
+  ],
   [
     "Reminder lock override activity payload is created",
     () => {
@@ -47,7 +75,7 @@ let failures = 0;
 
 for (const [name, fn] of tests) {
   try {
-    fn();
+    await Promise.resolve(fn());
     console.log(`ok - ${name}`);
   } catch (error) {
     failures += 1;

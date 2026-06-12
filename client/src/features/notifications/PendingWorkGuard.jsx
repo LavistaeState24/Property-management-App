@@ -1,15 +1,11 @@
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../hooks/useAuth";
 import { followupService } from "../../services/followupService";
-
-const allowedPaths = ["/followups", "/site-visits", "/profile"];
+import { toast } from "../../utils/toast";
 
 export default function PendingWorkGuard() {
   const { user, loading } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (loading || !user?.id) return;
@@ -19,24 +15,15 @@ export default function PendingWorkGuard() {
       const summary = await followupService.getPendingWorkSummary();
 
       if (summary.total > 0) {
-        const allowed = allowedPaths.some((path) =>
-          location.pathname.startsWith(path)
-        );
-
-        if (!allowed) {
-          navigate("/followups", {
-            replace: true,
-            state: {
-              message:
-                "Please complete your pending follow-ups/site visits before continuing.",
-            },
-          });
-        }
+        toast.info("You have pending follow-ups or site visits to complete.", {
+          id: `pending-work:${user.id}`,
+          duration: 6000,
+        });
       }
     };
 
     checkPendingWork();
-  }, [loading, user?.id, user?.role, location.pathname, navigate]);
+  }, [loading, user?.id, user?.role]);
 
   return null;
 }
