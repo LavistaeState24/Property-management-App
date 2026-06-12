@@ -4,6 +4,7 @@ import {
   buildReminderLockOverrideActivity,
   createReminderLockError,
   shouldBlockReminderAction,
+  shouldBlockReminderCreation,
 } from "../src/utils/reminderLock.js";
 import { Followup } from "../src/models/Followup.js";
 import { hasOverdueReminderForLead } from "../src/services/reminderService.js";
@@ -13,6 +14,8 @@ const tests = [
   ["Managers are blocked by the reminder lock", () => assert.equal(shouldBlockReminderAction("manager", true), true)],
   ["Admins are blocked by the reminder lock", () => assert.equal(shouldBlockReminderAction("admin", true), true)],
   ["Super Admin can bypass the reminder lock", () => assert.equal(shouldBlockReminderAction("super-admin", true), false)],
+  ["Reminder creation is blocked for overdue leads", () => assert.equal(shouldBlockReminderCreation("sales", true), true)],
+  ["Super Admin can create reminders on overdue leads", () => assert.equal(shouldBlockReminderCreation("super-admin", true), false)],
   [
     "Overdue reminder lookup is scoped to the current lead",
     async () => {

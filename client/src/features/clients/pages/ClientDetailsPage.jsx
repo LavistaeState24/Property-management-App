@@ -286,6 +286,11 @@ export default function ClientDetailsPage() {
     setIsSavingReminder(true);
 
     try {
+      if (isReminderLocked) {
+        setReminderError("Complete the overdue reminder before creating a new reminder for this lead");
+        return;
+      }
+
       await followupService.create({
         client: id,
         ...reminderForm,
@@ -709,10 +714,16 @@ export default function ClientDetailsPage() {
 
             {canCreateFollowups ? (
               <div className="mt-5 grid gap-4">
+                {isReminderLocked ? (
+                  <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-50">
+                    Complete the overdue reminder first before creating another reminder for this lead.
+                  </div>
+                ) : null}
                 <div className="grid gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
                   <SelectDropdown
                     label="Assigned Staff"
                     options={staffOptions}
+                    disabled={isReminderLocked}
                     value={reminderForm.assignedStaff}
                     onChange={(event) => updateReminderForm("assignedStaff", event.target.value)}
                     error={reminderErrors.assignedStaff}
@@ -720,6 +731,7 @@ export default function ClientDetailsPage() {
                   <SelectDropdown
                     label="Reminder Type"
                     options={reminderTypes}
+                    disabled={isReminderLocked}
                     value={reminderForm.reminderType}
                     onChange={(event) => updateReminderForm("reminderType", event.target.value)}
                     error={reminderErrors.reminderType}
@@ -727,12 +739,14 @@ export default function ClientDetailsPage() {
                   <FormInput
                     label="Reminder Date/Time"
                     type="datetime-local"
+                    disabled={isReminderLocked}
                     value={reminderForm.reminderDateTime}
                     onChange={(event) => updateReminderForm("reminderDateTime", event.target.value)}
                     error={reminderErrors.reminderDateTime}
                   />
                   <FormInput
                     label="Reminder Note"
+                    disabled={isReminderLocked}
                     value={reminderForm.note}
                     onChange={(event) => updateReminderForm("note", event.target.value)}
                     error={reminderErrors.note}
@@ -742,7 +756,7 @@ export default function ClientDetailsPage() {
                 {reminderError ? <p className="text-sm text-rose-300">{reminderError}</p> : null}
 
                 <div className="flex justify-end">
-                  <Button type="button" icon={Bell} disabled={isSavingReminder} onClick={handleCreateReminder}>
+                  <Button type="button" icon={Bell} disabled={isSavingReminder || isReminderLocked} onClick={handleCreateReminder}>
                     {isSavingReminder ? "Saving..." : "Create Reminder"}
                   </Button>
                 </div>

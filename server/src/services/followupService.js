@@ -6,6 +6,8 @@ import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { buildPagination } from "../utils/query.js";
 import { recordFollowupActivity } from "./activityLogService.js";
+import { hasOverdueReminderForLead } from "./reminderService.js";
+import { shouldBlockReminderCreation } from "../utils/reminderLock.js";
 
 const toObjectId = (value) => value?._id || value || null;
 const toObjectIdString = (value) => String(toObjectId(value) || "");
@@ -211,6 +213,11 @@ const buildReminderFilters = async (query, currentUser) => {
 
 export const createFollowup = async (payload, userId, currentUser) => {
   const client = await getAccessibleClient(payload.client, currentUser);
+  const hasOverdueReminder = await hasOverdueReminderForLead(client._id);
+
+  if (shouldBlockReminderCreation(currentUser.role, hasOverdueReminder)) {
+    throw new ApiError(403, "Complete overdue reminder before creating a new reminder");
+  }
 
   if (payload.project) {
     const project = await Project.findById(payload.project);
