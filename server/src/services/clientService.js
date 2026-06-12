@@ -785,9 +785,8 @@ export const importClients = async (payload, currentUser) => {
       resolvedAssignedStaff = resolvedAssignedFromFile || currentUser._id;
     }
 
-    if (newAssignedStaffId && newAssignedStaffId !== currentAssignedStaffId) {
-      // Reassignment allowed. Reminder lock is handled only for call/status updates.
-    }
+    // if (newAssignedStaffId && newAssignedStaffId !== currentAssignedStaffId) {
+    // }
 
     // try {
     //   assertNoPendingWorkBeforeAssignment(resolvedAssignedStaff, currentUser);
@@ -1179,7 +1178,10 @@ export const getPositiveClients = async (query, currentUser) => {
 };
 
 export const getClientById = async (clientId, currentUser) => {
-  const client = await populateClientUsers(Client.findById(clientId));
+  const [client, hasOverdueReminder] = await Promise.all([
+    populateClientUsers(Client.findById(clientId)),
+    hasOverdueReminderForLead(clientId),
+  ]);
 
   if (!client) {
     throw new ApiError(404, "Client not found");
@@ -1187,7 +1189,10 @@ export const getClientById = async (clientId, currentUser) => {
 
   await assertClientAccess(client, currentUser);
 
-  return normalizeAssignedStaff(client);
+  return normalizeAssignedStaff({
+    ...client.toObject(),
+    hasOverdueReminder,
+  });
 };
 
 export const getMatchingProjectsForClient = async (clientId, query, currentUser, origin) => {
@@ -1355,7 +1360,10 @@ export const shareMatchingProjectsWithClient = async (clientId, payload, current
       safeProjects,
       shareRecord,
       followup,
-      client: normalizeAssignedStaff(await populateClientUsers(Client.findById(client._id))),
+      client: normalizeAssignedStaff({
+        ...(await populateClientUsers(Client.findById(client._id))).toObject(),
+        hasOverdueReminder: await hasOverdueReminderForLead(client._id),
+      }),
     };
   } catch (error) {
     if (shareRecord?._id) {
@@ -1420,7 +1428,14 @@ export const updateClient = async (clientId, payload, currentUser) => {
   client.set(payload);
   await client.save();
 
-  const updatedClient = normalizeAssignedStaff(await populateClientUsers(Client.findById(client._id)));
+  const [refreshedClient, hasOverdueReminder] = await Promise.all([
+    populateClientUsers(Client.findById(client._id)),
+    hasOverdueReminderForLead(client._id),
+  ]);
+  const updatedClient = normalizeAssignedStaff({
+    ...refreshedClient.toObject(),
+    hasOverdueReminder,
+  });
 
   await recordLeadChangeActivities({
     lead: updatedClient,

@@ -4,7 +4,9 @@ import { SiteVisit } from "../models/SiteVisit.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { buildPagination } from "../utils/query.js";
-import { recordSiteVisitActivity } from "./activityLogService.js";
+import { buildReminderLockOverrideActivity, createReminderLockError, shouldBlockReminderAction } from "../utils/reminderLock.js";
+import { createActivityLog, recordSiteVisitActivity } from "./activityLogService.js";
+import { hasOverdueReminderForLead } from "./reminderService.js";
 
 const toObjectId = (value) => value?._id || value || null;
 const toObjectIdString = (value) => String(toObjectId(value) || "");
@@ -195,6 +197,26 @@ const buildSiteVisitFilters = async (query, currentUser) => {
 
 export const createSiteVisit = async (payload, userId, currentUser) => {
   const client = await getAccessibleClient(payload.client, currentUser);
+  const hasOverdueReminder = await hasOverdueReminderForLead(client._id);
+
+  if (shouldBlockReminderAction(currentUser.role, hasOverdueReminder)) {
+    throw createReminderLockError();
+  }
+
+  if (hasOverdueReminder && currentUser.role === "super-admin") {
+    await createActivityLog(
+      buildReminderLockOverrideActivity({
+        performedBy: currentUser._id,
+        targetId: client._id,
+        module: "site-visits",
+        message: "Super Admin bypassed overdue reminder lock",
+        metadata: {
+          source: "site-visit-create",
+        },
+      })
+    );
+  }
+
   await assertProjectExists(payload.project);
 
   const assignedStaff = await assertValidAssignee(payload.assignedStaff, client, currentUser);

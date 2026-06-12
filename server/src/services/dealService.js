@@ -4,7 +4,9 @@ import { Project } from "../models/Project.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { buildPagination } from "../utils/query.js";
-import { recordDealActivity, recordLeadChangeActivities } from "./activityLogService.js";
+import { buildReminderLockOverrideActivity, createReminderLockError, shouldBlockReminderAction } from "../utils/reminderLock.js";
+import { createActivityLog, recordDealActivity, recordLeadChangeActivities } from "./activityLogService.js";
+import { hasOverdueReminderForLead } from "./reminderService.js";
 
 const toObjectId = (value) => value?._id || value || null;
 const toObjectIdString = (value) => String(toObjectId(value) || "");
@@ -292,6 +294,26 @@ const buildClosedDealBaseFilter = async (currentUser, query = {}) => {
 export const createDeal = async (payload, currentUser) => {
   const lead = await getAccessibleLead(payload.leadId, currentUser);
   const previousLead = lead.toObject();
+  const hasOverdueReminder = await hasOverdueReminderForLead(lead._id);
+
+  if (shouldBlockReminderAction(currentUser.role, hasOverdueReminder)) {
+    throw createReminderLockError();
+  }
+
+  if (hasOverdueReminder && currentUser.role === "super-admin") {
+    await createActivityLog(
+      buildReminderLockOverrideActivity({
+        performedBy: currentUser._id,
+        targetId: lead._id,
+        module: "deals",
+        message: "Super Admin bypassed overdue reminder lock",
+        metadata: {
+          source: "deal-create",
+        },
+      })
+    );
+  }
+
   await assertProjectExists(payload.finalProject);
   const dealClosedBy = payload.dealStatus === "Closed" ? await assertValidCloser(payload.dealClosedBy, currentUser) : null;
 
