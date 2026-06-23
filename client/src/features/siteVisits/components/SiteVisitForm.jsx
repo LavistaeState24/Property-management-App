@@ -7,9 +7,19 @@ import SelectDropdown from "../../../components/common/SelectDropdown";
 import { applyServerErrors, dateRules, getErrorMessage, selectRules, textRules } from "../../../utils/validation";
 import { postVisitResultOptions, siteVisitStatusOptions } from "../siteVisitConfig";
 
+const visitTypeOptions = [
+  { label: "New Project", value: "New Project" },
+  { label: "Resale", value: "Resale" },
+  { label: "Rental", value: "Rental" },
+  { label: "Commercial", value: "Commercial" },
+  { label: "Plot", value: "Plot" },
+];
+
 const defaultValues = {
   leadId: "",
   projectId: "",
+  visitType: "New Project",
+  propertyName: "",
   assignedStaff: "",
   visitDateTime: "",
   pickupRequired: false,
@@ -49,6 +59,7 @@ export default function SiteVisitForm({
   });
 
   const visitStatus = watch("visitStatus");
+  const visitType = watch("visitType");
 
   useEffect(() => {
     reset({
@@ -64,11 +75,12 @@ export default function SiteVisitForm({
         try {
           await onSubmit(values);
         } catch (requestError) {
-          applyServerErrors(requestError, setError, () => {});
+          applyServerErrors(requestError, setError, () => { });
         }
       })}
     >
       {hideLead ? <input type="hidden" {...register("leadId")} /> : null}
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {!hideLead ? (
           <SelectDropdown
@@ -79,13 +91,45 @@ export default function SiteVisitForm({
             {...register("leadId", selectRules("Lead"))}
           />
         ) : null}
+
         <SelectDropdown
-          label="Project"
-          options={projectOptions}
+          label="Visit Type"
+          options={visitTypeOptions}
           disabled={disabled}
-          error={getErrorMessage(errors.projectId)}
-          {...register("projectId", selectRules("Project"))}
+          error={getErrorMessage(errors.visitType)}
+          {...register("visitType", selectRules("Visit type"))}
         />
+
+        {visitType === "New Project" ? (
+          <SelectDropdown
+            label="Project"
+            options={projectOptions}
+            disabled={disabled}
+            error={getErrorMessage(errors.projectId)}
+            {...register("projectId", selectRules("Project"))}
+          />
+        ) : (
+          <FormInput
+            label="Properties / Locations Shown"
+            as="textarea"
+            rows={4}
+            placeholder={`Example:
+Gota 2BHK - ₹25k
+Science City 3BHK - ₹32k
+Shilaj 2BHK - ₹28k`}
+            disabled={disabled}
+            error={getErrorMessage(errors.propertyName)}
+            {...register(
+              "propertyName",
+              textRules("Properties / Locations shown", {
+                min: 3,
+                max: 1000,
+                required: true,
+              })
+            )}
+          />
+        )}
+
         <SelectDropdown
           label="Assigned Staff"
           options={staffOptions}
@@ -93,6 +137,7 @@ export default function SiteVisitForm({
           error={getErrorMessage(errors.assignedStaff)}
           {...register("assignedStaff", selectRules("Assigned staff"))}
         />
+
         <FormInput
           label="Visit Date/Time"
           type="datetime-local"
@@ -100,6 +145,7 @@ export default function SiteVisitForm({
           error={getErrorMessage(errors.visitDateTime)}
           {...register("visitDateTime", dateRules("Visit date/time", { required: true }))}
         />
+
         <SelectDropdown
           label="Visit Status"
           options={siteVisitStatusOptions}
@@ -107,6 +153,7 @@ export default function SiteVisitForm({
           error={getErrorMessage(errors.visitStatus)}
           {...register("visitStatus", selectRules("Visit status"))}
         />
+
         <SelectDropdown
           label="Post Visit Result"
           options={postVisitResultOptions}
@@ -144,7 +191,8 @@ export default function SiteVisitForm({
         error={getErrorMessage(errors.nextAction)}
         {...register("nextAction", {
           ...textRules("Next action", { min: 3, max: 500, required: false }),
-          validate: (value) => (visitStatus !== "Done" || (String(value || "").trim().length >= 3 ? true : "Next action is required")),
+          validate: (value) =>
+            visitStatus !== "Done" || (String(value || "").trim().length >= 3 ? true : "Next action is required"),
         })}
       />
 
@@ -154,6 +202,7 @@ export default function SiteVisitForm({
             Cancel
           </Button>
         ) : null}
+
         <Button type="submit" className="w-full sm:w-auto" icon={SubmitIcon} disabled={isSaving || disabled}>
           {isSaving ? "Saving..." : saveLabel}
         </Button>
