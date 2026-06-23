@@ -14,19 +14,22 @@ const toObjectIdString = (value) => String(toObjectId(value) || "");
 const getAssignedUserId = (client) => toObjectId(client.assignedStaff) || toObjectId(client.assignedTo) || null;
 
 const buildClientVisibilityFilter = async (currentUser) => {
-  if (["super-admin", "admin"].includes(currentUser.role)) {
-    return {};
-  }
+  if (["super-admin", "admin"].includes(currentUser.role)) return {};
 
   if (currentUser.role === "manager") {
     const teamMembers = await User.find({
       isActive: true,
       $or: [{ _id: currentUser._id }, { role: "sales", managerId: currentUser._id }],
     }).select("_id");
+
     const teamUserIds = teamMembers.map((user) => user._id);
 
     return {
-      $or: [{ assignedStaff: { $in: teamUserIds } }, { assignedTo: { $in: teamUserIds } }, { createdBy: { $in: teamUserIds } }],
+      $or: [
+        { assignedStaff: { $in: teamUserIds } },
+        { assignedTo: { $in: teamUserIds } },
+        { createdBy: { $in: teamUserIds } },
+      ],
     };
   }
 
@@ -36,12 +39,11 @@ const buildClientVisibilityFilter = async (currentUser) => {
 };
 
 const assertClientAccess = async (client, currentUser) => {
-  if (["super-admin", "admin"].includes(currentUser.role)) {
-    return;
-  }
+  if (["super-admin", "admin"].includes(currentUser.role)) return;
 
   if (currentUser.role === "manager") {
     const relatedUserIds = [getAssignedUserId(client), toObjectId(client.createdBy)].filter(Boolean);
+
     const managedSalesCount = await User.countDocuments({
       role: "sales",
       managerId: currentUser._id,
@@ -53,9 +55,7 @@ const assertClientAccess = async (client, currentUser) => {
       toObjectIdString(client.createdBy) === toObjectIdString(currentUser._id) ||
       managedSalesCount > 0;
 
-    if (hasAccess) {
-      return;
-    }
+    if (hasAccess) return;
   } else if (toObjectIdString(getAssignedUserId(client)) === toObjectIdString(currentUser._id)) {
     return;
   }
@@ -75,9 +75,7 @@ const getAccessibleClient = async (clientId, currentUser) => {
 };
 
 const assertProjectExists = async (projectId) => {
-  if (!projectId) {
-    return null;
-  }
+  if (!projectId) return null;
 
   const project = await Project.findById(projectId).select("_id projectName publicAlias");
 
@@ -90,6 +88,7 @@ const assertProjectExists = async (projectId) => {
 
 const assertValidAssignee = async (assignedStaff, client, currentUser) => {
   const assigneeId = assignedStaff || getAssignedUserId(client) || currentUser._id;
+
   const user = await User.findOne({ _id: assigneeId, isActive: true }).select("_id role managerId");
 
   if (!user || user.role === "super-admin") {
@@ -145,6 +144,10 @@ const buildSiteVisitFilters = async (query, currentUser) => {
 
   if (query.projectId || query.project) {
     filters.project = query.projectId || query.project;
+  }
+
+  if (query.visitType) {
+    filters.visitType = query.visitType;
   }
 
   if (query.visitStatus) {
@@ -210,9 +213,7 @@ export const createSiteVisit = async (payload, userId, currentUser) => {
         targetId: client._id,
         module: "site-visits",
         message: "Super Admin bypassed overdue reminder lock",
-        metadata: {
-          source: "site-visit-create",
-        },
+        metadata: { source: "site-visit-create" },
       })
     );
   }
@@ -220,10 +221,13 @@ export const createSiteVisit = async (payload, userId, currentUser) => {
   await assertProjectExists(payload.project);
 
   const assignedStaff = await assertValidAssignee(payload.assignedStaff, client, currentUser);
+
   const siteVisit = await SiteVisit.create({
     ...payload,
     client: client._id,
-    project: payload.project,
+    project: payload.project || null,
+    visitType: payload.visitType || "New Project",
+    propertyName: payload.propertyName || "",
     assignedStaff,
     createdBy: userId,
     updatedBy: userId,
@@ -235,7 +239,9 @@ export const createSiteVisit = async (payload, userId, currentUser) => {
     performedBy: userId,
     action: "created",
     newValues: {
-      project: payload.project,
+      project: payload.project || null,
+      visitType: payload.visitType || "New Project",
+      propertyName: payload.propertyName || "",
       visitDateTime: payload.visitDateTime,
       visitStatus: payload.visitStatus || "Planned",
       assignedStaff,
@@ -295,8 +301,13 @@ export const updateSiteVisit = async (siteVisitId, payload, currentUser) => {
     siteVisit.client = nextClient._id;
   }
 
-  if (nextPayload.project) {
+  if (Object.prototype.hasOwnProperty.call(nextPayload, "project")) {
     await assertProjectExists(nextPayload.project);
+    nextPayload.project = nextPayload.project || null;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(nextPayload, "propertyName")) {
+    nextPayload.propertyName = nextPayload.propertyName || "";
   }
 
   if (!siteVisit.assignedStaff || nextPayload.assignedStaff) {
@@ -314,12 +325,16 @@ export const updateSiteVisit = async (siteVisitId, payload, currentUser) => {
     action: "updated",
     oldValues: {
       project: previousSiteVisit.project,
+      visitType: previousSiteVisit.visitType,
+      propertyName: previousSiteVisit.propertyName,
       visitDateTime: previousSiteVisit.visitDateTime,
       visitStatus: previousSiteVisit.visitStatus,
       assignedStaff: previousSiteVisit.assignedStaff,
     },
     newValues: {
       project: siteVisit.project,
+      visitType: siteVisit.visitType,
+      propertyName: siteVisit.propertyName,
       visitDateTime: siteVisit.visitDateTime,
       visitStatus: siteVisit.visitStatus,
       assignedStaff: siteVisit.assignedStaff,

@@ -9,6 +9,8 @@ import {
 
 const visitStatuses = ["Planned", "Done", "Cancelled", "Rescheduled"];
 
+const visitTypes = ["New Project", "Resale", "Rental", "Commercial", "Plot"];
+
 const postVisitResults = [
   "Interested",
   "Negotiation",
@@ -26,34 +28,59 @@ export const validateSiteVisitInput = (payload) => {
       required: false,
     }) || "Planned";
 
+  const visitType =
+    validateEnum(errors, "visitType", payload.visitType || "New Project", {
+      label: "Visit type",
+      values: visitTypes,
+      required: true,
+    }) || "New Project";
+
   const sanitized = {
     client: validateObjectId(errors, "client", payload.client || payload.leadId, {
       label: "Client",
     }),
-    project: validateObjectId(errors, "project", payload.project || payload.projectId, {
-      label: "Project",
-    }),
+
+    project:
+      validateObjectId(errors, "project", payload.project || payload.projectId, {
+        label: "Project",
+        required: false,
+      }) || null,
+
+    visitType,
+
+    propertyName:
+      validateOptionalText(errors, "propertyName", payload.propertyName, {
+        label: "Properties / Locations shown",
+        min: 3,
+        max: 1000,
+      }) || "",
+
     assignedStaff: validateObjectId(errors, "assignedStaff", payload.assignedStaff, {
       label: "Assigned staff",
     }),
+
     visitDateTime: validateDate(errors, "visitDateTime", payload.visitDateTime, {
       label: "Visit date/time",
       required: true,
     }),
+
     pickupRequired: Boolean(payload.pickupRequired),
     visitStatus,
+
     postVisitResult:
       validateEnum(errors, "postVisitResult", payload.postVisitResult, {
         label: "Post visit result",
         values: postVisitResults,
         required: false,
       }) || undefined,
+
     clientFeedback:
       validateOptionalText(errors, "clientFeedback", payload.clientFeedback, {
         label: "Client feedback",
         min: 3,
         max: 1000,
       }) || "",
+
     nextAction:
       validateOptionalText(errors, "nextAction", payload.nextAction, {
         label: "Next action",
@@ -61,6 +88,14 @@ export const validateSiteVisitInput = (payload) => {
         max: 500,
       }) || "",
   };
+
+  if (visitType === "New Project" && !sanitized.project) {
+    errors.project = "Project is required for new project visit.";
+  }
+
+  if (visitType !== "New Project" && !sanitized.propertyName) {
+    errors.propertyName = "Properties / locations shown are required for resale/rental/commercial/plot visit.";
+  }
 
   if (visitStatus === "Done") {
     sanitized.clientFeedback = validateRequiredText(errors, "clientFeedback", payload.clientFeedback, {
@@ -91,9 +126,28 @@ export const validateSiteVisitUpdateInput = (payload) => {
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, "project") || Object.prototype.hasOwnProperty.call(payload, "projectId")) {
-    sanitized.project = validateObjectId(errors, "project", payload.project || payload.projectId, {
-      label: "Project",
+    sanitized.project =
+      validateObjectId(errors, "project", payload.project || payload.projectId, {
+        label: "Project",
+        required: false,
+      }) || null;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "visitType")) {
+    sanitized.visitType = validateEnum(errors, "visitType", payload.visitType, {
+      label: "Visit type",
+      values: visitTypes,
+      required: true,
     });
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "propertyName")) {
+    sanitized.propertyName =
+      validateOptionalText(errors, "propertyName", payload.propertyName, {
+        label: "Properties / Locations shown",
+        min: 3,
+        max: 1000,
+      }) || "";
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, "assignedStaff")) {
@@ -147,6 +201,20 @@ export const validateSiteVisitUpdateInput = (payload) => {
       }) || "";
   }
 
+  const finalVisitType = sanitized.visitType || payload.visitType;
+
+  if (finalVisitType === "New Project" && Object.prototype.hasOwnProperty.call(sanitized, "project") && !sanitized.project) {
+    errors.project = "Project is required for new project visit.";
+  }
+
+  if (finalVisitType && finalVisitType !== "New Project") {
+    const propertyName = sanitized.propertyName ?? payload.propertyName;
+
+    if (!propertyName || propertyName.trim().length < 3) {
+      errors.propertyName = "Properties / locations shown are required for resale/rental/commercial/plot visit.";
+    }
+  }
+
   const finalStatus = sanitized.visitStatus || payload.visitStatus;
 
   if (finalStatus === "Done") {
@@ -172,35 +240,50 @@ export const validateSiteVisitUpdateInput = (payload) => {
 
 export const validateSiteVisitListQuery = (payload) => {
   const errors = {};
+
   const sanitized = {
     leadId: validateObjectId(errors, "leadId", payload.leadId || payload.clientId || payload.client, {
       label: "Lead",
       required: false,
     }) || undefined,
+
     projectId: validateObjectId(errors, "projectId", payload.projectId || payload.project, {
       label: "Project",
       required: false,
     }) || undefined,
+
     assignedStaff: validateObjectId(errors, "assignedStaff", payload.assignedStaff || payload.staff, {
       label: "Assigned staff",
       required: false,
     }) || undefined,
+
+    visitType:
+      validateEnum(errors, "visitType", payload.visitType, {
+        label: "Visit type",
+        values: visitTypes,
+        required: false,
+      }) || undefined,
+
     visitStatus:
       validateEnum(errors, "visitStatus", payload.visitStatus, {
         label: "Visit status",
         values: visitStatuses,
         required: false,
       }) || undefined,
+
     dateFrom: validateDate(errors, "dateFrom", payload.dateFrom, {
       label: "From date",
       required: false,
     }),
+
     dateTo: validateDate(errors, "dateTo", payload.dateTo, {
       label: "To date",
       required: false,
     }),
+
     page: payload.page,
     limit: payload.limit,
+
     today:
       payload.today === undefined || payload.today === ""
         ? undefined
@@ -209,6 +292,7 @@ export const validateSiteVisitListQuery = (payload) => {
           : String(payload.today) === "false"
             ? "false"
             : null,
+
     pickupRequired:
       payload.pickupRequired === undefined || payload.pickupRequired === ""
         ? undefined

@@ -27,6 +27,8 @@ const initialFilters = {
 const emptyFormValues = {
   leadId: "",
   projectId: "",
+  visitType: "New Project",
+  propertyName: "",
   assignedStaff: "",
   visitDateTime: "",
   pickupRequired: false,
@@ -105,8 +107,12 @@ export default function SiteVisitsPage() {
   const toFormValues = (siteVisit) => ({
     leadId: siteVisit.leadId || siteVisit.client?._id || siteVisit.client || "",
     projectId: siteVisit.projectId || siteVisit.project?._id || siteVisit.project || "",
+    visitType: siteVisit.visitType || "New Project",
+    propertyName: siteVisit.propertyName || "",
     assignedStaff: siteVisit.assignedStaff?._id || siteVisit.assignedStaff || "",
-    visitDateTime: siteVisit.visitDateTime ? new Date(siteVisit.visitDateTime).toISOString().slice(0, 16) : "",
+    visitDateTime: siteVisit.visitDateTime
+      ? new Date(siteVisit.visitDateTime).toISOString().slice(0, 16)
+      : "",
     pickupRequired: Boolean(siteVisit.pickupRequired),
     visitStatus: siteVisit.visitStatus || "Planned",
     clientFeedback: siteVisit.clientFeedback || "",
@@ -142,6 +148,21 @@ export default function SiteVisitsPage() {
         <div>
           <p className="text-sm text-ivory">{row.project?.projectName || "-"}</p>
           <p className="text-xs text-muted">{row.project?.publicAlias || ""}</p>
+        </div>
+      ),
+    },
+    {
+      key: "visitType",
+      label: "Visit Type",
+      render: (row) => row.visitType || "-",
+    },
+    {
+      key: "propertyName",
+      label: "Properties Shown",
+      searchValue: (row) => row.propertyName || "",
+      render: (row) => (
+        <div className="max-w-xs whitespace-pre-wrap text-xs">
+          {row.propertyName || "-"}
         </div>
       ),
     },
