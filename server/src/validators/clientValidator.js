@@ -5,9 +5,11 @@ import {
   validateEnum,
   validateNumber,
   validateObjectId,
+  validateOptionalUrl,
   validateOptionalText,
   validatePhone,
   validateRequiredText,
+  isSupportedLeadVideoUrl,
 } from "./common.js";
 
 const sourceOfPropertyValues = ["Owner", "Broker"];
@@ -64,6 +66,37 @@ const salesAllowedUpdateFields = [
 
 const hasOwnProperty = (payload, field) => Object.prototype.hasOwnProperty.call(payload, field);
 
+const validatePropertyImages = (errors, field, value) => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value)) {
+    errors[field] = "Property images must be an array";
+    return [];
+  }
+
+  const propertyImages = value
+    .map((imageUrl, index) => validateOptionalUrl(errors, `${field}.${index}`, imageUrl, "Property image URL"))
+    .filter(Boolean);
+
+  if (propertyImages.length > 15) {
+    errors[field] = "Property images cannot exceed 15 items";
+  }
+
+  return propertyImages;
+};
+
+const validateHouseVideo = (errors, field, value) => {
+  const houseVideo = validateOptionalUrl(errors, field, value, "House video URL");
+
+  if (houseVideo && !isSupportedLeadVideoUrl(houseVideo)) {
+    errors[field] = "House video URL must be an Instagram, YouTube, Vimeo, or Amazon S3 URL";
+  }
+
+  return houseVideo || null;
+};
+
 const validateNullableDate = (errors, field, value, { label }) => {
   if (value === "" || value === null || value === undefined) {
     return null;
@@ -86,6 +119,8 @@ export const validateClientInput = (payload, options = {}) => {
     "propertyCondition",
     "propertyAge",
     "propertySize",
+    "propertyImages",
+    "houseVideo",
     "clientPhoneNumber",
     "email",
     "internalNotes",
@@ -142,6 +177,12 @@ export const validateClientInput = (payload, options = {}) => {
       : {}),
     ...(shouldValidateField("propertySize")
       ? { propertySize: validateOptionalText(errors, "propertySize", payload.propertySize, { label: "Size of property", max: 80 }) }
+      : {}),
+    ...(shouldValidateField("propertyImages")
+      ? { propertyImages: validatePropertyImages(errors, "propertyImages", payload.propertyImages) ?? [] }
+      : {}),
+    ...(shouldValidateField("houseVideo")
+      ? { houseVideo: validateHouseVideo(errors, "houseVideo", payload.houseVideo) }
       : {}),
     ...(shouldValidateField("clientPhoneNumber")
       ? { clientPhoneNumber: validatePhone(errors, "clientPhoneNumber", payload.clientPhoneNumber, {

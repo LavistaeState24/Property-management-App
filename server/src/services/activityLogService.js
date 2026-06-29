@@ -319,9 +319,15 @@ export const recordShareActivity = async ({ lead, shareRecord, performedBy, meta
     leadId: lead._id || lead,
     activityType: "share.created",
     title: "Property shared",
-    description: `Shared ${shareRecord.projectPublicAliases?.length || 1} project(s) with the client.`,
+    description:
+      shareRecord.shareTargetType === "lead-property"
+        ? `Shared property details${shareRecord.sharedTitle ? ` for ${shareRecord.sharedTitle}` : ""} with the client.`
+        : `Shared ${shareRecord.projectPublicAliases?.length || 1} project(s) with the client.`,
     newValues: {
+      shareTargetType: shareRecord.shareTargetType || "project",
       projectIds: shareRecord.projectIds || [],
+      leadPropertyId: shareRecord.leadPropertyId || null,
+      sharedTitle: shareRecord.sharedTitle || "",
       shareChannel: shareRecord.shareChannel || "",
       status: shareRecord.status || "",
     },

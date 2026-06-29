@@ -102,3 +102,6 @@ export const uploadFilesHandler = asyncHandler(async (req, res) => {
     await Promise.all(req.files.map((file) => cleanupTempFile(file.path)));
   }
 });
+
+export const uploadLeadPropertyImagesHandler = uploadFilesHandler;
+export const uploadLeadPropertyVideoHandler = uploadFilesHandler;

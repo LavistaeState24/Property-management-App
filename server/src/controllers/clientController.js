@@ -7,6 +7,7 @@ import {
   getClientImportHistory,
   getClients,
   getMatchingProjectsForClient,
+  getClientSafePropertyShare,
   importClients,
   shareMatchingProjectsWithClient,
   updateClient,
@@ -42,6 +43,12 @@ export const getClientImportHistoryHandler = asyncHandler(async (req, res) => {
 export const getClientHandler = asyncHandler(async (req, res) => {
   const client = await getClientById(req.params.id, req.user);
   res.json({ success: true, data: client });
+});
+
+export const getClientSafePropertyShareHandler = asyncHandler(async (req, res) => {
+  const origin = `${req.protocol}://${req.get("host")}`;
+  const result = await getClientSafePropertyShare(req.params.id, req.user, origin);
+  res.json({ success: true, data: result });
 });
 
 export const getMatchingProjectsForClientHandler = asyncHandler(async (req, res) => {

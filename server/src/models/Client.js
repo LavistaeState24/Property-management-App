@@ -48,6 +48,17 @@ const clientSchema = new mongoose.Schema(
     },
     propertyAge: { type: String, required: true, trim: true, minlength: 1, maxlength: 80 },
     propertySize: { type: String, trim: true, maxlength: 80, default: "" },
+    propertyImages: {
+      type: [{ type: String, trim: true, maxlength: 500 }],
+      default: [],
+      validate: {
+        validator(value) {
+          return Array.isArray(value) && value.length <= 15;
+        },
+        message: "Property images cannot exceed 15 items",
+      },
+    },
+    houseVideo: { type: String, trim: true, maxlength: 500, default: null },
     clientPhoneNumber: { type: String, required: true, trim: true, match: /^[6-9]\d{9}$/ },
     email: { type: String, trim: true, lowercase: true, maxlength: 120, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
     internalNotes: { type: String, trim: true, maxlength: 500, default: "" },

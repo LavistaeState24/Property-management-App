@@ -3,6 +3,7 @@ const INDIAN_PHONE_REGEX = /^[6-9]\d{9}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,32}$/;
 const NUMBER_REGEX = /^\d+(\.\d+)?$/;
 const HTTPS_URL_REGEX = /^https:\/\/[^\s/$.?#].[^\s]*$/i;
+const HTTP_URL_REGEX = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
 
 export const validationPatterns = {
   email: EMAIL_REGEX,
@@ -10,6 +11,7 @@ export const validationPatterns = {
   password: PASSWORD_REGEX,
   number: NUMBER_REGEX,
   httpsUrl: HTTPS_URL_REGEX,
+  httpUrl: HTTP_URL_REGEX,
 };
 
 export const normalizeText = (value) => (typeof value === "string" ? value.trim() : value);
@@ -162,6 +164,42 @@ export const httpsUrlRules = (label, { required = false } = {}) => ({
 
     const normalized = typeof value === "string" ? value.trim() : value;
     return HTTPS_URL_REGEX.test(normalized) ? true : `${label} must be a valid https URL`;
+  },
+  setValueAs: normalizeText,
+});
+
+export const leadVideoUrlRules = (label, { required = false } = {}) => ({
+  ...(required ? { required: `${label} is required` } : {}),
+  validate: (value) => {
+    if (!value) {
+      return required ? `${label} is required` : true;
+    }
+
+    const normalized = typeof value === "string" ? value.trim() : value;
+
+    if (!HTTP_URL_REGEX.test(normalized)) {
+      return `${label} must be a valid URL`;
+    }
+
+    try {
+      const { hostname } = new URL(normalized);
+      const normalizedHost = hostname.toLowerCase();
+      const isSupportedHost =
+        normalizedHost === "youtu.be" ||
+        normalizedHost.endsWith(".youtu.be") ||
+        normalizedHost === "youtube.com" ||
+        normalizedHost.endsWith(".youtube.com") ||
+        normalizedHost === "vimeo.com" ||
+        normalizedHost.endsWith(".vimeo.com") ||
+        normalizedHost === "instagram.com" ||
+        normalizedHost.endsWith(".instagram.com") ||
+        normalizedHost === "amazonaws.com" ||
+        normalizedHost.endsWith(".amazonaws.com");
+
+      return isSupportedHost ? true : `${label} must be an Instagram, YouTube, Vimeo, or Amazon S3 URL`;
+    } catch {
+      return `${label} must be a valid URL`;
+    }
   },
   setValueAs: normalizeText,
 });

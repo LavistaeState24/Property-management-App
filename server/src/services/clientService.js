@@ -19,7 +19,11 @@ import {
   recordShareActivity,
   createActivityLog,
 } from "./activityLogService.js";
-import { buildClientSafeProjectPayload } from "./projectService.js";
+import {
+  buildClientSafeProjectPayload,
+  formatAssetUrl,
+  formatIndianCurrency,
+} from "./projectService.js";
 import { buildClientSafeShareMessage } from "../utils/shareMessage.js";
 import { createFollowup } from "./followupService.js";
 import {
@@ -338,7 +342,7 @@ const assertClientAccess = async (client, currentUser) => {
   throw new ApiError(403, "You do not have access to this resource");
 };
 
-const getAccessibleClient = async (clientId, currentUser) => {
+export const getAccessibleClient = async (clientId, currentUser) => {
   const client = await Client.findById(clientId);
 
   if (!client) {
@@ -396,6 +400,65 @@ const buildMatchingProjectQuery = (client, query) => {
 };
 
 const includesText = (value, expected) => normalizeToken(value).includes(normalizeToken(expected));
+
+const sharePurposeMap = {
+  buy: "Sale",
+  rent: "Rent",
+  lease: "Rent",
+  investment: "Resale",
+};
+
+const formatLeadSharePurpose = (value) => {
+  const normalized = normalizeToken(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return sharePurposeMap[normalized] || normalizeString(value);
+};
+
+const isBhkConfiguration = (value) => /^\d+(\.\d+)?\s*bhk$/i.test(String(value || "").trim());
+
+const formatLeadShareConfiguration = (value) => {
+  const normalized = normalizeString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return isBhkConfiguration(normalized) ? normalized.toUpperCase().replace(/\s+/g, "") : null;
+};
+
+const formatLeadSharePriceLabel = (purpose) => {
+  const normalizedPurpose = normalizeToken(purpose);
+  return ["rent", "lease"].includes(normalizedPurpose) ? "Rent" : "Price";
+};
+
+export const buildLeadPropertySharePayload = (client, user, origin) => ({
+  premiseName: normalizeString(client.premiseName) || null,
+  area: normalizeString(client.premiseArea || client.areaPreference) || null,
+  propertyType: normalizeString(client.propertyType) || null,
+  purpose: formatLeadSharePurpose(client.purpose),
+  configuration: formatLeadShareConfiguration(client.propertyType),
+  size: normalizeString(client.propertySize) || null,
+  priceLabel: formatLeadSharePriceLabel(client.purpose),
+  price: client.ownerPrice ? `Rs${formatIndianCurrency(client.ownerPrice)}` : null,
+  furnishingStatus: normalizeString(client.propertyCondition) || null,
+  propertyCondition: null,
+  availability: normalizeString(client.propertyStatus) || null,
+  amenities: [],
+  description: null,
+  propertyImages: (Array.isArray(client.propertyImages) ? client.propertyImages : [])
+    .map((imageUrl) => formatAssetUrl(origin, imageUrl))
+    .filter(Boolean)
+    .slice(0, 15),
+  houseVideo: formatAssetUrl(origin, client.houseVideo),
+  contact: {
+    name: user?.name || null,
+    phone: user?.phone || null,
+  },
+});
 
 const getBudgetScore = (client, project) => {
   const clientMin = client.budgetMin ?? null;
@@ -1193,6 +1256,11 @@ export const getClientById = async (clientId, currentUser) => {
     ...client.toObject(),
     hasOverdueReminder,
   });
+};
+
+export const getClientSafePropertyShare = async (clientId, currentUser, origin) => {
+  const client = await getAccessibleClient(clientId, currentUser);
+  return buildLeadPropertySharePayload(client, currentUser, origin);
 };
 
 export const getMatchingProjectsForClient = async (clientId, query, currentUser, origin) => {
