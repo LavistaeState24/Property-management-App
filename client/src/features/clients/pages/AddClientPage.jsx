@@ -2,14 +2,17 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
+  ImagePlus,
   IndianRupee,
   Mail,
   MapPin,
   Phone,
+  PlayCircle,
   Save,
   Shapes,
   UserCheck,
   UserRound,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -31,6 +34,7 @@ import {
 } from "../../../constants/theme";
 import { useAuth } from "../../../hooks/useAuth";
 import { clientService } from "../../../services/clientService";
+import { resolveAssetUrl, uploadService } from "../../../services/uploadService";
 import { userService } from "../../../services/userService";
 import {
   applyServerErrors,
@@ -45,6 +49,50 @@ import {
 } from "../../../utils/validation";
 import { formatCompactPrice } from "../clientPipeline";
 
+const MAX_PROPERTY_IMAGES = 15;
+const DIRECT_VIDEO_FILE_REGEX = /\.(mp4|m4v|mov|webm|ogg)(?:[?#].*)?$/i;
+
+const getImageNameFromUrl = (url, index) => {
+  try {
+    const pathname = new URL(url).pathname;
+    const fileName = pathname.split("/").pop();
+
+    return fileName || `Property image ${index + 1}`;
+  } catch {
+    return `Property image ${index + 1}`;
+  }
+};
+
+const getVideoNameFromUrl = (url) => {
+  try {
+    const pathname = new URL(url).pathname;
+    return pathname.split("/").pop() || "House video";
+  } catch {
+    return "House video";
+  }
+};
+
+const normalizePropertyImageAssets = (propertyImages = []) =>
+  (Array.isArray(propertyImages) ? propertyImages : [])
+    .filter(Boolean)
+    .map((url, index) => ({
+      name: getImageNameFromUrl(url, index),
+      url,
+    }));
+
+const normalizeHouseVideoAsset = (houseVideo) => {
+  if (!houseVideo) {
+    return null;
+  }
+
+  return {
+    name: getVideoNameFromUrl(houseVideo),
+    url: houseVideo,
+  };
+};
+
+const isDirectVideoUrl = (url) => DIRECT_VIDEO_FILE_REGEX.test(String(url || ""));
+
 const initialState = {
   ownerName: "",
   clientPhoneNumber: "",
@@ -58,6 +106,8 @@ const initialState = {
   propertyCondition: "",
   propertyAge: "",
   propertySize: "",
+  propertyImages: [],
+  houseVideo: "",
   internalNotes: "",
   propertyStatus: "",
   dateOfAddingProperty: "",
@@ -88,6 +138,8 @@ const mapClientToForm = (client) => ({
   propertyCondition: client.propertyCondition || "",
   propertyAge: client.propertyAge || "",
   propertySize: client.propertySize || "",
+  propertyImages: Array.isArray(client.propertyImages) ? client.propertyImages : [],
+  houseVideo: client.houseVideo || "",
   internalNotes: client.internalNotes || "",
   propertyStatus: client.propertyStatus || "",
   dateOfAddingProperty: client.dateOfAddingProperty ? new Date(client.dateOfAddingProperty).toISOString().slice(0, 10) : "",
@@ -114,6 +166,13 @@ export default function AddClientPage() {
   const [formError, setFormError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [staffOptions, setStaffOptions] = useState([]);
+  const [propertyImageAssets, setPropertyImageAssets] = useState([]);
+  const [propertyImagesError, setPropertyImagesError] = useState("");
+  const [isUploadingPropertyImages, setIsUploadingPropertyImages] = useState(false);
+  const [houseVideoAsset, setHouseVideoAsset] = useState(null);
+  const [houseVideoError, setHouseVideoError] = useState("");
+  const [isUploadingHouseVideo, setIsUploadingHouseVideo] = useState(false);
+  const [houseVideoUploadProgress, setHouseVideoUploadProgress] = useState(0);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const {
     register,
@@ -127,6 +186,26 @@ export default function AddClientPage() {
     mode: "onBlur",
     defaultValues: initialState,
   });
+
+  const syncPropertyImages = (assets, options = {}) => {
+    setPropertyImageAssets(assets);
+    setValue(
+      "propertyImages",
+      assets.map((asset) => asset.url),
+      {
+        shouldDirty: options.shouldDirty ?? true,
+        shouldValidate: options.shouldValidate ?? true,
+      }
+    );
+  };
+
+  const syncHouseVideo = (asset, options = {}) => {
+    setHouseVideoAsset(asset);
+    setValue("houseVideo", asset?.url || "", {
+      shouldDirty: options.shouldDirty ?? true,
+      shouldValidate: options.shouldValidate ?? true,
+    });
+  };
 
   useEffect(() => {
     const loadPage = async () => {
@@ -145,11 +224,28 @@ export default function AddClientPage() {
         }));
 
         setStaffOptions(nextStaffOptions);
+        setPropertyImagesError("");
+        setHouseVideoError("");
+        setHouseVideoUploadProgress(0);
 
         if (client) {
           reset(mapClientToForm(client));
+          const normalizedAssets = normalizePropertyImageAssets(client.propertyImages);
+          setPropertyImageAssets(normalizedAssets);
+          setValue(
+            "propertyImages",
+            normalizedAssets.map((asset) => asset.url),
+            { shouldDirty: false, shouldValidate: false }
+          );
+          syncHouseVideo(normalizeHouseVideoAsset(client.houseVideo), {
+            shouldDirty: false,
+            shouldValidate: false,
+          });
         } else {
           reset(initialState);
+          setPropertyImageAssets([]);
+          setValue("propertyImages", [], { shouldDirty: false, shouldValidate: false });
+          syncHouseVideo(null, { shouldDirty: false, shouldValidate: false });
 
           if (assignableUsers.length === 1) {
             setValue("assignedStaff", assignableUsers[0].id, { shouldDirty: false });
@@ -165,6 +261,92 @@ export default function AddClientPage() {
     loadPage();
   }, [id, isEditMode, reset, setValue]);
 
+  const handlePropertyImageUpload = async (event) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+
+    if (!files.length) {
+      return;
+    }
+
+    setPropertyImagesError("");
+
+    if (propertyImageAssets.length + files.length > MAX_PROPERTY_IMAGES) {
+      setPropertyImagesError(`You can upload up to ${MAX_PROPERTY_IMAGES} property images only`);
+      return;
+    }
+
+    const invalidFile = files.find((file) => !String(file.type || "").startsWith("image/"));
+
+    if (invalidFile) {
+      setPropertyImagesError("Only image files are allowed");
+      return;
+    }
+
+    setIsUploadingPropertyImages(true);
+
+    try {
+      const uploadedAssets = await uploadService.uploadLeadPropertyImages(files, {
+        onProgress: () => {},
+      });
+      const nextAssets = [...propertyImageAssets, ...uploadedAssets];
+      syncPropertyImages(nextAssets);
+    } catch (requestError) {
+      setPropertyImagesError(requestError.response?.data?.message || "Unable to upload property images");
+    } finally {
+      setIsUploadingPropertyImages(false);
+    }
+  };
+
+  const removePropertyImage = (indexToRemove) => {
+    setPropertyImagesError("");
+    syncPropertyImages(propertyImageAssets.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleHouseVideoUpload = async (event) => {
+    const [file] = Array.from(event.target.files || []);
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    setHouseVideoError("");
+    setHouseVideoUploadProgress(0);
+
+    if (!String(file.type || "").startsWith("video/")) {
+      setHouseVideoError("Only video files are allowed");
+      return;
+    }
+
+    setIsUploadingHouseVideo(true);
+
+    try {
+      const uploadedAsset = await uploadService.uploadLeadPropertyVideo(file, {
+        onProgress: (progress) => setHouseVideoUploadProgress(progress),
+      });
+
+      if (!uploadedAsset?.url) {
+        setHouseVideoError("Unable to upload house video");
+        return;
+      }
+
+      syncHouseVideo(uploadedAsset);
+      setHouseVideoUploadProgress(100);
+    } catch (requestError) {
+      setHouseVideoError(requestError.response?.data?.message || "Unable to upload house video");
+      setHouseVideoUploadProgress(0);
+    } finally {
+      setIsUploadingHouseVideo(false);
+    }
+  };
+
+  const removeHouseVideo = () => {
+    setHouseVideoError("");
+    setHouseVideoUploadProgress(0);
+    syncHouseVideo(null);
+  };
+
   const ownerPrice = watch("ownerPrice");
   const budgetMin = watch("budgetMin");
 
@@ -177,6 +359,8 @@ export default function AddClientPage() {
         ownerPrice: toOptionalNumber(formValues.ownerPrice),
         budgetMin: toOptionalNumber(formValues.budgetMin),
         budgetMax: toOptionalNumber(formValues.budgetMax),
+        propertyImages: propertyImageAssets.map((asset) => asset.url),
+        houseVideo: houseVideoAsset?.url || null,
       };
 
       if (!payload.assignedStaff) {
@@ -514,6 +698,163 @@ export default function AddClientPage() {
             error={getErrorMessage(errors.internalNotes)}
             {...register("internalNotes", textRules("Internal notes", { min: 0, max: 500, required: false }))}
           />
+        </section>
+
+        <section className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2">
+          <div className="lg:col-span-2">
+            <p className="text-xs uppercase tracking-[0.3em] text-gold">Property Media</p>
+            <h3 className="mt-2 font-display text-2xl">Images and optional house video</h3>
+          </div>
+
+          <div className="lg:col-span-2 rounded-3xl border border-dashed border-gold/30 bg-black/10 p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <ImagePlus className="h-5 w-5 text-gold-2" />
+                  <p className="text-sm font-semibold text-ivory">Property Images</p>
+                </div>
+                <p className="mt-2 text-sm text-muted">
+                  Upload up to {MAX_PROPERTY_IMAGES} property images. Existing project brochure uploads remain unchanged.
+                </p>
+              </div>
+              <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-gold/30 bg-gold/10 px-4 py-2.5 text-sm font-semibold text-gold-2 transition hover:bg-gold/20">
+                {isUploadingPropertyImages ? "Uploading..." : "Add Images"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handlePropertyImageUpload}
+                  disabled={isUploadingPropertyImages || propertyImageAssets.length >= MAX_PROPERTY_IMAGES}
+                />
+              </label>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
+              <span className="text-muted">Uploaded images</span>
+              <span className="font-medium text-ivory">
+                {propertyImageAssets.length}/{MAX_PROPERTY_IMAGES}
+              </span>
+            </div>
+
+            {propertyImageAssets.length ? (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {propertyImageAssets.map((asset, index) => (
+                  <div key={`${asset.url}-${index}`} className="overflow-hidden rounded-3xl border border-white/10 bg-black/20">
+                    <a href={resolveAssetUrl(asset.url)} target="_blank" rel="noreferrer">
+                      <img
+                        src={resolveAssetUrl(asset.url)}
+                        alt={asset.name || `Property image ${index + 1}`}
+                        className="h-40 w-full object-cover"
+                      />
+                    </a>
+                    <div className="flex items-center justify-between gap-3 px-4 py-3">
+                      <p className="truncate text-sm text-ivory">{asset.name || `Property image ${index + 1}`}</p>
+                      <button
+                        type="button"
+                        onClick={() => removePropertyImage(index)}
+                        className="rounded-full p-1 text-muted transition hover:bg-white/10 hover:text-ivory"
+                        aria-label={`Remove property image ${index + 1}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-muted">No property images uploaded yet.</p>
+            )}
+
+            {propertyImagesError ? <p className="mt-3 text-sm text-rose-300">{propertyImagesError}</p> : null}
+            {getErrorMessage(errors.propertyImages) ? <p className="mt-3 text-sm text-rose-300">{getErrorMessage(errors.propertyImages)}</p> : null}
+          </div>
+
+          <div className="lg:col-span-2 rounded-3xl border border-dashed border-gold/30 bg-black/10 p-5">
+            <input type="hidden" {...register("houseVideo")} />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <PlayCircle className="h-5 w-5 text-gold-2" />
+                  <p className="text-sm font-semibold text-ivory">House Video Upload</p>
+                </div>
+                <p className="mt-2 text-sm text-muted">
+                  Upload one property video directly to S3. You can remove or replace it before saving the lead.
+                </p>
+              </div>
+              <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-gold/30 bg-gold/10 px-4 py-2.5 text-sm font-semibold text-gold-2 transition hover:bg-gold/20">
+                {isUploadingHouseVideo ? "Uploading..." : houseVideoAsset ? "Replace Video" : "Upload Video"}
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={handleHouseVideoUpload}
+                  disabled={isUploadingHouseVideo}
+                />
+              </label>
+            </div>
+
+            {isUploadingHouseVideo ? (
+              <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-muted">Upload progress</span>
+                  <span className="font-medium text-ivory">{houseVideoUploadProgress}%</span>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-gold transition-all"
+                    style={{ width: `${houseVideoUploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {houseVideoAsset ? (
+              <div className="mt-4 overflow-hidden rounded-3xl border border-white/10 bg-black/20">
+                {isDirectVideoUrl(houseVideoAsset.url) ? (
+                  <video
+                    className="max-h-[420px] w-full bg-black"
+                    controls
+                    src={resolveAssetUrl(houseVideoAsset.url)}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <div className="flex min-h-48 items-center justify-center bg-black px-6 py-10 text-center">
+                    <div>
+                      <p className="text-sm font-medium text-ivory">Existing house video is linked from an external source.</p>
+                      <a
+                        href={resolveAssetUrl(houseVideoAsset.url)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-flex items-center justify-center rounded-2xl border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-semibold text-gold-2 transition hover:bg-gold/20"
+                      >
+                        Open Current Video
+                      </a>
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm text-ivory">{houseVideoAsset.name || "House video"}</p>
+                    <p className="truncate text-xs text-muted">{resolveAssetUrl(houseVideoAsset.url)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeHouseVideo}
+                    className="inline-flex items-center justify-center rounded-2xl border border-white/10 px-3 py-2 text-sm font-semibold text-muted transition hover:border-rose-300/40 hover:text-rose-200"
+                  >
+                    Remove Video
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-muted">No house video uploaded yet.</p>
+            )}
+
+            {houseVideoError ? <p className="mt-3 text-sm text-rose-300">{houseVideoError}</p> : null}
+            {getErrorMessage(errors.houseVideo) ? <p className="mt-3 text-sm text-rose-300">{getErrorMessage(errors.houseVideo)}</p> : null}
+          </div>
         </section>
 
         {formError ? <p className="text-sm text-rose-300">{formError}</p> : null}

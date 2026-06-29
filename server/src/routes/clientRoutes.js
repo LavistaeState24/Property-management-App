@@ -10,6 +10,7 @@ import {
   getClientHandler,
   getClientActivityTimelineHandler,
   getClientImportHistoryHandler,
+  getClientSafePropertyShareHandler,
   getClientShareHistoryHandler,
   getMatchingProjectsForClientHandler,
   importClientsHandler,
@@ -33,6 +34,7 @@ router.get("/", protect, authorize("clients", "view"), listClientsHandler);
 router.get("/positive", protect, authorize("clients", "view"), listPositiveClientsHandler);
 router.post("/import", protect, authorize("clients", "create"), importClientsHandler);
 router.get("/import-history", protect, authorize("clients", "create"), getClientImportHistoryHandler);
+router.get("/:id/property-share", protect, authorize("clients", "view"), getClientSafePropertyShareHandler);
 router.get(
   "/:id/matching-projects",
   protect,

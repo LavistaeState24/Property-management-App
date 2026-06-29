@@ -17,6 +17,16 @@ const formatWhatsAppPhone = (phone) => {
   return digits.length === 10 ? `91${digits}` : digits;
 };
 
+const getSharedItemLabel = (record) => {
+  if (record.shareTargetType === "lead-property") {
+    return record.sharedTitle || record.leadPropertyId?.premiseName || record.leadPropertyId?.ownerName || "Property details";
+  }
+
+  return record.projectPublicAlias || record.projectId?.publicAlias || "-";
+};
+
+const getShareTypeLabel = (record) => (record.shareTargetType === "lead-property" ? "Lead Property" : "Project");
+
 const toLocalDateTimeInputValue = (value) => {
   if (!value) {
     return "";
@@ -156,7 +166,21 @@ export default function SharedHistoryPage() {
   const columns = [
     { key: "clientName", label: "Client Name" },
     { key: "clientPhone", label: "Client Phone" },
-    { key: "projectPublicAlias", label: "Project Alias" },
+    {
+      key: "sharedItem",
+      label: "Shared Item",
+      searchValue: (row) =>
+        [getSharedItemLabel(row), row.projectPublicAliases?.join(" "), row.leadPropertyId?.premiseArea, row.leadPropertyId?.propertyType]
+          .filter(Boolean)
+          .join(" "),
+      render: (row) => getSharedItemLabel(row),
+    },
+    {
+      key: "shareTargetType",
+      label: "Type",
+      searchValue: (row) => getShareTypeLabel(row),
+      render: (row) => getShareTypeLabel(row),
+    },
     { key: "sharedByName", label: "Shared By" },
     {
       key: "createdAt",
@@ -249,7 +273,7 @@ export default function SharedHistoryPage() {
     <div className="space-y-6">
       <div>
         <p className="text-xs uppercase tracking-[0.3em] text-gold">Shared History</p>
-        <h2 className="mt-2 font-display text-3xl">Client-safe project sharing history</h2>
+        <h2 className="mt-2 font-display text-3xl">Client-safe sharing history</h2>
       </div>
 
       <AdvancedDataTable

@@ -31,6 +31,9 @@ export const allowedUploadMimeTypes = [
   "video/x-matroska",
 ];
 
+export const allowedImageUploadMimeTypes = allowedUploadMimeTypes.filter((mimeType) => mimeType.startsWith("image/"));
+export const allowedVideoUploadMimeTypes = allowedUploadMimeTypes.filter((mimeType) => mimeType.startsWith("video/"));
+
 const normalizeUploadBaseName = (filename) =>
   filename
     .replace(/\.[^/.]+$/, "")

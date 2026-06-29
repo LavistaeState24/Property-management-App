@@ -3,10 +3,15 @@ import mongoose from "mongoose";
 const sharedFieldsSchema = new mongoose.Schema(
   {
     area: { type: String, trim: true, maxlength: 120 },
+    propertyType: { type: String, trim: true, maxlength: 80 },
+    purpose: { type: String, trim: true, maxlength: 80 },
     configuration: { type: String, trim: true, maxlength: 80 },
     size: { type: String, trim: true, maxlength: 80 },
     priceRange: { type: String, trim: true, maxlength: 120 },
     possession: { type: String, trim: true, maxlength: 80 },
+    furnishingStatus: { type: String, trim: true, maxlength: 80 },
+    propertyStatus: { type: String, trim: true, maxlength: 80 },
+    description: { type: String, trim: true, maxlength: 1500 },
     amenities: [{ type: String, trim: true, maxlength: 500 }],
     brochureUrl: { type: String, trim: true, maxlength: 500, default: null },
     sampleVideoUrl: { type: String, trim: true, maxlength: 500, default: null },
@@ -30,6 +35,12 @@ const sharedProjectSchema = new mongoose.Schema(
 
 const shareRecordSchema = new mongoose.Schema(
   {
+    shareTargetType: {
+      type: String,
+      enum: ["project", "lead-property"],
+      default: "project",
+      index: true,
+    },
     client: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",
@@ -52,8 +63,15 @@ const shareRecordSchema = new mongoose.Schema(
         ref: "Project",
       },
     ],
-    projectPublicAlias: { type: String, required: true, trim: true, maxlength: 100 },
+    projectPublicAlias: { type: String, trim: true, maxlength: 100, default: "" },
     projectPublicAliases: [{ type: String, trim: true, maxlength: 100 }],
+    leadPropertyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Client",
+      default: null,
+      index: true,
+    },
+    sharedTitle: { type: String, trim: true, maxlength: 120, default: "" },
     sharedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -88,17 +106,28 @@ const shareRecordSchema = new mongoose.Schema(
 shareRecordSchema.index({ clientPhone: 1, createdAt: -1 });
 shareRecordSchema.index({ projectId: 1, createdAt: -1 });
 shareRecordSchema.index({ client: 1, createdAt: -1 });
+shareRecordSchema.index({ leadPropertyId: 1, createdAt: -1 });
 
 shareRecordSchema.pre("validate", function normalizeShareRecord(next) {
-  if ((!this.projectIds || !this.projectIds.length) && this.projectId) {
+  if (this.shareTargetType === "project" && (!this.projectIds || !this.projectIds.length) && this.projectId) {
     this.projectIds = [this.projectId];
   }
 
-  if ((!this.projectPublicAliases || !this.projectPublicAliases.length) && this.projectPublicAlias) {
+  if (
+    this.shareTargetType === "project" &&
+    (!this.projectPublicAliases || !this.projectPublicAliases.length) &&
+    this.projectPublicAlias
+  ) {
     this.projectPublicAliases = [this.projectPublicAlias];
   }
 
-  if ((!this.sharedProjects || !this.sharedProjects.length) && this.projectId && this.projectPublicAlias && this.sharedFields) {
+  if (
+    this.shareTargetType === "project" &&
+    (!this.sharedProjects || !this.sharedProjects.length) &&
+    this.projectId &&
+    this.projectPublicAlias &&
+    this.sharedFields
+  ) {
     this.sharedProjects = [
       {
         projectId: this.projectId,

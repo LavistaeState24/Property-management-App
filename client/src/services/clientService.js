@@ -31,6 +31,10 @@ export const clientService = {
     const { data } = await api.get(`/clients/${id}`);
     return data.data;
   },
+  getPropertyShare: async (id) => {
+    const { data } = await api.get(`/clients/${id}/property-share`);
+    return data.data;
+  },
   getMatchingProjects: async (id, params) => {
     const { data } = await api.get(`/clients/${id}/matching-projects`, { params });
     return data.data;

@@ -5,6 +5,7 @@ import { ShareRecord } from "../models/ShareRecord.js";
 import { ApiError } from "../utils/ApiError.js";
 import { applyScopedFilter, assertDocumentScope, getModuleScope } from "../utils/accessControl.js";
 import { recordShareActivity } from "./activityLogService.js";
+import { getAccessibleClient } from "./clientService.js";
 
 const normalizePhoneDigits = (value) => String(value || "").replace(/\D/g, "").slice(-10);
 
@@ -26,6 +27,32 @@ const resolveSharedRecordClientId = async (shareRecord) => {
 };
 
 export const createShareRecord = async (payload, currentUser) => {
+  if (payload.shareTargetType === "lead-property") {
+    await getAccessibleClient(payload.leadPropertyId, currentUser);
+
+    const shareRecord = await ShareRecord.create({
+      ...payload,
+      sharedBy: currentUser._id,
+      sharedByName: currentUser.name,
+      sharedByPhone: currentUser.phone,
+    });
+
+    await syncShareRecordFollowupReminder(shareRecord, currentUser);
+
+    if (shareRecord.client) {
+      await recordShareActivity({
+        lead: shareRecord.client,
+        shareRecord,
+        performedBy: currentUser._id,
+        metadata: {
+          source: "share-record",
+        },
+      });
+    }
+
+    return shareRecord;
+  }
+
   const project = await Project.findById(payload.projectId);
 
   if (!project) {
@@ -71,6 +98,7 @@ export const listShareRecords = async (currentUser) =>
     })
   )
     .populate("projectId", "publicAlias location status")
+    .populate("leadPropertyId", "premiseName ownerName premiseArea propertyType")
     .populate("sharedBy", "name phone role")
     .sort({ createdAt: -1 });
 
@@ -99,6 +127,7 @@ const syncShareRecordFollowupReminder = async (shareRecord, currentUser) => {
   }
 
   const reminderType = shareRecord.shareChannel === "Copy" ? "Details Send" : "WhatsApp";
+  const sharedItemLabel = shareRecord.shareTargetType === "lead-property" ? "property details" : "project details";
 
   // If follow-up date is removed from Shared History,
   // cancel the linked reminder instead of leaving an old pending reminder active.
@@ -120,10 +149,10 @@ const syncShareRecordFollowupReminder = async (shareRecord, currentUser) => {
     {
       client: clientId,
       leadId: clientId,
-      project: shareRecord.projectId,
+      project: shareRecord.shareTargetType === "project" ? shareRecord.projectId : null,
       assignedStaff: shareRecord.sharedBy,
       reminderType,
-      note: "Follow up after shared project details",
+      note: `Follow up after shared ${sharedItemLabel}`,
       reminderDateTime: shareRecord.followUpDate,
       dueDate: shareRecord.followUpDate,
       status: "Pending",
@@ -149,6 +178,7 @@ export const getShareRecordsByClientPhone = async (clientPhone, currentUser) =>
     })
   )
     .populate("projectId", "publicAlias location status")
+    .populate("leadPropertyId", "premiseName ownerName premiseArea propertyType")
     .populate("sharedBy", "name phone role")
     .sort({ createdAt: -1 });
 
@@ -160,6 +190,7 @@ export const getShareRecordsByProjectId = async (projectId, currentUser) =>
     })
   )
     .populate("projectId", "publicAlias location status")
+    .populate("leadPropertyId", "premiseName ownerName premiseArea propertyType")
     .populate("sharedBy", "name phone role")
     .sort({ createdAt: -1 });
 
@@ -181,6 +212,7 @@ export const updateShareRecordStatus = async (id, payload, currentUser) => {
   await shareRecord.save();
   await syncShareRecordFollowupReminder(shareRecord, currentUser);
   await shareRecord.populate("projectId", "publicAlias location status");
+  await shareRecord.populate("leadPropertyId", "premiseName ownerName premiseArea propertyType");
   await shareRecord.populate("sharedBy", "name phone role");
 
   if (shareRecord.client) {
@@ -216,6 +248,7 @@ export const updateShareRecordNotes = async (id, payload, currentUser) => {
   await shareRecord.save();
   await syncShareRecordFollowupReminder(shareRecord, currentUser);
   await shareRecord.populate("projectId", "publicAlias location status");
+  await shareRecord.populate("leadPropertyId", "premiseName ownerName premiseArea propertyType");
   await shareRecord.populate("sharedBy", "name phone role");
 
   if (shareRecord.client) {

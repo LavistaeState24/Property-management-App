@@ -9,18 +9,23 @@ import {
   Clock,
   ExternalLink,
   History,
+  ImageIcon,
   IndianRupee,
+  Link2,
   Mail,
   MapPin,
   Phone,
+  PlayCircle,
   Ruler,
   ScrollText,
+  Send,
   Shapes,
   Sparkles,
   UserCheck,
   UserRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import Badge from "../../../components/common/Badge";
@@ -39,8 +44,13 @@ import { useCan } from "../../../hooks/useCan";
 import { clientService } from "../../../services/clientService";
 import { followupService } from "../../../services/followupService";
 import { projectService } from "../../../services/projectService";
+import { shareRecordService } from "../../../services/shareRecordService";
+import { resolveAssetUrl } from "../../../services/uploadService";
 import { siteVisitService } from "../../../services/siteVisitService";
 import { userService } from "../../../services/userService";
+import { applyServerErrors, getErrorMessage, phoneRules, textRules } from "../../../utils/validation";
+import { authStorage } from "../../../utils/storage";
+import { buildLeadPropertyShareMessage, formatWhatsAppPhone } from "../../../utils/whatsappMessage";
 import { formatBudgetRange, getInterestLevelTone } from "../clientPipeline";
 import ClientMatchingSection from "../components/ClientMatchingSection";
 import SiteVisitForm from "../../siteVisits/components/SiteVisitForm";
@@ -50,12 +60,50 @@ import ClientActivityTimeline from "../components/ClientActivityTimeline";
 
 const reminderTypes = ["Call", "WhatsApp", "Details Send", "Site Visit", "Payment", "Document"];
 
+const DIRECT_VIDEO_FILE_REGEX = /\.(mp4|m4v|mov|webm|ogg)(?:[?#].*)?$/i;
+
+const isDirectVideoUrl = (url) => DIRECT_VIDEO_FILE_REGEX.test(String(url || ""));
+
+const getEmbedVideoUrl = (url) => {
+  if (!url) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname.toLowerCase();
+
+    if (hostname === "youtu.be" || hostname.endsWith(".youtu.be")) {
+      const videoId = parsedUrl.pathname.split("/").filter(Boolean)[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
+    }
+
+    if (hostname === "youtube.com" || hostname.endsWith(".youtube.com")) {
+      const videoId =
+        parsedUrl.searchParams.get("v") ||
+        parsedUrl.pathname.match(/\/(?:embed|shorts)\/([^/?#]+)/)?.[1] ||
+        "";
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
+    }
+
+    if (hostname === "vimeo.com" || hostname.endsWith(".vimeo.com")) {
+      const videoId = parsedUrl.pathname.split("/").find((segment) => /^\d+$/.test(segment));
+      return videoId ? `https://player.vimeo.com/video/${videoId}` : "";
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
+};
+
 export default function ClientDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const isSalesUser = user?.role === "sales";
   const canUpdateClients = useCan("clients", "update");
+  const canCreateShareRecords = useCan("shareRecords", "create");
   const canViewFollowups = useCan("followups", "view");
   const canCreateFollowups = useCan("followups", "create");
   const canUpdateFollowups = useCan("followups", "update");
@@ -112,6 +160,21 @@ export default function ClientDetailsPage() {
   const [loadError, setLoadError] = useState("");
   const [updateError, setUpdateError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isPropertyShareOpen, setIsPropertyShareOpen] = useState(false);
+  const [propertyShareError, setPropertyShareError] = useState("");
+  const {
+    register: registerPropertyShare,
+    handleSubmit: handleSubmitPropertyShare,
+    reset: resetPropertyShareForm,
+    setError: setPropertyShareFieldError,
+    formState: { errors: propertyShareErrors, isSubmitting: isSubmittingPropertyShare },
+  } = useForm({
+    mode: "onBlur",
+    defaultValues: {
+      clientName: "",
+      clientPhone: "",
+    },
+  });
 
   const syncClientState = (nextClient) => {
     setClient(nextClient);
@@ -187,6 +250,13 @@ export default function ClientDetailsPage() {
 
     loadClient();
   }, [canCreateSiteVisits, canViewFollowups, canViewSiteVisits, id]);
+
+  useEffect(() => {
+    resetPropertyShareForm({
+      clientName: "",
+      clientPhone: "",
+    });
+  }, [resetPropertyShareForm]);
 
   const handleQuickUpdate = async () => {
     setUpdateError("");
@@ -353,6 +423,80 @@ export default function ClientDetailsPage() {
     await navigator.clipboard.writeText(buildSiteVisitConfirmationMessage(siteVisit));
   };
 
+  const handlePropertyWhatsAppShare = async (formValues) => {
+    setPropertyShareError("");
+
+    if (!authStorage.getRawToken()) {
+      setPropertyShareError("Your session has expired. Please log in again before sharing.");
+      return;
+    }
+
+    if (!user?.id || !user?.name || !user?.phone) {
+      setPropertyShareError("Your account details are incomplete. Please log in again before sharing.");
+      return;
+    }
+
+    const formattedPhone = formatWhatsAppPhone(formValues.clientPhone);
+
+    if (!formattedPhone) {
+      setPropertyShareError("Enter a valid WhatsApp number before sharing.");
+      return;
+    }
+
+    const popupWindow = window.open("", "_blank");
+
+    try {
+      const safeProperty = await clientService.getPropertyShare(id);
+      const whatsappMessage = buildLeadPropertyShareMessage(safeProperty);
+
+      await shareRecordService.create({
+        shareTargetType: "lead-property",
+        clientName: formValues.clientName,
+        clientPhone: formValues.clientPhone,
+        leadPropertyId: id,
+        sharedTitle: safeProperty.premiseName || client?.premiseName || client?.ownerName || "Property details",
+        sharedFields: {
+          area: safeProperty.area,
+          propertyType: safeProperty.propertyType,
+          purpose: safeProperty.purpose,
+          configuration: safeProperty.configuration,
+          size: safeProperty.size,
+          priceRange: safeProperty.price,
+          possession: safeProperty.availability,
+          furnishingStatus: safeProperty.furnishingStatus,
+          propertyStatus: safeProperty.propertyCondition || safeProperty.availability,
+          description: safeProperty.description,
+          amenities: safeProperty.amenities || [],
+          sampleVideoUrl: safeProperty.houseVideo,
+          photos: safeProperty.propertyImages || [],
+        },
+        shareChannel: "WhatsApp",
+        whatsappMessage,
+        status: "shared",
+      });
+
+      const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(whatsappMessage)}`;
+
+      if (popupWindow) {
+        popupWindow.location.href = whatsappUrl;
+      } else {
+        window.location.assign(whatsappUrl);
+      }
+
+      setIsPropertyShareOpen(false);
+      resetPropertyShareForm({
+        clientName: "",
+        clientPhone: "",
+      });
+    } catch (requestError) {
+      if (popupWindow) {
+        popupWindow.close();
+      }
+
+      applyServerErrors(requestError, setPropertyShareFieldError, setPropertyShareError);
+    }
+  };
+
   const formatDateTime = (value) => (value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "-");
   const overdueReminder = reminders.find((reminder) => reminder.status === "Overdue") || null;
   const isReminderLocked = Boolean(client?.hasOverdueReminder || overdueReminder) && user?.role !== "super-admin";
@@ -380,6 +524,11 @@ export default function ClientDetailsPage() {
     return <PageSkeleton variant="detail" />;
   }
 
+  const propertyImages = (Array.isArray(client.propertyImages) ? client.propertyImages : []).filter(Boolean);
+  const houseVideoUrl = resolveAssetUrl(client.houseVideo);
+  const embedVideoUrl = getEmbedVideoUrl(houseVideoUrl);
+  const showDirectVideo = Boolean(houseVideoUrl) && isDirectVideoUrl(houseVideoUrl);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -392,6 +541,14 @@ export default function ClientDetailsPage() {
           <Badge tone="slate">{client.leadStatus || "New Lead"}</Badge>
           <Badge tone={getInterestLevelTone(client.interestLevel)}>{client.interestLevel || "Warm"}</Badge>
           <Badge tone="green">{client.assignedStaff?.name || "Unassigned"}</Badge>
+          {canCreateShareRecords ? (
+            <Button type="button" variant="secondary" icon={Link2} onClick={() => {
+              setPropertyShareError("");
+              setIsPropertyShareOpen(true);
+            }}>
+              Share on WhatsApp
+            </Button>
+          ) : null}
           {canUpdateClients && !isSalesUser ? (
             <Link to={`/clients/${client._id}/edit`}>
               <Button>Edit Lead</Button>
@@ -471,6 +628,91 @@ export default function ClientDetailsPage() {
                   <p className="mt-2 break-words text-base font-medium text-ivory">{value || "Not added"}</p>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+            <div className="flex items-center gap-3">
+              <ImageIcon className="h-5 w-5 text-gold-2" />
+              <h3 className="font-display text-2xl">Property Media</h3>
+            </div>
+
+            <div className="mt-5 space-y-5">
+              <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Property Images</p>
+                  <p className="text-sm text-muted">{propertyImages.length} uploaded</p>
+                </div>
+
+                {propertyImages.length ? (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {propertyImages.map((imageUrl, index) => (
+                      <a
+                        key={`${imageUrl}-${index}`}
+                        href={resolveAssetUrl(imageUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5"
+                      >
+                        <img
+                          src={resolveAssetUrl(imageUrl)}
+                          alt={`Property image ${index + 1}`}
+                          className="h-44 w-full object-cover transition duration-200 group-hover:scale-[1.02]"
+                        />
+                        <div className="flex items-center justify-between px-4 py-3 text-sm">
+                          <span className="text-ivory">Image {index + 1}</span>
+                          <span className="text-gold-2">Open</span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-muted">No property images uploaded for this lead.</p>
+                )}
+              </div>
+
+              {houseVideoUrl ? (
+                <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+                  <div className="flex items-center gap-2">
+                    <PlayCircle className="h-4 w-4 text-gold-2" />
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">House Video</p>
+                  </div>
+
+                  {showDirectVideo ? (
+                    <video className="mt-4 w-full rounded-3xl border border-white/10 bg-black" controls src={houseVideoUrl}>
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : embedVideoUrl ? (
+                    <div className="mt-4 overflow-hidden rounded-3xl border border-white/10 bg-black">
+                      <iframe
+                        src={embedVideoUrl}
+                        title="House video"
+                        className="aspect-video w-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : null}
+
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <p className="max-w-3xl break-all text-sm text-muted">{houseVideoUrl}</p>
+                    <a
+                      href={houseVideoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-2xl border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-semibold text-gold-2 transition hover:bg-gold/20"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Open Video
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">House Video</p>
+                  <p className="mt-3 text-sm text-muted">No house video added for this lead.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -984,6 +1226,53 @@ export default function ClientDetailsPage() {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        title="Share Property on WhatsApp"
+        isOpen={canCreateShareRecords && isPropertyShareOpen}
+        onClose={() => {
+          if (!isSubmittingPropertyShare) {
+            setIsPropertyShareOpen(false);
+            setPropertyShareError("");
+          }
+        }}
+      >
+        <form className="space-y-4" onSubmit={handleSubmitPropertyShare(handlePropertyWhatsAppShare)}>
+          <FormInput
+            label="Client Name"
+            placeholder="Enter client name"
+            error={getErrorMessage(propertyShareErrors.clientName)}
+            {...registerPropertyShare("clientName", textRules("Client name", { min: 3, max: 60 }))}
+          />
+          <FormInput
+            label="Client WhatsApp Number"
+            placeholder="Enter 10 digit mobile number"
+            error={getErrorMessage(propertyShareErrors.clientPhone)}
+            {...registerPropertyShare("clientPhone", phoneRules())}
+          />
+
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-muted">
+            <p className="text-ivory">Shared by</p>
+            <p className="mt-2">{user?.name || "-"}</p>
+            <p>{user?.phone || "-"}</p>
+          </div>
+
+          <div className="rounded-2xl border border-amber-400/20 bg-amber-500/5 p-4 text-xs text-amber-100">
+            Owner details, exact address, source, internal notes, reminders, assigned staff, and confidential brokerage information are excluded automatically.
+          </div>
+
+          {propertyShareError ? <p className="text-sm text-rose-300">{propertyShareError}</p> : null}
+
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" disabled={isSubmittingPropertyShare} onClick={() => setIsPropertyShareOpen(false)}>
+              Cancel
+            </Button>
+            <Button disabled={isSubmittingPropertyShare} icon={Send}>
+              {isSubmittingPropertyShare ? "Preparing..." : "Open WhatsApp"}
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

@@ -212,6 +212,34 @@ export const validateOptionalAssetUrl = (errors, field, value, label) => {
   return normalized;
 };
 
+export const isSupportedLeadVideoUrl = (value) => {
+  const normalized = normalizeString(value);
+
+  if (!normalized) {
+    return false;
+  }
+
+  try {
+    const { hostname } = new URL(normalized);
+    const normalizedHost = hostname.toLowerCase();
+
+    return (
+      normalizedHost === "youtu.be" ||
+      normalizedHost.endsWith(".youtu.be") ||
+      normalizedHost === "youtube.com" ||
+      normalizedHost.endsWith(".youtube.com") ||
+      normalizedHost === "vimeo.com" ||
+      normalizedHost.endsWith(".vimeo.com") ||
+      normalizedHost === "instagram.com" ||
+      normalizedHost.endsWith(".instagram.com") ||
+      normalizedHost === "amazonaws.com" ||
+      normalizedHost.endsWith(".amazonaws.com")
+    );
+  } catch {
+    return false;
+  }
+};
+
 export const validateObjectId = (errors, field, value, { label, required = true } = {}) => {
   const normalized = normalizeString(value);
 
