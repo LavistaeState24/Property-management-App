@@ -848,32 +848,6 @@ export const importClients = async (payload, currentUser) => {
       resolvedAssignedStaff = resolvedAssignedFromFile || currentUser._id;
     }
 
-    // if (newAssignedStaffId && newAssignedStaffId !== currentAssignedStaffId) {
-    // }
-
-    // try {
-    //   assertNoPendingWorkBeforeAssignment(resolvedAssignedStaff, currentUser);
-    // } catch (lockError) {
-    //   invalidRows.push({
-    //     rowNumber,
-    //     phone: clientPhoneNumber,
-    //     clientName,
-    //     email: email || "",
-    //     propertyType: normalizeImportPropertyType(row.propertyType || row.bhk || "2BHK"),
-    //     requirementType,
-    //     budgetMin: parsedBudgetMin,
-    //     budgetMax: parsedBudgetMax,
-    //     areaPreference,
-    //     source,
-    //     assignedStaff: assignedFromFile || String(resolvedAssignedStaff || ""),
-    //     leadStatus,
-    //     interestLevel,
-    //     notes,
-    //     errors: [lockError.message],
-    //   });
-    //   return;
-    // }
-
     const assignedStaffId = String(resolvedAssignedStaff || currentUser._id);
     const rawPayload = {
       ownerName: clientName,

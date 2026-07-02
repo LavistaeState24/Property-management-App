@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useState } from "react";
 
 import { authService } from "../../services/authService";
-import { authStorage } from "../../utils/storage";
+import { AUTH_STORAGE_EVENT, authStorage } from "../../utils/storage";
 import { toast } from "../../utils/toast";
 
 export const AuthContext = createContext(null);
@@ -10,6 +10,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(authStorage.getUser());
   const [token, setToken] = useState(authStorage.getToken());
   const [loading, setLoading] = useState(Boolean(authStorage.getToken()));
+
+  const syncAuthStateFromStorage = useCallback(() => {
+    setToken(authStorage.getToken());
+    setUser(authStorage.getUser());
+    setLoading(false);
+  }, []);
 
   const syncUser = (nextUser) => {
     setUser(nextUser);
@@ -41,11 +47,31 @@ export function AuthProvider({ children }) {
     bootstrap();
   }, [token]);
 
+  useEffect(() => {
+    const handleAuthStorageChange = () => {
+      syncAuthStateFromStorage();
+    };
+
+    const handleBrowserStorage = (event) => {
+      if (!event.key || ["pmcrm_token", "pmcrm_user"].includes(event.key)) {
+        syncAuthStateFromStorage();
+      }
+    };
+
+    window.addEventListener(AUTH_STORAGE_EVENT, handleAuthStorageChange);
+    window.addEventListener("storage", handleBrowserStorage);
+
+    return () => {
+      window.removeEventListener(AUTH_STORAGE_EVENT, handleAuthStorageChange);
+      window.removeEventListener("storage", handleBrowserStorage);
+    };
+  }, [syncAuthStateFromStorage]);
+
   const login = async (payload) => {
     const data = await authService.login(payload);
+    authStorage.setToken(data.token);
     syncUser(data.user);
     setToken(data.token);
-    authStorage.setToken(data.token);
     toast.success("Logged in successfully");
     return data;
   };

@@ -1,9 +1,20 @@
 const TOKEN_KEY = "pmcrm_token";
 const USER_KEY = "pmcrm_user";
+export const AUTH_STORAGE_EVENT = "pmcrm:auth-storage-change";
 
-const clearStoredAuth = () => {
+const emitAuthStorageChange = () => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(AUTH_STORAGE_EVENT));
+  }
+};
+
+const clearStoredAuth = ({ emit = true } = {}) => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+
+  if (emit) {
+    emitAuthStorageChange();
+  }
 };
 
 const decodeTokenPayload = (token) => {
@@ -58,13 +69,19 @@ export const authStorage = {
     return token;
   },
   getRawToken: () => localStorage.getItem(TOKEN_KEY),
-  setToken: (token) => localStorage.setItem(TOKEN_KEY, token),
-  removeToken: () => localStorage.removeItem(TOKEN_KEY),
+  setToken: (token) => {
+    localStorage.setItem(TOKEN_KEY, token);
+    emitAuthStorageChange();
+  },
+  removeToken: () => {
+    localStorage.removeItem(TOKEN_KEY);
+    emitAuthStorageChange();
+  },
   getUser: () => {
     const token = localStorage.getItem(TOKEN_KEY);
 
     if (!isTokenValid(token)) {
-      clearStoredAuth();
+      clearStoredAuth({ emit: false });
       return null;
     }
 
@@ -77,6 +94,9 @@ export const authStorage = {
       return null;
     }
   },
-  setUser: (user) => localStorage.setItem(USER_KEY, JSON.stringify(user)),
+  setUser: (user) => {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    emitAuthStorageChange();
+  },
   clear: clearStoredAuth,
 };

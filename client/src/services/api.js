@@ -24,7 +24,8 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = authStorage.getRawToken() || authStorage.getToken();
+  const token = authStorage.getToken();
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -39,7 +40,9 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401 && authStorage.getToken()) {
+    const isAuthRequest = error.config?.url?.includes("/auth/login") || error.config?.url?.includes("/auth/register");
+
+    if (error.response?.status === 401 && !isAuthRequest) {
       authStorage.clear();
 
       if (window.location.pathname !== "/login") {

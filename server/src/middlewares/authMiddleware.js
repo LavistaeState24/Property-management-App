@@ -30,7 +30,7 @@ export const protect = async (req, _res, next) => {
     }).catch(() => { });
 
     next();
-  } catch (_error) {
+  } catch (error) {
     next(new ApiError(401, "Invalid or expired token"));
   }
 };
