@@ -1,6 +1,7 @@
 import {
   BriefcaseBusiness,
   Building2,
+  ClipboardList,
   FolderPlus,
   LayoutDashboard,
   MessageSquareShare,
@@ -21,6 +22,7 @@ export const navigationItems = [
   { to: "/clients/new", label: "Add Lead", icon: UserPlus, moduleKey: "clients", actionKey: "create" },
   { to: "/followups", label: "Follow-ups", icon: BriefcaseBusiness, moduleKey: "followups", actionKey: "view" },
   { to: "/site-visits", label: "Site Visits", icon: TicketCheck, moduleKey: "siteVisits", actionKey: "view" },
+  { to: "/daily-work-updates", label: "Daily Work Updates", icon: ClipboardList, moduleKey: "dailyWorkUpdates", actionKey: "view" },
   { to: "/deals/negotiation", label: "Negotiation", icon: BriefcaseBusiness, moduleKey: "deals", actionKey: "view", group: "Deal Closing" },
   { to: "/deals/bookings", label: "Bookings", icon: BriefcaseBusiness, moduleKey: "deals", actionKey: "view", group: "Deal Closing" },
   { to: "/deals/closed", label: "Closed Deals", icon: BriefcaseBusiness, moduleKey: "deals", actionKey: "view", group: "Deal Closing" },

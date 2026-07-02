@@ -90,7 +90,11 @@ export const getRolePermissions = async (roleKey) => {
 
 export const getResolvedPermissionsForRole = async (roleKey) => {
   const role = await getRoleByKey(roleKey);
-  return sanitizePermissionsForResponse(role.permissions);
+  const defaults = buildDefaultPermissions(roleKey);
+
+  const normalizedPermissions = normalizePermissions(role.permissions, defaults);
+
+  return sanitizePermissionsForResponse(normalizedPermissions);
 };
 
 export const hasPermission = (permissions, moduleKey, actionKey) =>
@@ -113,6 +117,13 @@ export const validatePermissionPayloadShape = (payload = {}) => {
       if (actionKey !== "scope" && typeof actionValue !== "boolean") {
         throw new ApiError(400, `${moduleKey}.${actionKey} must be a boolean`);
       }
+
+      if (
+        actionKey === "scope" &&
+        !["all", "assigned", "own", "team", "none"].includes(actionValue)
+      ) {
+        throw new ApiError(400, `${moduleKey}.scope is invalid`);
+      }
     }
   }
 };
@@ -131,7 +142,7 @@ export const mergePermissions = (roleKey, currentPermissions, updates) => {
     nextPermissions[moduleKey] = {
       ...nextPermissions[moduleKey],
       ...updates[moduleKey],
-      scope: nextPermissions[moduleKey].scope,
+      scope: updates[moduleKey].scope || nextPermissions[moduleKey].scope,
     };
 
     if (!nextPermissions[moduleKey].view) {

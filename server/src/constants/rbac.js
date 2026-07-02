@@ -6,6 +6,7 @@ export const moduleKeys = [
   "clients",
   "followups",
   "siteVisits",
+  "dailyWorkUpdates",
   "deals",
   "dealReports",
   "shareRecords",
@@ -16,7 +17,7 @@ export const moduleKeys = [
 
 export const actionKeys = ["view", "create", "update", "delete"];
 
-export const scopeKeys = ["all", "assigned", "own", "none"];
+export const scopeKeys = ["all", "assigned", "team", "own", "none"];
 
 const createPermission = ({
   view = false,
@@ -48,6 +49,7 @@ export const buildDefaultPermissions = (roleKey) => {
         clients: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         followups: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         siteVisits: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
+        dailyWorkUpdates: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         deals: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         dealReports: createPermission({ view: true, scope: "all" }),
         shareRecords: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
@@ -63,6 +65,7 @@ export const buildDefaultPermissions = (roleKey) => {
         clients: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         followups: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         siteVisits: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
+        dailyWorkUpdates: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         deals: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
         dealReports: createPermission({ view: true, scope: "all" }),
         shareRecords: createPermission({ view: true, create: true, update: true, delete: true, scope: "all" }),
@@ -78,6 +81,13 @@ export const buildDefaultPermissions = (roleKey) => {
         clients: createPermission({ view: true, create: true, update: true, delete: false, scope: "assigned" }),
         followups: createPermission({ view: true, create: true, update: true, delete: false, scope: "assigned" }),
         siteVisits: createPermission({ view: true, create: true, update: true, delete: false, scope: "assigned" }),
+        dailyWorkUpdates: createPermission({
+          view: true,
+          create: false,
+          update: true,
+          delete: false,
+          scope: "team",
+        }),
         deals: createPermission({ view: true, create: true, update: true, delete: false, scope: "assigned" }),
         dealReports: createPermission({ view: true, scope: "all" }),
         shareRecords: createPermission({ view: true, create: true, update: true, delete: false, scope: "assigned" }),
@@ -91,9 +101,16 @@ export const buildDefaultPermissions = (roleKey) => {
       return {
         dashboard: createPermission({ view: true, scope: "own" }),
         projects: createPermission({ view: true, scope: "all" }),
-        clients: createPermission({ view: true, create:true, update: true, delete: false, scope: "assigned" }),
+        clients: createPermission({ view: true, create: true, update: true, delete: false, scope: "assigned" }),
         followups: createPermission({ view: true, create: true, update: true, delete: false, scope: "own" }),
         siteVisits: createPermission({ view: true, create: true, update: true, delete: false, scope: "own" }),
+        dailyWorkUpdates: createPermission({ 
+          view: true,
+           create: true,  
+            update: true,
+             delete: false,
+              scope: "own"
+             }),
         deals: createPermission({ view: true, create: true, update: true, delete: false, scope: "own" }),
         dealReports: createPermission({ view: false, scope: "none" }),
         shareRecords: createPermission({ view: true, create: true, update: false, delete: false, scope: "own" }),

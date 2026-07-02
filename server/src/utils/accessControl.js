@@ -24,6 +24,15 @@ export const applyScopedFilter = (baseFilters, scope, user, fieldResolvers) => {
     };
   }
 
+  if (scope === "team") {
+    const teamFields = fieldResolvers.team || fieldResolvers.assigned || [];
+
+    return {
+      ...baseFilters,
+      $or: teamFields.map((field) => ({ [field]: user._id })),
+    };
+  }
+
   if (scope === "own") {
     return {
       ...baseFilters,
@@ -42,7 +51,12 @@ export const assertDocumentScope = (document, scope, user, fieldResolvers) => {
   assertScopeAllowed(scope);
 
   const userId = toObjectIdString(user._id);
-  const fields = scope === "assigned" ? fieldResolvers.assigned : fieldResolvers.own;
+  const fields =
+    scope === "assigned"
+      ? fieldResolvers.assigned
+      : scope === "team"
+        ? fieldResolvers.team || fieldResolvers.assigned
+        : fieldResolvers.own;
   const hasAccess = fields.some((field) => toObjectIdString(document[field]) === userId);
 
   if (!hasAccess) {

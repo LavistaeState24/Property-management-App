@@ -18,6 +18,9 @@ const AddClientPage = lazy(() => import("../features/clients/pages/AddClientPage
 const ClientDetailsPage = lazy(() => import("../features/clients/pages/ClientDetailsPage"));
 const FollowupsPage = lazy(() => import("../features/followups/pages/FollowupsPage"));
 const SiteVisitsPage = lazy(() => import("../features/siteVisits/pages/SiteVisitsPage"));
+const DailyWorkUpdatesPage = lazy(() => import("../features/dailyWorkUpdates/pages/DailyWorkUpdatesPage"));
+const AddEditDailyWorkUpdatePage = lazy(() => import("../features/dailyWorkUpdates/pages/AddEditDailyWorkUpdatePage"));
+const DailyWorkUpdateDetailsPage = lazy(() => import("../features/dailyWorkUpdates/pages/DailyWorkUpdateDetailsPage"));
 const DealNegotiationPage = lazy(() => import("../features/deals/pages/DealNegotiationPage"));
 const DealBookingsPage = lazy(() => import("../features/deals/pages/DealBookingsPage"));
 const DealClosedDealsPage = lazy(() => import("../features/deals/pages/DealClosedDealsPage"));
@@ -139,6 +142,38 @@ export const router = createBrowserRouter([
             element: withSuspense(
               <PermissionRoute moduleKey="siteVisits">
                 <SiteVisitsPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "daily-work-updates",
+            element: withSuspense(
+              <PermissionRoute moduleKey="dailyWorkUpdates">
+                <DailyWorkUpdatesPage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "daily-work-updates/new",
+            element: withSuspense(
+              <PermissionRoute moduleKey="dailyWorkUpdates" actionKey="create">
+                <AddEditDailyWorkUpdatePage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "daily-work-updates/:id/edit",
+            element: withSuspense(
+              <PermissionRoute moduleKey="dailyWorkUpdates" actionKey="update">
+                <AddEditDailyWorkUpdatePage />
+              </PermissionRoute>
+            ),
+          },
+          {
+            path: "daily-work-updates/:id",
+            element: withSuspense(
+              <PermissionRoute moduleKey="dailyWorkUpdates">
+                <DailyWorkUpdateDetailsPage />
               </PermissionRoute>
             ),
           },

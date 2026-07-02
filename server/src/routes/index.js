@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import authRoutes from "./authRoutes.js";
 import clientRoutes from "./clientRoutes.js";
+import dailyWorkUpdateRoutes from "./dailyWorkUpdateRoutes.js";
 import followupRoutes from "./followupRoutes.js";
 import permissionRoutes from "./permissionRoutes.js";
 import projectRoutes from "./projectRoutes.js";
@@ -21,6 +22,7 @@ router.use("/deals", dealRoutes);
 router.use("/users", userRoutes);
 router.use("/permissions", permissionRoutes);
 router.use("/clients", clientRoutes);
+router.use("/daily-work-updates", dailyWorkUpdateRoutes);
 router.use("/followups", followupRoutes);
 router.use("/site-visits", siteVisitRoutes);
 router.use("/share-links", shareRoutes);
