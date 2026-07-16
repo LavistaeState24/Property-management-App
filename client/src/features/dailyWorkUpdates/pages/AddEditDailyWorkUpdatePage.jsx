@@ -188,162 +188,299 @@ export default function AddEditDailyWorkUpdatePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div>
+      <p className="text-xs uppercase tracking-[0.3em] text-gold">
+        Daily Work Updates
+      </p>
+
+      <h2 className="mt-2 font-display text-3xl text-heading">
+        {dailyWorkUpdate
+          ? "Edit and review work update"
+          : "Create today's work update"}
+      </h2>
+
+      <p className="mt-2 text-sm text-body">
+        {dailyWorkUpdate?.userId?.name
+          ? `${dailyWorkUpdate.userId.name} • `
+          : ""}
+        {reportDateLabel}
+      </p>
+    </div>
+
+    <Link
+      to={
+        dailyWorkUpdate
+          ? `/daily-work-updates/${dailyWorkUpdate._id}`
+          : "/daily-work-updates"
+      }
+    >
+      <Button
+        type="button"
+        variant="secondary"
+        icon={ArrowLeft}
+      >
+        Back
+      </Button>
+    </Link>
+  </div>
+
+  {pageError ? (
+    <p className="text-sm text-rose-600">
+      {pageError}
+    </p>
+  ) : null}
+
+  <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+    <section className="rounded-[32px] border border-border bg-surface p-6 shadow-md">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-gold">Daily Work Updates</p>
-          <h2 className="mt-2 font-display text-3xl">
-            {dailyWorkUpdate ? "Edit and review work update" : "Create today's work update"}
-          </h2>
-          <p className="mt-2 text-sm text-muted">
-            {dailyWorkUpdate?.userId?.name ? `${dailyWorkUpdate.userId.name} • ` : ""}
-            {reportDateLabel}
+          <p className="text-xs uppercase tracking-[0.24em] text-gold">
+            Report Form
           </p>
+
+          <h3 className="mt-2 font-display text-2xl text-heading">
+            Daily contribution summary
+          </h3>
         </div>
-        <Link to={dailyWorkUpdate ? `/daily-work-updates/${dailyWorkUpdate._id}` : "/daily-work-updates"}>
-          <Button type="button" variant="secondary" icon={ArrowLeft}>
-            Back
-          </Button>
-        </Link>
+
+        <span className="rounded-full border border-border bg-surface-soft px-3 py-1 text-sm text-body">
+          {reportDateLabel}
+        </span>
       </div>
 
-      {pageError ? <p className="text-sm text-rose-300">{pageError}</p> : null}
+      {canEditContent ? (
+        <form className="mt-6 space-y-4">
+          <FormInput
+            label="Today's Achievement"
+            as="textarea"
+            rows={5}
+            error={getErrorMessage(errors.achievements)}
+            {...register(
+              "achievements",
+              textRules("Today's achievement", {
+                min: 3,
+                max: 3000,
+              }),
+            )}
+          />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-        <section className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-gold">Report Form</p>
-              <h3 className="mt-2 font-display text-2xl">Daily contribution summary</h3>
-            </div>
-            <span className="rounded-full border border-white/10 px-3 py-1 text-sm text-muted">{reportDateLabel}</span>
+          <FormInput
+            label="Pending Work"
+            as="textarea"
+            rows={5}
+            error={getErrorMessage(errors.pendingWork)}
+            {...register(
+              "pendingWork",
+              textRules("Pending work", {
+                min: 3,
+                max: 3000,
+              }),
+            )}
+          />
+
+          <FormInput
+            label="Tomorrow's Plan"
+            as="textarea"
+            rows={5}
+            error={getErrorMessage(errors.tomorrowPlan)}
+            {...register(
+              "tomorrowPlan",
+              textRules("Tomorrow's plan", {
+                min: 3,
+                max: 3000,
+              }),
+            )}
+          />
+
+          <FormInput
+            label="Need Help / Blockers"
+            as="textarea"
+            rows={4}
+            error={getErrorMessage(errors.blockers)}
+            {...register(
+              "blockers",
+              textRules("Need help / blockers", {
+                min: 0,
+                max: 2000,
+                required: false,
+              }),
+            )}
+          />
+
+          <FormInput
+            label="Additional Notes"
+            as="textarea"
+            rows={4}
+            error={getErrorMessage(errors.additionalNotes)}
+            {...register(
+              "additionalNotes",
+              textRules("Additional notes", {
+                min: 0,
+                max: 2000,
+                required: false,
+              }),
+            )}
+          />
+
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              icon={Save}
+              disabled={isSaving}
+              onClick={handleSubmit((formValues) =>
+                saveReport(formValues, "Draft"),
+              )}
+            >
+              {isSaving ? "Saving..." : "Save Draft"}
+            </Button>
+
+            <Button
+              type="button"
+              icon={CheckCircle2}
+              disabled={isSaving}
+              onClick={handleSubmit((formValues) =>
+                saveReport(formValues, "Submitted"),
+              )}
+            >
+              {isSaving
+                ? "Submitting..."
+                : "Submit Report"}
+            </Button>
           </div>
+        </form>
+      ) : (
+        <div className="mt-6 space-y-4">
+          {[
+            [
+              "Today's Achievement",
+              dailyWorkUpdate?.achievements,
+            ],
+            ["Pending Work", dailyWorkUpdate?.pendingWork],
+            [
+              "Tomorrow's Plan",
+              dailyWorkUpdate?.tomorrowPlan,
+            ],
+            [
+              "Need Help / Blockers",
+              dailyWorkUpdate?.blockers,
+            ],
+            [
+              "Additional Notes",
+              dailyWorkUpdate?.additionalNotes,
+            ],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="rounded-3xl border border-border bg-surface-soft p-4"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-body">
+                {label}
+              </p>
 
-          {canEditContent ? (
-            <form className="mt-6 space-y-4">
-              <FormInput
-                label="Today's Achievement"
-                as="textarea"
-                rows={5}
-                error={getErrorMessage(errors.achievements)}
-                {...register("achievements", textRules("Today's achievement", { min: 3, max: 3000 }))}
-              />
-              <FormInput
-                label="Pending Work"
-                as="textarea"
-                rows={5}
-                error={getErrorMessage(errors.pendingWork)}
-                {...register("pendingWork", textRules("Pending work", { min: 3, max: 3000 }))}
-              />
-              <FormInput
-                label="Tomorrow's Plan"
-                as="textarea"
-                rows={5}
-                error={getErrorMessage(errors.tomorrowPlan)}
-                {...register("tomorrowPlan", textRules("Tomorrow's plan", { min: 3, max: 3000 }))}
-              />
-              <FormInput
-                label="Need Help / Blockers"
-                as="textarea"
-                rows={4}
-                error={getErrorMessage(errors.blockers)}
-                {...register("blockers", textRules("Need help / blockers", { min: 0, max: 2000, required: false }))}
-              />
-              <FormInput
-                label="Additional Notes"
-                as="textarea"
-                rows={4}
-                error={getErrorMessage(errors.additionalNotes)}
-                {...register("additionalNotes", textRules("Additional notes", { min: 0, max: 2000, required: false }))}
-              />
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm text-heading">
+                {value || "Not added"}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
 
-              <div className="flex flex-wrap justify-end gap-3">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  icon={Save}
-                  disabled={isSaving}
-                  onClick={handleSubmit((formValues) => saveReport(formValues, "Draft"))}
-                >
-                  {isSaving ? "Saving..." : "Save Draft"}
-                </Button>
+    <section className="space-y-6">
+      <div className="rounded-[32px] border border-border bg-surface p-6 shadow-md">
+        <p className="text-xs uppercase tracking-[0.24em] text-gold">
+          Report Status
+        </p>
+
+        <div className="mt-4 space-y-3 text-sm text-body">
+          <p>
+            Status:{" "}
+            <span className="text-heading">
+              {dailyWorkUpdate?.status || "Draft"}
+            </span>
+          </p>
+
+          <p>
+            Employee:{" "}
+            <span className="text-heading">
+              {dailyWorkUpdate?.userId?.name ||
+                user?.name ||
+                "-"}
+            </span>
+          </p>
+
+          <p>
+            Manager:{" "}
+            <span className="text-heading">
+              {dailyWorkUpdate?.managerId?.name ||
+                user?.managerName ||
+                "Not assigned"}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      {canReviewReport ? (
+        <div className="rounded-[32px] border border-border bg-surface p-6 shadow-card">
+          <p className="text-xs uppercase tracking-[0.24em] text-gold">
+            Manager Review
+          </p>
+
+          <h3 className="mt-2 font-display text-2xl text-heading">
+            Comment and close the report
+          </h3>
+
+          <form className="mt-5 space-y-4">
+            <FormInput
+              label="Manager Comment"
+              as="textarea"
+              rows={6}
+              error={getErrorMessage(errors.managerComment)}
+              {...register(
+                "managerComment",
+                textRules("Manager comment", {
+                  min: 0,
+                  max: 2000,
+                  required: false,
+                }),
+              )}
+            />
+
+            <div className="flex flex-wrap justify-end gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                icon={Save}
+                disabled={isSaving}
+                onClick={handleSubmit((formValues) =>
+                  saveManagerReview(formValues, false),
+                )}
+              >
+                {isSaving ? "Saving..." : "Save Comment"}
+              </Button>
+
+              {dailyWorkUpdate?.status !== "Reviewed" ? (
                 <Button
                   type="button"
                   icon={CheckCircle2}
                   disabled={isSaving}
-                  onClick={handleSubmit((formValues) => saveReport(formValues, "Submitted"))}
+                  onClick={handleSubmit((formValues) =>
+                    saveManagerReview(formValues, true),
+                  )}
                 >
-                  {isSaving ? "Submitting..." : "Submit Report"}
+                  {isSaving
+                    ? "Reviewing..."
+                    : "Mark as Reviewed"}
                 </Button>
-              </div>
-            </form>
-          ) : (
-            <div className="mt-6 space-y-4">
-              {[
-                ["Today's Achievement", dailyWorkUpdate?.achievements],
-                ["Pending Work", dailyWorkUpdate?.pendingWork],
-                ["Tomorrow's Plan", dailyWorkUpdate?.tomorrowPlan],
-                ["Need Help / Blockers", dailyWorkUpdate?.blockers],
-                ["Additional Notes", dailyWorkUpdate?.additionalNotes],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{label}</p>
-                  <p className="mt-3 whitespace-pre-wrap break-words text-sm text-ivory">{value || "Not added"}</p>
-                </div>
-              ))}
+              ) : null}
             </div>
-          )}
-        </section>
-
-        <section className="space-y-6">
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-            <p className="text-xs uppercase tracking-[0.24em] text-gold">Report Status</p>
-            <div className="mt-4 space-y-3 text-sm text-muted">
-              <p>Status: <span className="text-ivory">{dailyWorkUpdate?.status || "Draft"}</span></p>
-              <p>Employee: <span className="text-ivory">{dailyWorkUpdate?.userId?.name || user?.name || "-"}</span></p>
-              <p>Manager: <span className="text-ivory">{dailyWorkUpdate?.managerId?.name || user?.managerName || "Not assigned"}</span></p>
-            </div>
-          </div>
-
-          {canReviewReport ? (
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
-              <p className="text-xs uppercase tracking-[0.24em] text-gold">Manager Review</p>
-              <h3 className="mt-2 font-display text-2xl">Comment and close the report</h3>
-
-              <form className="mt-5 space-y-4">
-                <FormInput
-                  label="Manager Comment"
-                  as="textarea"
-                  rows={6}
-                  error={getErrorMessage(errors.managerComment)}
-                  {...register("managerComment", textRules("Manager comment", { min: 0, max: 2000, required: false }))}
-                />
-
-                <div className="flex flex-wrap justify-end gap-3">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    icon={Save}
-                    disabled={isSaving}
-                    onClick={handleSubmit((formValues) => saveManagerReview(formValues, false))}
-                  >
-                    {isSaving ? "Saving..." : "Save Comment"}
-                  </Button>
-                  {dailyWorkUpdate?.status !== "Reviewed" ? (
-                    <Button
-                      type="button"
-                      icon={CheckCircle2}
-                      disabled={isSaving}
-                      onClick={handleSubmit((formValues) => saveManagerReview(formValues, true))}
-                    >
-                      {isSaving ? "Reviewing..." : "Mark as Reviewed"}
-                    </Button>
-                  ) : null}
-                </div>
-              </form>
-            </div>
-          ) : null}
-        </section>
-      </div>
-    </div>
+          </form>
+        </div>
+      ) : null}
+    </section>
+  </div>
+</div>
   );
 }

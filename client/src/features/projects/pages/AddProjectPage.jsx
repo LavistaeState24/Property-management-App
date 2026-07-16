@@ -383,280 +383,454 @@ export default function AddProjectPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-gold">
-          {isEditMode ? "Inventory Editing" : "Inventory Onboarding"}
-        </p>
-        <h2 className="mt-2 font-display text-3xl">
-          {isEditMode ? "Update premium project details" : "Add a premium project Details"}
-        </h2>
-      </div>
+  <div>
+    <p className="text-xs uppercase tracking-[0.3em] text-gold">
+      {isEditMode ? "Inventory Editing" : "Inventory Onboarding"}
+    </p>
 
-      <form className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
-        <FormInput
-          label="Project Name"
-          icon={Building2}
-          placeholder="Enter project name"
-          error={getErrorMessage(errors.projectName)}
-          {...register("projectName", textRules("Project name", { min: 3, max: 100 }))}
+    <h2 className="mt-2 font-display text-3xl text-heading">
+      {isEditMode
+        ? "Update premium project details"
+        : "Add a premium project Details"}
+    </h2>
+  </div>
+
+  <form
+    className="grid gap-5 rounded-[32px] border border-border bg-surface p-6 shadow-glass lg:grid-cols-2"
+    onSubmit={handleSubmit(onSubmit)}
+  >
+    <FormInput
+      label="Project Name"
+      icon={Building2}
+      placeholder="Enter project name"
+      error={getErrorMessage(errors.projectName)}
+      {...register(
+        "projectName",
+        textRules("Project name", {
+          min: 3,
+          max: 100,
+        }),
+      )}
+    />
+
+    <FormInput
+      label="Client-safe Alias"
+      icon={Building2}
+      placeholder="Enter client-safe alias"
+      error={getErrorMessage(errors.publicAlias)}
+      {...register(
+        "publicAlias",
+        textRules("Client-safe alias", {
+          min: 3,
+          max: 100,
+        }),
+      )}
+    />
+
+    <FormInput
+      label="Location"
+      icon={MapPin}
+      placeholder="Enter project location"
+      error={getErrorMessage(errors.location)}
+      {...register(
+        "location",
+        textRules("Location", {
+          min: 2,
+          max: 100,
+        }),
+      )}
+    />
+
+    <FormInput
+      label="Area"
+      icon={MapPin}
+      placeholder="Enter area name"
+      error={getErrorMessage(errors.area)}
+      {...register(
+        "area",
+        textRules("Area", {
+          min: 2,
+          max: 80,
+        }),
+      )}
+    />
+
+    <Controller
+      control={control}
+      name="propertyType"
+      defaultValue={[]}
+      render={({ field }) => (
+        <MultiSelectDropdown
+          label="BHK / Unit Type"
+          icon={Shapes}
+          options={projectPropertyTypes}
+          placeholder="Select BHK"
+          error={getErrorMessage(errors.propertyType)}
+          value={field.value || []}
+          onChange={field.onChange}
+          onBlur={field.onBlur}
+          name={field.name}
         />
+      )}
+    />
 
+    <FormInput
+      label="Property Category"
+      icon={Shapes}
+      placeholder="Apartment / Villa / Plot"
+      error={getErrorMessage(errors.configuration)}
+      {...register(
+        "configuration",
+        textRules(" Property Category", {
+          min: 3,
+          max: 60,
+        }),
+      )}
+    />
+
+    <FormInput
+      label="Size"
+      placeholder="2400 to 3900 / 1200-1800 "
+      error={getErrorMessage(errors.sizeRange?.label)}
+      {...register(
+        "sizeRange.label",
+        textRules("Size", {
+          min: 1,
+          max: 50,
+        }),
+      )}
+    />
+
+    <div className="space-y-2">
+      <div className="grid gap-4 md:grid-cols-2">
         <FormInput
-          label="Client-safe Alias"
-          icon={Building2}
-          placeholder="Enter client-safe alias"
-          error={getErrorMessage(errors.publicAlias)}
-          {...register("publicAlias", textRules("Client-safe alias", { min: 3, max: 100 }))}
-        />
-
-        <FormInput
-          label="Location"
-          icon={MapPin}
-          placeholder="Enter project location"
-          error={getErrorMessage(errors.location)}
-          {...register("location", textRules("Location", { min: 2, max: 100 }))}
-        />
-
-        <FormInput
-          label="Area"
-          icon={MapPin}
-          placeholder="Enter area name"
-          error={getErrorMessage(errors.area)}
-          {...register("area", textRules("Area", { min: 2, max: 80 }))}
-        />
-
-        <Controller
-          control={control}
-          name="propertyType"
-          defaultValue={[]}
-          render={({ field }) => (
-            <MultiSelectDropdown
-              label="BHK / Unit Type"
-              icon={Shapes}
-              options={projectPropertyTypes}
-              placeholder="Select BHK"
-              error={getErrorMessage(errors.propertyType)}
-              value={field.value || []}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              name={field.name}
-            />
+          label="Min Price"
+          icon={Wallet}
+          type="number"
+          placeholder="Optional minimum price"
+          error={getErrorMessage(errors.priceRange?.min)}
+          {...register(
+            "priceRange.min",
+            numberRules("Minimum price", {
+              required: false,
+              min: 1,
+            }),
           )}
         />
 
         <FormInput
-          label="Property Category"
-          icon={Shapes}
-          placeholder="Apartment / Villa / Plot"
-          error={getErrorMessage(errors.configuration)}
-          {...register("configuration", textRules(" Property Category", { min: 3, max: 60 }))}
-        />
-
-        <FormInput
-          label="Size"
-          placeholder="2400 to 3900 / 1200-1800 "
-          error={getErrorMessage(errors.sizeRange?.label)}
-          {...register("sizeRange.label", textRules("Size", { min: 1, max: 50 }))}
-        />
-
-        <div className="space-y-2">
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormInput
-              label="Min Price"
-              icon={Wallet}
-              type="number"
-              placeholder="Optional minimum price"
-              error={getErrorMessage(errors.priceRange?.min)}
-              {...register("priceRange.min", numberRules("Minimum price", { required: false, min: 1 }))}
-            />
-            <FormInput
-              label="Max Price"
-              icon={Wallet}
-              type="number"
-              placeholder="Optional maximum price"
-              error={getErrorMessage(errors.priceRange?.max)}
-              {...register("priceRange.max", {
-                ...numberRules("Maximum price", { required: false, min: 1 }),
-                validate: (value) => {
-                  const baseValidation = numberRules("Maximum price", { required: false, min: 1 }).validate(value);
-
-                  if (baseValidation !== true) {
-                    return baseValidation;
-                  }
-
-                  if (value === "" || value === null || value === undefined) {
-                    return true;
-                  }
-
-                  const minValue = toOptionalNumber(priceMinValue);
-                  const maxValue = toOptionalNumber(value);
-
-                  if (minValue === undefined || maxValue === undefined) {
-                    return true;
-                  }
-
-                  return maxValue >= minValue || "Maximum price must be greater than or equal to minimum price";
-                },
-              })}
-            />
-          </div>
-          {formatCompactPrice(priceMinValue) || formatCompactPrice(priceMaxValue) ? (
-            <div className="inline-flex rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-medium text-gold-2">
-              {formatCompactPrice(priceMinValue) && formatCompactPrice(priceMaxValue)
-                ? `${formatCompactPrice(priceMinValue)} - ${formatCompactPrice(priceMaxValue)}`
-                : formatCompactPrice(priceMinValue) || formatCompactPrice(priceMaxValue)}
-            </div>
-          ) : null}
-        </div>
-
-        <FormInput
-          label="Total Plot Size"
-          placeholder="Enter total plot size (sq yd)"
-          error={getErrorMessage(errors.totalPlotSize)}
-          {...register("totalPlotSize", textRules("Total plot size", { min: 1, max: 50, required: false }))}
-        />
-
-        <FormInput
-          label="Total Blocks"
+          label="Max Price"
+          icon={Wallet}
           type="number"
-          placeholder="Enter number of blocks"
-          error={getErrorMessage(errors.totalBlocks)}
-          {...register("totalBlocks", numberRules("Total blocks", { required: true, min: 0, integer: true }))}
-        />
-
-        <FormInput
-          label="Total Units"
-          type="number"
-          placeholder="Enter total units"
-          error={getErrorMessage(errors.totalUnits)}
-          {...register("totalUnits", numberRules("Total units", { required: true, min: 1, integer: true }))}
-        />
-
-        <FormInput
-          label="Available Units"
-          type="number"
-          placeholder="Optional available units"
-          error={getErrorMessage(errors.availableUnits)}
-          {...register("availableUnits", {
-            ...numberRules("Available units", { required: false, min: 0, integer: true }),
+          placeholder="Optional maximum price"
+          error={getErrorMessage(errors.priceRange?.max)}
+          {...register("priceRange.max", {
+            ...numberRules("Maximum price", {
+              required: false,
+              min: 1,
+            }),
             validate: (value) => {
-              const baseValidation = numberRules("Available units", { required: false, min: 0, integer: true }).validate(value);
+              const baseValidation = numberRules(
+                "Maximum price",
+                {
+                  required: false,
+                  min: 1,
+                },
+              ).validate(value);
 
               if (baseValidation !== true) {
                 return baseValidation;
               }
 
-              if (value === "" || value === null || value === undefined) {
+              if (
+                value === "" ||
+                value === null ||
+                value === undefined
+              ) {
                 return true;
               }
 
-              return Number(value) <= Number(totalUnits || 0) || "Available units cannot exceed total units";
+              const minValue = toOptionalNumber(priceMinValue);
+              const maxValue = toOptionalNumber(value);
+
+              if (
+                minValue === undefined ||
+                maxValue === undefined
+              ) {
+                return true;
+              }
+
+              return (
+                maxValue >= minValue ||
+                "Maximum price must be greater than or equal to minimum price"
+              );
             },
           })}
         />
+      </div>
 
-        <FormInput
-          label="Possession Date"
-          icon={CalendarDays}
-          type="date"
-          error={getErrorMessage(errors.possessionDate)}
-          {...register("possessionDate", dateRules("Possession date", { required: true }))}
-        />
-
-        <SelectDropdown
-          label="Status"
-          options={projectStatuses}
-          error={getErrorMessage(errors.status)}
-          {...register("status", selectRules("Status"))}
-        />
-
-        <FormInput
-          label="Amenities"
-          className="lg:col-span-1"
-          placeholder="Clubhouse, Pool, Gym, Garden"
-          error={getErrorMessage(errors.amenities)}
-          {...register("amenities", textRules("Amenities", { min: 3, max: 300 }))}
-        />
-
-        <div className="flex flex-col gap-2 lg:col-span-1">
-          <span className="text-md text-muted">Sample House Video</span>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="flex flex-wrap items-center gap-6">
-              <label className="flex items-center gap-3 text-sm text-ivory">
-                <input
-                  type="radio"
-                  value="true"
-                  className="h-4 w-4 accent-[#c9a35d]"
-                  {...register("hasSampleVideo", { required: "Sample house video selection is required" })}
-                />
-                <span>Add Video URL</span>
-              </label>
-              <label className="flex items-center gap-3 text-sm text-ivory">
-                <input
-                  type="radio"
-                  value="false"
-                  className="h-4 w-4 accent-[#c9a35d]"
-                  {...register("hasSampleVideo", { required: "Sample house video selection is required" })}
-                />
-                <span>No Video Available</span>
-              </label>
-            </div>
-            {errors.hasSampleVideo ? (
-              <p className="mt-3 text-sm text-rose-300">{getErrorMessage(errors.hasSampleVideo)}</p>
-            ) : null}
-          </div>
-          {hasSampleVideo === "true" ? (
-            <FormInput
-              label="Video URL"
-              placeholder="Paste YouTube / Vimeo / HTTPS link"
-              error={getErrorMessage(errors.sampleVideoUrl)}
-              {...register("sampleVideoUrl", httpsUrlRules("Video URL", { required: true }))}
-            />
-          ) : null}
+      {formatCompactPrice(priceMinValue) ||
+      formatCompactPrice(priceMaxValue) ? (
+        <div className="inline-flex rounded-full border border-gold/25 bg-gold-soft px-3 py-1 text-xs font-semibold text-gold">
+          {formatCompactPrice(priceMinValue) &&
+          formatCompactPrice(priceMaxValue)
+            ? `${formatCompactPrice(
+                priceMinValue,
+              )} - ${formatCompactPrice(priceMaxValue)}`
+            : formatCompactPrice(priceMinValue) ||
+              formatCompactPrice(priceMaxValue)}
         </div>
-
-        <FormInput
-          label="Builder Details"
-          className="lg:col-span-1"
-          placeholder="Enter builder / developer details"
-          error={getErrorMessage(errors.builderDetails)}
-          {...register("builderDetails", textRules("Builder details", { min: 3, max: 300, required: false }))}
-        />
-
-        <FormInput
-          label="Internal Notes"
-          className="lg:col-span-1"
-          placeholder="Add internal notes (not visible to client)"
-          error={getErrorMessage(errors.internalNotes)}
-          {...register("internalNotes", textRules("Internal notes", { min: 0, max: 500, required: false }))}
-        />
-
-        <div className="grid gap-4 md:grid-cols-2 lg:col-span-1 lg:grid-cols-1">
-          <input type="hidden" {...register("brochure")} />
-          <UploadBox
-            label="Brochure Upload"
-            helpText="Click to upload or drag and drop a PDF brochure up to 1000MB"
-            asset={brochureAsset}
-            uploading={isUploadingBrochure}
-            error={brochureError || getErrorMessage(errors.brochure)}
-            onFileChange={handleBrochureUpload}
-            onRemove={removeBrochure}
-          />
-        </div>
-
-        {formError ? <p className="text-sm text-rose-300 lg:col-span-2">{formError}</p> : null}
-
-        <div className="flex justify-end gap-3 text-right lg:col-span-2">
-          {isEditMode ? (
-            <Button type="button" variant="secondary" onClick={goBackToProjects}>
-              Cancel
-            </Button>
-          ) : null}
-          <Button disabled={isSubmitting} icon={Save}>
-            {isSubmitting ? "Saving..." : isEditMode ? "Update Project" : "Save Project"}
-          </Button>
-        </div>
-      </form>
+      ) : null}
     </div>
+
+    <FormInput
+      label="Total Plot Size"
+      placeholder="Enter total plot size (sq yd)"
+      error={getErrorMessage(errors.totalPlotSize)}
+      {...register(
+        "totalPlotSize",
+        textRules("Total plot size", {
+          min: 1,
+          max: 50,
+          required: false,
+        }),
+      )}
+    />
+
+    <FormInput
+      label="Total Blocks"
+      type="number"
+      placeholder="Enter number of blocks"
+      error={getErrorMessage(errors.totalBlocks)}
+      {...register(
+        "totalBlocks",
+        numberRules("Total blocks", {
+          required: true,
+          min: 0,
+          integer: true,
+        }),
+      )}
+    />
+
+    <FormInput
+      label="Total Units"
+      type="number"
+      placeholder="Enter total units"
+      error={getErrorMessage(errors.totalUnits)}
+      {...register(
+        "totalUnits",
+        numberRules("Total units", {
+          required: true,
+          min: 1,
+          integer: true,
+        }),
+      )}
+    />
+
+    <FormInput
+      label="Available Units"
+      type="number"
+      placeholder="Optional available units"
+      error={getErrorMessage(errors.availableUnits)}
+      {...register("availableUnits", {
+        ...numberRules("Available units", {
+          required: false,
+          min: 0,
+          integer: true,
+        }),
+        validate: (value) => {
+          const baseValidation = numberRules(
+            "Available units",
+            {
+              required: false,
+              min: 0,
+              integer: true,
+            },
+          ).validate(value);
+
+          if (baseValidation !== true) {
+            return baseValidation;
+          }
+
+          if (
+            value === "" ||
+            value === null ||
+            value === undefined
+          ) {
+            return true;
+          }
+
+          return (
+            Number(value) <= Number(totalUnits || 0) ||
+            "Available units cannot exceed total units"
+          );
+        },
+      })}
+    />
+
+    <FormInput
+      label="Possession Date"
+      icon={CalendarDays}
+      type="date"
+      error={getErrorMessage(errors.possessionDate)}
+      {...register(
+        "possessionDate",
+        dateRules("Possession date", {
+          required: true,
+        }),
+      )}
+    />
+
+    <SelectDropdown
+      label="Status"
+      options={projectStatuses}
+      error={getErrorMessage(errors.status)}
+      {...register("status", selectRules("Status"))}
+    />
+
+    <FormInput
+      label="Amenities"
+      className="lg:col-span-1"
+      placeholder="Clubhouse, Pool, Gym, Garden"
+      error={getErrorMessage(errors.amenities)}
+      {...register(
+        "amenities",
+        textRules("Amenities", {
+          min: 3,
+          max: 300,
+        }),
+      )}
+    />
+
+    <div className="flex flex-col gap-2 lg:col-span-1">
+      <span className="text-md font-medium text-body">
+        Sample House Video
+      </span>
+
+      <div className="rounded-2xl border border-border bg-surface-soft p-4">
+        <div className="flex flex-wrap items-center gap-6">
+          <label className="flex items-center gap-3 text-sm text-heading">
+            <input
+              type="radio"
+              value="true"
+              className="h-4 w-4 accent-gold"
+              {...register("hasSampleVideo", {
+                required:
+                  "Sample house video selection is required",
+              })}
+            />
+            <span>Add Video URL</span>
+          </label>
+
+          <label className="flex items-center gap-3 text-sm text-heading">
+            <input
+              type="radio"
+              value="false"
+              className="h-4 w-4 accent-gold"
+              {...register("hasSampleVideo", {
+                required:
+                  "Sample house video selection is required",
+              })}
+            />
+            <span>No Video Available</span>
+          </label>
+        </div>
+
+        {errors.hasSampleVideo ? (
+          <p className="mt-3 text-sm text-rose-600">
+            {getErrorMessage(errors.hasSampleVideo)}
+          </p>
+        ) : null}
+      </div>
+
+      {hasSampleVideo === "true" ? (
+        <FormInput
+          label="Video URL"
+          placeholder="Paste YouTube / Vimeo / HTTPS link"
+          error={getErrorMessage(errors.sampleVideoUrl)}
+          {...register(
+            "sampleVideoUrl",
+            httpsUrlRules("Video URL", {
+              required: true,
+            }),
+          )}
+        />
+      ) : null}
+    </div>
+
+    <FormInput
+      label="Builder Details"
+      className="lg:col-span-1"
+      placeholder="Enter builder / developer details"
+      error={getErrorMessage(errors.builderDetails)}
+      {...register(
+        "builderDetails",
+        textRules("Builder details", {
+          min: 3,
+          max: 300,
+          required: false,
+        }),
+      )}
+    />
+
+    <FormInput
+      label="Internal Notes"
+      className="lg:col-span-1"
+      placeholder="Add internal notes (not visible to client)"
+      error={getErrorMessage(errors.internalNotes)}
+      {...register(
+        "internalNotes",
+        textRules("Internal notes", {
+          min: 0,
+          max: 500,
+          required: false,
+        }),
+      )}
+    />
+
+    <div className="grid gap-4 md:grid-cols-2 lg:col-span-1 lg:grid-cols-1">
+      <input type="hidden" {...register("brochure")} />
+
+      <UploadBox
+        label="Brochure Upload"
+        helpText="Click to upload or drag and drop a PDF brochure up to 1000MB"
+        asset={brochureAsset}
+        uploading={isUploadingBrochure}
+        error={
+          brochureError ||
+          getErrorMessage(errors.brochure)
+        }
+        onFileChange={handleBrochureUpload}
+        onRemove={removeBrochure}
+      />
+    </div>
+
+    {formError ? (
+      <p className="text-sm text-rose-600 lg:col-span-2">
+        {formError}
+      </p>
+    ) : null}
+
+    <div className="flex justify-end gap-3 text-right lg:col-span-2">
+      {isEditMode ? (
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={goBackToProjects}
+        >
+          Cancel
+        </Button>
+      ) : null}
+
+      <Button disabled={isSubmitting} icon={Save}>
+        {isSubmitting
+          ? "Saving..."
+          : isEditMode
+            ? "Update Project"
+            : "Save Project"}
+      </Button>
+    </div>
+  </form>
+</div>
   );
 }

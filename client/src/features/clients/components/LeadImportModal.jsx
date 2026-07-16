@@ -269,13 +269,13 @@ export default function LeadImportModal({ isOpen, onClose, onImported }) {
             <div className="flex items-center gap-3">
               <FileSpreadsheet className="h-5 w-5 text-gold-2" />
               <div>
-                <p className="text-sm font-semibold text-ivory">{fileName || "CSV, XLS, or XLSX file"}</p>
+                <p className="text-sm font-semibold text-heading">{fileName || "CSV, XLS, or XLSX file"}</p>
                 <p className="mt-1 text-xs text-muted">
                   Supports Facebook, Instagram, Housing.com, 99acres, MagicBricks, Rental, Broker, Reseller, and Manual Excel sheets.
                 </p>
               </div>
             </div>
-            <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-ivory transition hover:border-gold/50 hover:bg-white/10">
+            <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-heading transition hover:border-gold/50 hover:bg-white/10">
               Choose File
               <input
                 type="file"
@@ -365,7 +365,7 @@ export default function LeadImportModal({ isOpen, onClose, onImported }) {
                       <tr key={field.key} className="border-t border-white/10">
                         <td className="px-3 py-3">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-ivory">{field.label}</span>
+                            <span className="font-medium text-heading">{field.label}</span>
                             {field.required ? <Badge tone="rose">Required</Badge> : <Badge tone="slate">Optional</Badge>}
                           </div>
                         </td>
@@ -373,7 +373,7 @@ export default function LeadImportModal({ isOpen, onClose, onImported }) {
                           <select
                             value={columnMap[field.key] || ""}
                             onChange={(event) => setColumnMap((current) => ({ ...current, [field.key]: event.target.value }))}
-                            className="w-full rounded-2xl border border-white/10 bg-ink-2 px-3 py-2 text-sm text-ivory outline-none transition focus:border-gold/50"
+                            className="w-full rounded-2xl border border-white/10 bg-ink-2 px-3 py-2 text-sm text-heading outline-none transition focus:border-gold/50"
                           >
                             <option value="">Not mapped</option>
                             {headers.map((header) => (
@@ -397,7 +397,7 @@ export default function LeadImportModal({ isOpen, onClose, onImported }) {
         {previewRows.length ? (
           <div className="space-y-3 rounded-2xl border border-white/10 bg-black/20 p-4">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="font-semibold text-ivory">Row Preview</h3>
+              <h3 className="font-semibold text-heading">Row Preview</h3>
               <Badge tone="slate">First 5 rows</Badge>
             </div>
             <div className="max-h-72 overflow-auto rounded-2xl border border-white/10">
@@ -424,8 +424,8 @@ export default function LeadImportModal({ isOpen, onClose, onImported }) {
                   {previewRows.map((row) => (
                     <tr key={`${row.rowNumber}-${row.phone}`} className="border-t border-white/10">
                       <td className="px-3 py-2 text-muted">{row.rowNumber}</td>
-                      <td className="px-3 py-2 text-ivory">{row.clientName || "-"}</td>
-                      <td className="px-3 py-2 text-ivory">{row.phone || "-"}</td>
+                      <td className="px-3 py-2 text-heading">{row.clientName || "-"}</td>
+                      <td className="px-3 py-2 text-heading">{row.phone || "-"}</td>
                       <td className="px-3 py-2 text-muted">{row.email || "-"}</td>
                       <td className="px-3 py-2 text-muted">{row.propertyType || "-"}</td>
                       <td className="px-3 py-2 text-muted">{row.requirementType || "-"}</td>
@@ -479,8 +479,8 @@ export default function LeadImportModal({ isOpen, onClose, onImported }) {
                     {summary.failedRows.map((row) => (
                       <tr key={`${row.rowNumber}-${row.phone}-${row.status}`} className="border-t border-white/10">
                         <td className="px-3 py-2 text-muted">{row.rowNumber}</td>
-                        <td className="px-3 py-2 text-ivory">{row.phone || "-"}</td>
-                        <td className="px-3 py-2 text-ivory">{row.clientName || "-"}</td>
+                        <td className="px-3 py-2 text-heading">{row.phone || "-"}</td>
+                        <td className="px-3 py-2 text-heading">{row.clientName || "-"}</td>
                         <td className="px-3 py-2 text-muted">{row.reason || row.errors?.join(", ") || row.status}</td>
                       </tr>
                     ))}
@@ -493,7 +493,7 @@ export default function LeadImportModal({ isOpen, onClose, onImported }) {
 
         <div className="space-y-3 rounded-2xl border border-white/10 bg-black/20 p-4">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-ivory">Import History</h3>
+            <h3 className="font-semibold text-heading">Import History</h3>
             <Button type="button" variant="secondary" icon={RefreshCw} onClick={loadHistory} disabled={isLoadingHistory}>
               Refresh
             </Button>
@@ -519,7 +519,7 @@ export default function LeadImportModal({ isOpen, onClose, onImported }) {
                   {history.map((entry) => (
                     <tr key={entry.batchId} className="border-t border-white/10">
                       <td className="px-3 py-2 text-muted">{new Date(entry.importedAt).toLocaleString()}</td>
-                      <td className="px-3 py-2 text-ivory">{entry.source || "Import"}</td>
+                      <td className="px-3 py-2 text-heading">{entry.source || "Import"}</td>
                       <td className="px-3 py-2 text-muted">{entry.fileName || "-"}</td>
                       <td className="px-3 py-2 text-muted">{entry.assignmentMode || "-"}</td>
                       <td className="px-3 py-2 text-muted">{entry.duplicateHandling || "-"}</td>

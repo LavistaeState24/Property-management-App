@@ -58,7 +58,7 @@ export default function DealPipelinePage({ title, subtitle, status, statusLabel 
       searchValue: (row) => `${row.lead?.ownerName || ""} ${row.lead?.clientPhoneNumber || ""}`,
       render: (row) => (
         <div>
-          <p className="font-medium text-ivory">{row.lead?.ownerName || "-"}</p>
+          <p className="font-medium text-heading">{row.lead?.ownerName || "-"}</p>
           <p className="text-xs text-muted">{row.lead?.clientPhoneNumber || ""}</p>
         </div>
       ),
@@ -69,7 +69,7 @@ export default function DealPipelinePage({ title, subtitle, status, statusLabel 
       searchValue: (row) => `${row.project?.projectName || ""} ${row.project?.publicAlias || ""}`,
       render: (row) => (
         <div>
-          <p className="font-medium text-ivory">{row.project?.projectName || "-"}</p>
+          <p className="font-medium text-heading">{row.project?.projectName || "-"}</p>
           <p className="text-xs text-muted">{row.project?.publicAlias || ""}</p>
         </div>
       ),

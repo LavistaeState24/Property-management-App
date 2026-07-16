@@ -3,32 +3,48 @@
 @tailwind utilities;
 
 :root {
-  --ink: #090a0d;
-  --ink-2: #11151b;
-  --panel: rgba(255, 255, 255, 0.07);
-  --panel-strong: rgba(255, 255, 255, 0.11);
-  --line: rgba(255, 255, 255, 0.14);
+  --page: #f6f7f9;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+
+  --sidebar: #192231;
+
   --gold: #c9a35d;
-  --gold-2: #f3d79b;
-  --ivory: #f7f1e6;
-  --muted: #b7aea0;
+  --gold-light: #f3d79b;
+  --gold-soft: #f8f1e6;
+
+  --heading: #192231;
+  --body: #64748b;
+  --subtle: #94a3b8;
+
+  --line: #e5e7eb;
+  --line-soft: #f1f5f9;
+
   --green: #1d4a3f;
   --wine: #5d2638;
 }
 
 html {
+  min-height: 100%;
   scroll-behavior: smooth;
+  background-color: var(--page);
 }
 
 body {
   margin: 0;
   min-width: 320px;
-  background:
-    radial-gradient(circle at top left, rgba(201, 163, 93, 0.18), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(93, 38, 56, 0.2), transparent 22%),
-    linear-gradient(180deg, var(--ink), #0c1015);
-  color: var(--ivory);
+  min-height: 100vh;
+  background-color: var(--page);
+  color: var(--heading);
   font-family: "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--page);
+  color: var(--heading);
 }
 
 * {
@@ -38,4 +54,16 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background-color: rgba(201, 163, 93, 0.25);
+  color: var(--heading);
 }

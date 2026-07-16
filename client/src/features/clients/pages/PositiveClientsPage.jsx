@@ -101,7 +101,7 @@ export default function PositiveClientsPage() {
           .join(" "),
       render: (row) => (
         <div className="space-y-1">
-          <p className="font-medium text-ivory">{row.ownerName}</p>
+          <p className="font-medium text-heading">{row.ownerName}</p>
           <p className="text-xs text-muted">{row.clientPhoneNumber}</p>
           <p className="text-xs text-muted">{row.areaPreference || row.premiseArea || "Area not added"}</p>
           {/* <p className="text-xs text-muted">
@@ -139,7 +139,7 @@ export default function PositiveClientsPage() {
       searchValue: (row) => row.lastDiscussion || "",
       render: (row) => (
         <div className="space-y-1">
-          <p className="max-w-xs whitespace-pre-wrap text-sm text-ivory">{row.lastDiscussion || "No discussion saved"}</p>
+          <p className="max-w-xs whitespace-pre-wrap text-sm text-heading">{row.lastDiscussion || "No discussion saved"}</p>
           <p className="text-xs text-muted">{formatDateTime(row.lastDiscussionAt)}</p>
         </div>
       ),
@@ -151,7 +151,7 @@ export default function PositiveClientsPage() {
       render: (row) =>
         row.nextActiveFollowup ? (
           <div className="space-y-2">
-            <p className="text-sm text-ivory">{formatDateTime(row.nextActiveFollowup.reminderDateTime)}</p>
+            <p className="text-sm text-heading">{formatDateTime(row.nextActiveFollowup.reminderDateTime)}</p>
             <p className="max-w-xs text-xs text-muted">{row.nextActiveFollowup.note || "No note added"}</p>
             <div className="flex flex-wrap gap-2">
               <Badge tone={getFollowupTone(row.nextActiveFollowup.status)}>{row.nextActiveFollowup.status}</Badge>
@@ -168,7 +168,7 @@ export default function PositiveClientsPage() {
       searchValue: (row) => `${row.assignedStaff?.name || ""} ${row.nextActiveFollowup?.assignedStaff?.name || ""}`,
       render: (row) => (
         <div className="space-y-1">
-          <p className="text-sm text-ivory">{row.assignedStaff?.name || "Unassigned"}</p>
+          <p className="text-sm text-heading">{row.assignedStaff?.name || "Unassigned"}</p>
           <p className="text-xs text-muted">{row.nextActiveFollowup?.assignedStaff?.name ? `Follow-up: ${row.nextActiveFollowup.assignedStaff.name}` : ""}</p>
         </div>
       ),

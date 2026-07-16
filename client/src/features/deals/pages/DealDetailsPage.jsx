@@ -88,7 +88,7 @@ export default function DealDetailsPage() {
             {infoItems(deal).map(([label, value]) => (
               <div key={label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{label}</p>
-                <p className="mt-2 break-words text-base font-medium text-ivory">{value || "Not added"}</p>
+                <p className="mt-2 break-words text-base font-medium text-heading">{value || "Not added"}</p>
               </div>
             ))}
           </div>
@@ -110,7 +110,7 @@ export default function DealDetailsPage() {
             ].map(([label, value]) => (
               <div key={label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{label}</p>
-                <p className="mt-2 break-words text-base font-medium text-ivory">{value}</p>
+                <p className="mt-2 break-words text-base font-medium text-heading">{value}</p>
               </div>
             ))}
           </div>

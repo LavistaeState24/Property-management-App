@@ -1,4 +1,10 @@
-import { CalendarPlus, Copy, ExternalLink, Pencil, RefreshCw } from "lucide-react";
+import {
+  CalendarPlus,
+  Copy,
+  ExternalLink,
+  Pencil,
+  RefreshCw,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import Badge from "../../../components/common/Badge";
@@ -13,8 +19,15 @@ import { projectService } from "../../../services/projectService";
 import { siteVisitService } from "../../../services/siteVisitService";
 import { userService } from "../../../services/userService";
 import SiteVisitForm from "../components/SiteVisitForm";
-import { formatSiteVisitDateTime, getSiteVisitStatusTone, siteVisitStatusOptions } from "../siteVisitConfig";
-import { buildSiteVisitConfirmationMessage, getSiteVisitWhatsAppUrl } from "../siteVisitMessaging";
+import {
+  formatSiteVisitDateTime,
+  getSiteVisitStatusTone,
+  siteVisitStatusOptions,
+} from "../siteVisitConfig";
+import {
+  buildSiteVisitConfirmationMessage,
+  getSiteVisitWhatsAppUrl,
+} from "../siteVisitMessaging";
 
 const initialFilters = {
   visitStatus: "",
@@ -41,6 +54,7 @@ const emptyFormValues = {
 export default function SiteVisitsPage() {
   const canCreateSiteVisits = useCan("siteVisits", "create");
   const canUpdateSiteVisits = useCan("siteVisits", "update");
+
   const [siteVisits, setSiteVisits] = useState([]);
   const [leadOptions, setLeadOptions] = useState([]);
   const [projectOptions, setProjectOptions] = useState([]);
@@ -54,17 +68,40 @@ export default function SiteVisitsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const loadSiteVisitDependencies = async () => {
-    const shouldLoadFormDependencies = canCreateSiteVisits || canUpdateSiteVisits;
+    const shouldLoadFormDependencies =
+      canCreateSiteVisits || canUpdateSiteVisits;
 
     if (!shouldLoadFormDependencies) {
       return;
     }
 
-    const [leadsData, projectsData, assignableUsers] = await Promise.all([clientService.listAll(), projectService.listAll(), userService.listAssignable()]);
+    const [leadsData, projectsData, assignableUsers] =
+      await Promise.all([
+        clientService.listAll(),
+        projectService.listAll(),
+        userService.listAssignable(),
+      ]);
 
-    setLeadOptions((leadsData.items || []).map((lead) => ({ value: lead._id, label: `${lead.ownerName} (${lead.clientPhoneNumber})` })));
-    setProjectOptions((projectsData.items || []).map((project) => ({ value: project._id, label: `${project.projectName} (${project.publicAlias})` })));
-    setStaffOptions(assignableUsers.map((user) => ({ value: user.id, label: `${user.name} (${user.role})` })));
+    setLeadOptions(
+      (leadsData.items || []).map((lead) => ({
+        value: lead._id,
+        label: `${lead.ownerName} (${lead.clientPhoneNumber})`,
+      })),
+    );
+
+    setProjectOptions(
+      (projectsData.items || []).map((project) => ({
+        value: project._id,
+        label: `${project.projectName} (${project.publicAlias})`,
+      })),
+    );
+
+    setStaffOptions(
+      assignableUsers.map((user) => ({
+        value: user.id,
+        label: `${user.name} (${user.role})`,
+      })),
+    );
   };
 
   const loadSiteVisits = async (nextFilters = filters) => {
@@ -75,7 +112,10 @@ export default function SiteVisitsPage() {
       const data = await siteVisitService.listAll(nextFilters);
       setSiteVisits(data.items || []);
     } catch (requestError) {
-      setListError(requestError.response?.data?.message || "Unable to load site visits");
+      setListError(
+        requestError.response?.data?.message ||
+          "Unable to load site visits",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -87,9 +127,15 @@ export default function SiteVisitsPage() {
       setListError("");
 
       try {
-        await Promise.all([loadSiteVisitDependencies(), loadSiteVisits(initialFilters)]);
+        await Promise.all([
+          loadSiteVisitDependencies(),
+          loadSiteVisits(initialFilters),
+        ]);
       } catch (requestError) {
-        setListError(requestError.response?.data?.message || "Unable to load site visits");
+        setListError(
+          requestError.response?.data?.message ||
+            "Unable to load site visits",
+        );
         setIsLoading(false);
       }
     };
@@ -98,20 +144,44 @@ export default function SiteVisitsPage() {
   }, [canCreateSiteVisits, canUpdateSiteVisits]);
 
   const plannedRows = useMemo(
-    () => siteVisits.filter((siteVisit) => ["Planned", "Rescheduled", "Cancelled"].includes(siteVisit.visitStatus)),
+    () =>
+      siteVisits.filter((siteVisit) =>
+        ["Planned", "Rescheduled", "Cancelled"].includes(
+          siteVisit.visitStatus,
+        ),
+      ),
     [siteVisits],
   );
 
-  const doneRows = useMemo(() => siteVisits.filter((siteVisit) => siteVisit.visitStatus === "Done"), [siteVisits]);
+  const doneRows = useMemo(
+    () =>
+      siteVisits.filter(
+        (siteVisit) => siteVisit.visitStatus === "Done",
+      ),
+    [siteVisits],
+  );
 
   const toFormValues = (siteVisit) => ({
-    leadId: siteVisit.leadId || siteVisit.client?._id || siteVisit.client || "",
-    projectId: siteVisit.projectId || siteVisit.project?._id || siteVisit.project || "",
+    leadId:
+      siteVisit.leadId ||
+      siteVisit.client?._id ||
+      siteVisit.client ||
+      "",
+    projectId:
+      siteVisit.projectId ||
+      siteVisit.project?._id ||
+      siteVisit.project ||
+      "",
     visitType: siteVisit.visitType || "New Project",
     propertyName: siteVisit.propertyName || "",
-    assignedStaff: siteVisit.assignedStaff?._id || siteVisit.assignedStaff || "",
+    assignedStaff:
+      siteVisit.assignedStaff?._id ||
+      siteVisit.assignedStaff ||
+      "",
     visitDateTime: siteVisit.visitDateTime
-      ? new Date(siteVisit.visitDateTime).toISOString().slice(0, 16)
+      ? new Date(siteVisit.visitDateTime)
+          .toISOString()
+          .slice(0, 16)
       : "",
     pickupRequired: Boolean(siteVisit.pickupRequired),
     visitStatus: siteVisit.visitStatus || "Planned",
@@ -121,33 +191,56 @@ export default function SiteVisitsPage() {
   });
 
   const openWhatsAppConfirmation = (siteVisit) => {
-    window.open(getSiteVisitWhatsAppUrl(siteVisit), "_blank", "noopener,noreferrer");
+    window.open(
+      getSiteVisitWhatsAppUrl(siteVisit),
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   const copyWhatsAppConfirmation = async (siteVisit) => {
-    await navigator.clipboard.writeText(buildSiteVisitConfirmationMessage(siteVisit));
+    await navigator.clipboard.writeText(
+      buildSiteVisitConfirmationMessage(siteVisit),
+    );
   };
+
+  const actionButtonClasses =
+    "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-body transition-all duration-200 hover:border-gold/50 hover:bg-gold-soft hover:text-gold";
 
   const columns = [
     {
       key: "lead",
       label: "Lead",
-      searchValue: (row) => `${row.client?.ownerName || ""} ${row.client?.clientPhoneNumber || ""}`,
+      searchValue: (row) =>
+        `${row.client?.ownerName || ""} ${
+          row.client?.clientPhoneNumber || ""
+        }`,
       render: (row) => (
         <div>
-          <p className="font-medium text-ivory">{row.client?.ownerName || "-"}</p>
-          <p className="text-xs text-muted">{row.client?.clientPhoneNumber || ""}</p>
+          <p className="font-medium text-heading">
+            {row.client?.ownerName || "-"}
+          </p>
+          <p className="text-xs text-body">
+            {row.client?.clientPhoneNumber || ""}
+          </p>
         </div>
       ),
     },
     {
       key: "project",
       label: "Project",
-      searchValue: (row) => `${row.project?.projectName || ""} ${row.project?.publicAlias || ""}`,
+      searchValue: (row) =>
+        `${row.project?.projectName || ""} ${
+          row.project?.publicAlias || ""
+        }`,
       render: (row) => (
         <div>
-          <p className="text-sm text-ivory">{row.project?.projectName || "-"}</p>
-          <p className="text-xs text-muted">{row.project?.publicAlias || ""}</p>
+          <p className="text-sm font-medium text-heading">
+            {row.project?.projectName || "-"}
+          </p>
+          <p className="text-xs text-body">
+            {row.project?.publicAlias || ""}
+          </p>
         </div>
       ),
     },
@@ -161,7 +254,7 @@ export default function SiteVisitsPage() {
       label: "Properties Shown",
       searchValue: (row) => row.propertyName || "",
       render: (row) => (
-        <div className="max-w-xs whitespace-pre-wrap text-xs">
+        <div className="max-w-xs whitespace-pre-wrap text-xs text-body">
           {row.propertyName || "-"}
         </div>
       ),
@@ -169,7 +262,8 @@ export default function SiteVisitsPage() {
     {
       key: "visitDateTime",
       label: "Visit Time",
-      render: (row) => formatSiteVisitDateTime(row.visitDateTime),
+      render: (row) =>
+        formatSiteVisitDateTime(row.visitDateTime),
     },
     {
       key: "assignedStaff",
@@ -180,12 +274,20 @@ export default function SiteVisitsPage() {
     {
       key: "pickupRequired",
       label: "Pickup",
-      render: (row) => <Badge tone={row.pickupRequired ? "amber" : "slate"}>{row.pickupRequired ? "Required" : "No"}</Badge>,
+      render: (row) => (
+        <Badge tone={row.pickupRequired ? "amber" : "slate"}>
+          {row.pickupRequired ? "Required" : "No"}
+        </Badge>
+      ),
     },
     {
       key: "visitStatus",
       label: "Status",
-      render: (row) => <Badge tone={getSiteVisitStatusTone(row.visitStatus)}>{row.visitStatus}</Badge>,
+      render: (row) => (
+        <Badge tone={getSiteVisitStatusTone(row.visitStatus)}>
+          {row.visitStatus}
+        </Badge>
+      ),
     },
     {
       key: "postVisitResult",
@@ -201,7 +303,7 @@ export default function SiteVisitsPage() {
           {canUpdateSiteVisits ? (
             <button
               type="button"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2"
+              className={actionButtonClasses}
               onClick={() => {
                 setEditingSiteVisit(row);
                 setFormError("");
@@ -213,18 +315,20 @@ export default function SiteVisitsPage() {
               <Pencil className="h-3.5 w-3.5" />
             </button>
           ) : null}
+
           <button
             type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2"
+            className={actionButtonClasses}
             onClick={() => copyWhatsAppConfirmation(row)}
             title="Copy WhatsApp confirmation"
             aria-label="Copy WhatsApp confirmation"
           >
             <Copy className="h-3.5 w-3.5" />
           </button>
+
           <button
             type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2"
+            className={actionButtonClasses}
             onClick={() => openWhatsAppConfirmation(row)}
             title="Open WhatsApp confirmation"
             aria-label="Open WhatsApp confirmation"
@@ -237,12 +341,19 @@ export default function SiteVisitsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-heading">
+      {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-gold">Field Operations</p>
-          <h2 className="mt-2 font-display text-3xl">Site visit planning, completion, and follow-through</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">
+            Field Operations
+          </p>
+
+          <h2 className="mt-2 font-display text-3xl font-medium text-heading">
+            Site visit planning, completion, and follow-through
+          </h2>
         </div>
+
         {canCreateSiteVisits ? (
           <Button
             icon={CalendarPlus}
@@ -257,19 +368,32 @@ export default function SiteVisitsPage() {
         ) : null}
       </div>
 
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-glass md:grid-cols-2 xl:grid-cols-5">
+      {/* Filters */}
+      <div className="grid gap-4 rounded-[28px] border border-border bg-surface p-5 shadow-glass md:grid-cols-2 xl:grid-cols-5">
         <SelectDropdown
           label="Visit Status"
           options={siteVisitStatusOptions}
           value={filters.visitStatus}
-          onChange={(event) => setFilters((current) => ({ ...current, visitStatus: event.target.value }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              visitStatus: event.target.value,
+            }))
+          }
         />
+
         <SelectDropdown
           label="Assigned Staff"
           options={staffOptions}
           value={filters.assignedStaff}
-          onChange={(event) => setFilters((current) => ({ ...current, assignedStaff: event.target.value }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              assignedStaff: event.target.value,
+            }))
+          }
         />
+
         <SelectDropdown
           label="Pickup Required"
           options={[
@@ -277,20 +401,38 @@ export default function SiteVisitsPage() {
             { value: "false", label: "Not Required" },
           ]}
           value={filters.pickupRequired}
-          onChange={(event) => setFilters((current) => ({ ...current, pickupRequired: event.target.value }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              pickupRequired: event.target.value,
+            }))
+          }
         />
+
         <FormInput
           label="Date From"
           type="date"
           value={filters.dateFrom}
-          onChange={(event) => setFilters((current) => ({ ...current, dateFrom: event.target.value }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              dateFrom: event.target.value,
+            }))
+          }
         />
+
         <FormInput
           label="Date To"
           type="date"
           value={filters.dateTo}
-          onChange={(event) => setFilters((current) => ({ ...current, dateTo: event.target.value }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              dateTo: event.target.value,
+            }))
+          }
         />
+
         <div className="flex items-end gap-3">
           <Button
             type="button"
@@ -303,24 +445,47 @@ export default function SiteVisitsPage() {
           >
             Reset
           </Button>
-          <Button type="button" className="w-full" onClick={() => loadSiteVisits(filters)}>
+
+          <Button
+            type="button"
+            className="w-full"
+            onClick={() => loadSiteVisits(filters)}
+          >
             Apply
           </Button>
         </div>
       </div>
 
-      {listError ? <p className="text-sm text-rose-300">{listError}</p> : null}
+      {listError ? (
+        <p className="text-sm text-rose-600">
+          {listError}
+        </p>
+      ) : null}
 
+      {/* Planned Visits */}
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-gold">Planned Queue</p>
-            <h3 className="mt-2 font-display text-2xl">Planned, rescheduled, and cancelled visits</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">
+              Planned Queue
+            </p>
+
+            <h3 className="mt-2 font-display text-2xl font-medium text-heading">
+              Planned, rescheduled, and cancelled visits
+            </h3>
           </div>
-          <Button type="button" variant="secondary" icon={RefreshCw} onClick={() => loadSiteVisits(filters)} disabled={isLoading}>
+
+          <Button
+            type="button"
+            variant="secondary"
+            icon={RefreshCw}
+            onClick={() => loadSiteVisits(filters)}
+            disabled={isLoading}
+          >
             {isLoading ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
+
         <DataTable
           columns={columns}
           rows={plannedRows}
@@ -332,11 +497,18 @@ export default function SiteVisitsPage() {
         />
       </section>
 
+      {/* Completed Visits */}
       <section className="space-y-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-gold">Completed Visits</p>
-          <h3 className="mt-2 font-display text-2xl">Done visits and post-visit results</h3>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">
+            Completed Visits
+          </p>
+
+          <h3 className="mt-2 font-display text-2xl font-semibold text-heading">
+            Done visits and post-visit results
+          </h3>
         </div>
+
         <DataTable
           columns={columns}
           rows={doneRows}
@@ -348,8 +520,13 @@ export default function SiteVisitsPage() {
         />
       </section>
 
+      {/* Site Visit Form Modal */}
       <Modal
-        title={editingSiteVisit ? "Edit Site Visit" : "Add Site Visit"}
+        title={
+          editingSiteVisit
+            ? "Edit Site Visit"
+            : "Add Site Visit"
+        }
         isOpen={isFormOpen}
         onClose={() => {
           if (!isSaving) {
@@ -360,15 +537,30 @@ export default function SiteVisitsPage() {
         }}
       >
         <div className="space-y-4">
-          {formError ? <p className="text-sm text-rose-300">{formError}</p> : null}
+          {formError ? (
+            <p className="text-sm text-rose-600">
+              {formError}
+            </p>
+          ) : null}
+
           <SiteVisitForm
-            initialValues={editingSiteVisit ? toFormValues(editingSiteVisit) : emptyFormValues}
+            initialValues={
+              editingSiteVisit
+                ? toFormValues(editingSiteVisit)
+                : emptyFormValues
+            }
             leadOptions={leadOptions}
             projectOptions={projectOptions}
             staffOptions={staffOptions}
             isSaving={isSaving}
-            saveLabel={editingSiteVisit ? "Update Site Visit" : "Create Site Visit"}
-            submitIcon={editingSiteVisit ? Pencil : CalendarPlus}
+            saveLabel={
+              editingSiteVisit
+                ? "Update Site Visit"
+                : "Create Site Visit"
+            }
+            submitIcon={
+              editingSiteVisit ? Pencil : CalendarPlus
+            }
             onCancel={() => {
               setIsFormOpen(false);
               setEditingSiteVisit(null);
@@ -380,7 +572,10 @@ export default function SiteVisitsPage() {
 
               try {
                 if (editingSiteVisit) {
-                  await siteVisitService.update(editingSiteVisit._id, values);
+                  await siteVisitService.update(
+                    editingSiteVisit._id,
+                    values,
+                  );
                 } else {
                   await siteVisitService.create(values);
                 }
@@ -389,7 +584,11 @@ export default function SiteVisitsPage() {
                 setEditingSiteVisit(null);
                 await loadSiteVisits(filters);
               } catch (requestError) {
-                setFormError(requestError.response?.data?.message || "Unable to save site visit");
+                setFormError(
+                  requestError.response?.data?.message ||
+                    "Unable to save site visit",
+                );
+
                 throw requestError;
               } finally {
                 setIsSaving(false);

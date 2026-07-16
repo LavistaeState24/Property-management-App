@@ -38,7 +38,7 @@ export default function SharePreviewPage() {
   const project = preview.project;
 
   return (
-    <div className="min-h-screen bg-ink bg-glow px-6 py-12 text-ivory">
+    <div className="min-h-screen bg-ink bg-glow px-6 py-12 text-heading">
       <div className="mx-auto max-w-4xl rounded-[36px] border border-white/10 bg-white/5 p-8 shadow-glass">
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -51,19 +51,19 @@ export default function SharePreviewPage() {
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted">Area</p>
-            <p className="mt-2 text-xl text-ivory">{project.location}</p>
+            <p className="mt-2 text-xl text-heading">{project.location}</p>
           </div>
           <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted">Configuration</p>
-            <p className="mt-2 text-xl text-ivory">{project.configuration || formatPropertyTypes(project.propertyType)}</p>
+            <p className="mt-2 text-xl text-heading">{project.configuration || formatPropertyTypes(project.propertyType)}</p>
           </div>
           <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted">Price</p>
-            <p className="mt-2 text-xl text-ivory">{formatPrice(project.priceRange)}</p>
+            <p className="mt-2 text-xl text-heading">{formatPrice(project.priceRange)}</p>
           </div>
           <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted">Possession</p>
-            <p className="mt-2 text-xl text-ivory">
+            <p className="mt-2 text-xl text-heading">
               {project.possessionDate ? new Date(project.possessionDate).toLocaleDateString("en-IN") : "On request"}
             </p>
           </div>
@@ -71,12 +71,12 @@ export default function SharePreviewPage() {
 
         <div className="mt-6 rounded-[28px] border border-white/10 bg-black/20 p-6">
           <p className="text-xs uppercase tracking-[0.2em] text-muted">Amenities</p>
-          <p className="mt-3 text-lg text-ivory">{project.amenities?.join(", ") || "Available on request"}</p>
+          <p className="mt-3 text-lg text-heading">{project.amenities?.join(", ") || "Available on request"}</p>
         </div>
 
         <div className="mt-6 rounded-[28px] border border-gold/20 bg-gold/10 p-6">
           <p className="text-xs uppercase tracking-[0.2em] text-gold-2">WhatsApp-ready message</p>
-          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm text-ivory">{project.whatsAppMessage}</pre>
+          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm text-heading">{project.whatsAppMessage}</pre>
         </div>
       </div>
     </div>
