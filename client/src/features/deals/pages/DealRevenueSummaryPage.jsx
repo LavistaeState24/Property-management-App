@@ -65,7 +65,7 @@ export default function DealRevenueSummaryPage() {
         <p className="mt-2 text-sm text-muted">Track closed value, token flow, and closing performance by staff.</p>
       </div>
 
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-glass md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 rounded-[32px] border border-border bg-surface p-6 shadow-card lg:grid-cols-2 xl:grid-cols-4">
         <FormInput
           label="From"
           type="date"
@@ -115,7 +115,7 @@ export default function DealRevenueSummaryPage() {
         <StatCard label="Month Closings" value={summary?.currentMonthBookings ?? "--"} accent="green" meta="Bookings in range" />
       </section>
 
-      <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+      <div className="rounded-[32px] border border-border bg-surface p-5 shadow-glass">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.24em] text-gold">Staff Closing Reports</p>

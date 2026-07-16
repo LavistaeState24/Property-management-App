@@ -201,7 +201,7 @@ export default function DealUpsertPage() {
         </div>
       ) : null}
 
-      <form className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass" onSubmit={handleSubmit(onSubmit)}>
+      <form className="rounded-[32px] border border-border bg-surface p-6 shadow-glass" onSubmit={handleSubmit(onSubmit)}>
         <DealForm
           register={register}
           errors={errors}

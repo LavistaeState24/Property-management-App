@@ -246,7 +246,7 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex  flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-gold">Lead Pipeline</p>
           <h2 className="mt-2 font-display text-3xl">Lead tracking, ownership, and conversion flow</h2>
@@ -263,7 +263,7 @@ export default function ClientsPage() {
         ) : null}
       </div>
 
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-glass md:grid-cols-2 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_auto]">
+      <div className="grid gap-5 rounded-[32px] border border-border bg-surface p-6 shadow-card lg:grid-cols-2 xl:grid-cols-5">
         <FormInput
           label="Search"
           placeholder="Name, phone, area..."

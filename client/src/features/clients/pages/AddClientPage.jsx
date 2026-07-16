@@ -416,7 +416,7 @@ export default function AddClientPage() {
       </div>
 
       <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-        <section className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2">
+        <section className="grid gap-5 rounded-[32px] border border-border bg-surface p-6 shadow-card lg:grid-cols-2">
           <div className="lg:col-span-2">
             <p className="text-xs uppercase tracking-[0.3em] text-gold">Pipeline Control</p>
             <h3 className="mt-2 font-display text-2xl">Ownership, status, and requirement fit</h3>
@@ -553,7 +553,7 @@ export default function AddClientPage() {
           />
         </section>
 
-        <section className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2">
+        <section className="grid gap-5 rounded-[32px] border border-border bg-surface p-6 shadow-card lg:grid-cols-2">
           <div className="lg:col-span-2">
             <p className="text-xs uppercase tracking-[0.3em] text-gold">Client Profile</p>
             <h3 className="mt-2 font-display text-2xl">Client Details</h3>
@@ -700,7 +700,7 @@ export default function AddClientPage() {
           />
         </section>
 
-        <section className="grid gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass lg:grid-cols-2">
+        <section className="grid gap-5 rounded-[32px] border border-border bg-surface p-6 shadow-card lg:grid-cols-2">
           <div className="lg:col-span-2">
             <p className="text-xs uppercase tracking-[0.3em] text-gold">Property Media</p>
             <h3 className="mt-2 font-display text-2xl">Images and optional house video</h3>

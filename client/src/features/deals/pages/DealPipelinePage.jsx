@@ -159,7 +159,7 @@ export default function DealPipelinePage({ title, subtitle, status, statusLabel 
         </div>
       </div>
 
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-glass md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-5 rounded-[32px] border border-border bg-surface p-6 shadow-card lg:grid-cols-2 xl:grid-cols-5">
         <FormInput
           label="Search"
           placeholder="Lead, project, unit, note..."

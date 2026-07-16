@@ -210,7 +210,7 @@ export default function PositiveClientsPage() {
         <h2 className="mt-2 font-display text-3xl">Positive clients with active follow-up momentum</h2>
       </div>
 
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-glass md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-5 rounded-[32px] border border-border bg-surface p-6 shadow-card lg:grid-cols-2 xl:grid-cols-5">
         <FormInput
           label="Search"
           placeholder="Name, phone, area, project..."
