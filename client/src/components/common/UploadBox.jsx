@@ -35,7 +35,7 @@ export default function UploadBox({
   };
 
   return (
-    <div className="rounded-3xl border border-dashed border-gold/30 bg-white/5 p-5">
+    <div className="rounded-3xl border border-dashed border-gold/30 bg-surface p-5 shadow-glass">
       <div
         role="button"
         tabIndex={0}
@@ -52,8 +52,10 @@ export default function UploadBox({
         }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
-        className={`rounded-2xl border border-dashed px-4 py-6 text-center transition ${
-          isDragging ? "border-gold bg-gold/10" : "border-white/10 bg-black/10 hover:border-gold/40"
+        className={`rounded-2xl border border-dashed px-4 py-6 text-center outline-none transition-all duration-200 ${
+          isDragging
+            ? "border-gold bg-gold-soft ring-4 ring-gold/10"
+            : "border-border bg-surface-soft hover:border-gold/50 hover:bg-gold-soft/50"
         }`}
       >
         <input
@@ -66,28 +68,34 @@ export default function UploadBox({
             event.target.value = "";
           }}
         />
-        <Upload className="mx-auto h-6 w-6 text-gold-2" />
-        <p className="mt-3 text-sm font-medium text-ivory">{label}</p>
-        <p className="mt-2 text-sm text-muted">
+
+        <Upload className="mx-auto h-6 w-6 text-gold" />
+
+        <p className="mt-3 text-sm font-semibold text-heading">
+          {label}
+        </p>
+
+        <p className="mt-2 text-sm text-body">
           {uploading ? "Uploading brochure..." : helpText}
         </p>
       </div>
 
       {asset ? (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface-soft px-4 py-3">
           <a
             href={resolveAssetUrl(asset.downloadUrl || asset.url)}
             target="_blank"
             rel="noreferrer"
-            className="flex min-w-0 items-center gap-3 text-sm text-ivory hover:text-gold-2"
+            className="flex min-w-0 items-center gap-3 text-sm font-medium text-heading transition hover:text-gold"
           >
-            <FileText className="h-4 w-4 shrink-0 text-gold-2" />
+            <FileText className="h-4 w-4 shrink-0 text-gold" />
             <span className="truncate">{asset.name}</span>
           </a>
+
           <button
             type="button"
             onClick={onRemove}
-            className="rounded-full p-1 text-muted transition hover:bg-white/10 hover:text-ivory"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-body transition hover:bg-rose-50 hover:text-rose-600"
             aria-label="Remove brochure"
           >
             <X className="h-4 w-4" />
@@ -95,7 +103,11 @@ export default function UploadBox({
         </div>
       ) : null}
 
-      {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
+      {error ? (
+        <p className="mt-3 text-sm text-rose-600">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

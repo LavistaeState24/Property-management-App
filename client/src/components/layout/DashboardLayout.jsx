@@ -10,8 +10,14 @@ import { useAuth } from "../../hooks/useAuth";
 
 export default function DashboardLayout() {
   const { touchLastSeen } = useAuth();
-  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
+
+  const [isDesktop, setIsDesktop] = useState(
+    () => window.innerWidth >= 1024,
+  );
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(
+    () => window.innerWidth >= 1024,
+  );
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -26,11 +32,18 @@ export default function DashboardLayout() {
 
     if (typeof mediaQuery.addEventListener === "function") {
       mediaQuery.addEventListener("change", handleBreakpointChange);
-      return () => mediaQuery.removeEventListener("change", handleBreakpointChange);
+
+      return () =>
+        mediaQuery.removeEventListener(
+          "change",
+          handleBreakpointChange,
+        );
     }
 
     mediaQuery.addListener(handleBreakpointChange);
-    return () => mediaQuery.removeListener(handleBreakpointChange);
+
+    return () =>
+      mediaQuery.removeListener(handleBreakpointChange);
   }, []);
 
   useEffect(() => {
@@ -38,40 +51,62 @@ export default function DashboardLayout() {
       authService
         .updateLastSeen()
         .then(() => touchLastSeen())
-        .catch(() => { });
+        .catch(() => {});
     };
 
     pingLastSeen();
 
-    const intervalId = window.setInterval(pingLastSeen, 60000);
+    const intervalId = window.setInterval(
+      pingLastSeen,
+      60000,
+    );
 
     return () => window.clearInterval(intervalId);
   }, [touchLastSeen]);
 
   const closeSidebar = () => setIsSidebarOpen(true);
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  const toggleSidebar = () =>
+    setIsSidebarOpen((previous) => !previous);
 
   return (
-    <div className="min-h-screen bg-ink bg-glow text-ivory">
+    <div className="min-h-screen bg-page text-heading">
       <ReminderToastNotifier />
       <PendingWorkGuard />
-      <Navbar isSidebarOpen={isSidebarOpen} onToggleSidebar={toggleSidebar} />
-      <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
+
+      <Navbar
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={toggleSidebar}
+      />
+
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
+      />
 
       {isSidebarOpen ? (
         <button
           type="button"
-          className="fixed inset-0 top-16 z-30 bg-black/45 lg:hidden"
+          className="fixed inset-0 top-16 z-30 bg-[#192231]/45 backdrop-blur-[1px] lg:hidden"
           onClick={closeSidebar}
           aria-label="Close sidebar overlay"
         />
       ) : null}
 
-      <div className={`transition-[padding] duration-300 ${isDesktop && isSidebarOpen ? "lg:pl-64" : "lg:pl-0"}`}>
-        <main className="min-h-screen px-4 pb-8 pt-20 sm:px-6 lg:px-4">
-          <div className="mx-auto max-w-auto">
+      <div
+        className={`min-h-screen transition-[padding] duration-300 ease-out ${
+          isDesktop && isSidebarOpen
+            ? "lg:pl-64"
+            : "lg:pl-0"
+        }`}
+      >
+        <main className="min-h-screen bg-page px-4 pb-8 pt-20 sm:px-6 lg:px-5">
+          <div className="mx-auto w-full max-w-none">
             <Breadcrumbs />
-            <Outlet />
+
+            <div className="mt-4">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>

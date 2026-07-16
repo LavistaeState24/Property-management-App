@@ -81,7 +81,7 @@ export default function DealRevenueSummaryPage() {
         <div className="flex items-end gap-3 xl:col-span-2">
           <button
             type="button"
-            className="inline-flex w-full items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-ivory transition hover:border-gold/50 hover:bg-white/10"
+            className="inline-flex w-full items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-heading transition hover:border-gold/50 hover:bg-white/10"
             onClick={() => {
               setFilters(initialFilters);
               loadReports(initialFilters);

@@ -298,7 +298,7 @@ export default function SharedHistoryPage() {
       >
         {selectedRecord && actionType === "view" ? (
           <div className="space-y-4 text-sm text-muted">
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4 whitespace-pre-wrap text-ivory">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4 whitespace-pre-wrap text-heading">
               {selectedRecord.whatsappMessage}
             </div>
             <div className="flex justify-end">

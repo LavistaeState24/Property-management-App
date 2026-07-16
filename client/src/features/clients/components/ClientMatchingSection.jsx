@@ -393,7 +393,7 @@ export default function ClientMatchingSection({ client, onClientUpdate }) {
       >
         <div className="space-y-4">
           <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-sm text-muted sm:p-4">
-            <p className="text-ivory">{selectedProjects.length} project(s) selected</p>
+            <p className="text-heading">{selectedProjects.length} project(s) selected</p>
             <p className="mt-2 break-words">{selectedProjects.map((project) => project.projectName).join(", ")}</p>
           </div>
 
@@ -423,7 +423,7 @@ export default function ClientMatchingSection({ client, onClientUpdate }) {
 
           <div className="rounded-2xl border border-white/10 bg-black/20 p-3 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-ivory">Client-safe preview</p>
+              <p className="text-sm font-semibold text-heading">Client-safe preview</p>
               <button type="button" className="inline-flex items-center gap-1 text-xs text-gold-2" onClick={() => handleCopyExistingMessage(previewMessage)}>
                 <Copy className="h-3.5 w-3.5" />
                 Copy Preview

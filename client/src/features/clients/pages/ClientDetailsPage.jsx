@@ -592,7 +592,7 @@ export default function ClientDetailsPage() {
                     <Icon className="h-4 w-4 text-gold-2" />
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{label}</p>
                   </div>
-                  <p className="mt-2 break-words text-base font-medium text-ivory">{value || "Not added"}</p>
+                  <p className="mt-2 break-words text-base font-medium text-heading">{value || "Not added"}</p>
                 </div>
               ))}
             </div>
@@ -625,7 +625,7 @@ export default function ClientDetailsPage() {
                     <Icon className="h-4 w-4 text-gold-2" />
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{label}</p>
                   </div>
-                  <p className="mt-2 break-words text-base font-medium text-ivory">{value || "Not added"}</p>
+                  <p className="mt-2 break-words text-base font-medium text-heading">{value || "Not added"}</p>
                 </div>
               ))}
             </div>
@@ -660,7 +660,7 @@ export default function ClientDetailsPage() {
                           className="h-44 w-full object-cover transition duration-200 group-hover:scale-[1.02]"
                         />
                         <div className="flex items-center justify-between px-4 py-3 text-sm">
-                          <span className="text-ivory">Image {index + 1}</span>
+                          <span className="text-heading">Image {index + 1}</span>
                           <span className="text-gold-2">Open</span>
                         </div>
                       </a>
@@ -798,7 +798,7 @@ export default function ClientDetailsPage() {
             </div>
 
             <div className="mt-5 grid gap-4">
-              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm font-semibold text-ivory">
+              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm font-semibold text-heading">
                 <input
                   type="checkbox"
                   className="h-4 w-4 accent-gold"
@@ -925,7 +925,7 @@ export default function ClientDetailsPage() {
                       callLogs.map((callLog) => (
                         <tr key={callLog._id} className="border-t border-white/10 align-top">
                           <td className="px-3 py-3 text-muted">{formatDateTime(callLog.createdAt)}</td>
-                          <td className="px-3 py-3 text-ivory">{callLog.leadStatus}</td>
+                          <td className="px-3 py-3 text-heading">{callLog.leadStatus}</td>
                           <td className="px-3 py-3 text-muted">{callLog.callConnected ? "Yes" : "No"}</td>
                           <td className="max-w-xs px-3 py-3 text-muted">{callLog.discussionSummary}</td>
                           <td className="max-w-xs px-3 py-3 text-muted">{callLog.lostReason || "-"}</td>
@@ -1023,7 +1023,7 @@ export default function ClientDetailsPage() {
                         <td className={`px-3 py-3 ${reminder.status === "Overdue" ? "font-semibold text-rose-300" : "text-muted"}`}>
                           {formatDateTime(reminder.reminderDateTime)}
                         </td>
-                        <td className="px-3 py-3 text-ivory">{reminder.reminderType}</td>
+                        <td className="px-3 py-3 text-heading">{reminder.reminderType}</td>
                         <td className="px-3 py-3 text-muted">{reminder.assignedStaff?.name || "-"}</td>
                         <td className="max-w-xs px-3 py-3 text-muted">{reminder.note}</td>
                         <td className="px-3 py-3">
@@ -1101,7 +1101,7 @@ export default function ClientDetailsPage() {
                     searchValue: (row) => `${row.project?.projectName || ""} ${row.project?.publicAlias || ""}`,
                     render: (row) => (
                       <div>
-                        <p className="font-medium text-ivory">{row.project?.projectName || "-"}</p>
+                        <p className="font-medium text-heading">{row.project?.projectName || "-"}</p>
                         <p className="text-xs text-muted">{row.project?.publicAlias || ""}</p>
                       </div>
                     ),
@@ -1168,19 +1168,19 @@ export default function ClientDetailsPage() {
           <div className="mt-5 space-y-4">
             <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Lead Notes</p>
-              <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">{client.notes || "No lead notes added."}</p>
+              <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-heading">{client.notes || "No lead notes added."}</p>
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Internal Notes</p>
-              <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">
+              <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-heading">
                 {client.internalNotes || "No internal notes added."}
               </p>
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Follow-up</p>
-              <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-ivory">
+              <p className="mt-2 whitespace-pre-wrap break-words text-base font-medium text-heading">
                 {client.lastCallStatus || "No call status added."}
               </p>
               <p className="mt-2 text-sm text-muted">
@@ -1253,7 +1253,7 @@ export default function ClientDetailsPage() {
           />
 
           <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-muted">
-            <p className="text-ivory">Shared by</p>
+            <p className="text-heading">Shared by</p>
             <p className="mt-2">{user?.name || "-"}</p>
             <p>{user?.phone || "-"}</p>
           </div>

@@ -20,7 +20,6 @@ const formatLabel = (value) => {
   if (!value) return "";
   if (labelMap[value]) return labelMap[value];
 
-  // hide MongoDB ids / long dynamic ids
   if (value.length > 16) return "Details";
 
   return value
@@ -33,6 +32,7 @@ export default function Breadcrumbs() {
   const searchParams = new URLSearchParams(location.search);
   const navigation = useNavigation();
   const pathnames = location.pathname.split("/").filter(Boolean);
+
   const isLoading = navigation.state !== "idle";
 
   if (pathnames.length === 0) return null;
@@ -41,32 +41,35 @@ export default function Breadcrumbs() {
     return (
       <nav
         aria-label="breadcrumb"
-        className="mb-4 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm shadow-xl backdrop-blur-lg"
+        className="mb-4 flex items-center rounded-2xl border border-border bg-surface px-4 py-3 shadow-glass"
       >
-        <div className="h-4 w-16 animate-pulse rounded-full bg-white/10" />
-        <ChevronRight className="mx-2 h-4 w-4 text-white/20" />
-        <div className="h-4 w-24 animate-pulse rounded-full bg-white/10" />
-        <ChevronRight className="mx-2 h-4 w-4 text-white/20" />
-        <div className="h-4 w-20 animate-pulse rounded-full bg-white/10" />
+        <div className="h-4 w-16 animate-pulse rounded-full bg-border" />
+        <ChevronRight className="mx-2 h-4 w-4 text-subtle" />
+        <div className="h-4 w-24 animate-pulse rounded-full bg-border" />
+        <ChevronRight className="mx-2 h-4 w-4 text-subtle" />
+        <div className="h-4 w-20 animate-pulse rounded-full bg-border" />
       </nav>
     );
   }
 
   const getBreadcrumbTarget = (routeTo) => {
     if (routeTo === "/projects") {
-    return searchParams.get("returnTo") || "/projects";
-  }
+      return searchParams.get("returnTo") || "/projects";
+    }
 
     return routeTo;
   };
 
   return (
-    <nav aria-label="breadcrumb" className="mb-4 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-muted shadow-xl backdrop-blur-lg">
+    <nav
+      aria-label="breadcrumb"
+      className="mb-4 flex items-center rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-body shadow-glass"
+    >
       <Link
         to="/dashboard"
-        className="flex items-center gap-3 text-white/60 transition hover:text-gold-2"
+        className="flex items-center gap-3 text-body transition hover:text-gold"
       >
-        <Home className="h-4 w-4 text-gold-2" />
+        <Home className="h-4 w-4 text-gold" />
         Dashboard
       </Link>
 
@@ -78,14 +81,17 @@ export default function Breadcrumbs() {
 
         return (
           <div key={routeTo} className="flex items-center">
-            <ChevronRight className="mx-2 h-4 w-4 text-white/20" />
+            <ChevronRight className="mx-2 h-4 w-4 text-subtle" />
 
             {isLast ? (
-              <span className="font-medium text-ivory">
+              <span className="font-semibold text-heading">
                 {formatLabel(name)}
               </span>
             ) : (
-              <Link to={getBreadcrumbTarget(routeTo)} className="text-white/60 transition hover:text-gold-2">
+              <Link
+                to={getBreadcrumbTarget(routeTo)}
+                className="text-body transition hover:text-gold"
+              >
                 {formatLabel(name)}
               </Link>
             )}

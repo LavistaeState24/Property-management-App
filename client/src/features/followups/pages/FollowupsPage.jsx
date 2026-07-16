@@ -11,8 +11,22 @@ import { useCan } from "../../../hooks/useCan";
 import { followupService } from "../../../services/followupService";
 import { userService } from "../../../services/userService";
 
-const reminderTypes = ["Call", "WhatsApp", "Details Send", "Site Visit", "Payment", "Document"];
-const reminderStatuses = ["Pending", "Completed", "Overdue", "Cancelled"];
+const reminderTypes = [
+  "Call",
+  "WhatsApp",
+  "Details Send",
+  "Site Visit",
+  "Payment",
+  "Document",
+];
+
+const reminderStatuses = [
+  "Pending",
+  "Completed",
+  "Overdue",
+  "Cancelled",
+];
+
 const initialFilters = {
   status: "",
   type: "",
@@ -30,10 +44,17 @@ const getStatusTone = (status) => {
   return "gold";
 };
 
-const formatDateTime = (value) => (value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "-");
+const formatDateTime = (value) =>
+  value
+    ? new Date(value).toLocaleString("en-IN", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : "-";
 
 export default function FollowupsPage() {
   const canUpdateFollowups = useCan("followups", "update");
+
   const [followups, setFollowups] = useState([]);
   const [staffOptions, setStaffOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,10 +78,20 @@ export default function FollowupsPage() {
         today: filters.today || undefined,
         overdue: filters.overdue || undefined,
       };
-      const [data, assignableUsers] = await Promise.all([followupService.list(params), userService.listAssignable()]);
+
+      const [data, assignableUsers] = await Promise.all([
+        followupService.list(params),
+        userService.listAssignable(),
+      ]);
 
       setFollowups(data.items || []);
-      setStaffOptions(assignableUsers.map((user) => ({ value: user.id, label: `${user.name} (${user.role})` })));
+
+      setStaffOptions(
+        assignableUsers.map((user) => ({
+          value: user.id,
+          label: `${user.name} (${user.role})`,
+        })),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -77,12 +108,19 @@ export default function FollowupsPage() {
     setIsSavingAction(true);
 
     try {
-      await followupService.complete(completionTarget._id, { completionNote });
+      await followupService.complete(completionTarget._id, {
+        completionNote,
+      });
+
       setCompletionTarget(null);
       setCompletionNote("");
       await loadFollowups();
     } catch (requestError) {
-      setActionError(requestError.response?.data?.errors?.completionNote || requestError.response?.data?.message || "Unable to complete reminder");
+      setActionError(
+        requestError.response?.data?.errors?.completionNote ||
+          requestError.response?.data?.message ||
+          "Unable to complete reminder",
+      );
     } finally {
       setIsSavingAction(false);
     }
@@ -96,7 +134,10 @@ export default function FollowupsPage() {
       await followupService.cancel(row._id);
       await loadFollowups();
     } catch (requestError) {
-      setActionError(requestError.response?.data?.message || "Unable to cancel reminder");
+      setActionError(
+        requestError.response?.data?.message ||
+          "Unable to cancel reminder",
+      );
     } finally {
       setIsSavingAction(false);
     }
@@ -106,16 +147,30 @@ export default function FollowupsPage() {
     {
       key: "client",
       label: "Lead",
-      searchValue: (row) => `${row.client?.ownerName || ""} ${row.client?.clientPhoneNumber || ""}`,
+      searchValue: (row) =>
+        `${row.client?.ownerName || ""} ${
+          row.client?.clientPhoneNumber || ""
+        }`,
       render: (row) => (
         <div>
-          <p className="font-medium text-ivory">{row.client?.ownerName || "-"}</p>
-          <p className="text-xs text-muted">{row.client?.clientPhoneNumber || ""}</p>
+          <p className="font-medium text-heading">
+            {row.client?.ownerName || "-"}
+          </p>
+
+          <p className="text-xs text-body">
+            {row.client?.clientPhoneNumber || ""}
+          </p>
         </div>
       ),
     },
-    { key: "note", label: "Note" },
-    { key: "reminderType", label: "Type" },
+    {
+      key: "note",
+      label: "Note",
+    },
+    {
+      key: "reminderType",
+      label: "Type",
+    },
     {
       key: "assignedStaff",
       label: "Assigned",
@@ -125,19 +180,34 @@ export default function FollowupsPage() {
     {
       key: "reminderDateTime",
       label: "Reminder",
-      render: (row) => <span className={row.status === "Overdue" ? "font-semibold text-rose-300" : ""}>{formatDateTime(row.reminderDateTime)}</span>,
+      render: (row) => (
+        <span
+          className={
+            row.status === "Overdue"
+              ? "font-semibold text-rose-600"
+              : "text-heading"
+          }
+        >
+          {formatDateTime(row.reminderDateTime)}
+        </span>
+      ),
     },
     {
       key: "status",
       label: "Status",
-      render: (row) => <Badge tone={getStatusTone(row.status)}>{row.status}</Badge>,
+      render: (row) => (
+        <Badge tone={getStatusTone(row.status)}>
+          {row.status}
+        </Badge>
+      ),
     },
     {
       key: "actions",
       label: "Actions",
       searchable: false,
       render: (row) =>
-        canUpdateFollowups && !["Completed", "Cancelled"].includes(row.status) ? (
+        canUpdateFollowups &&
+        !["Completed", "Cancelled"].includes(row.status) ? (
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
@@ -152,7 +222,14 @@ export default function FollowupsPage() {
             >
               Complete
             </Button>
-            <Button type="button" variant="ghost" icon={XCircle} disabled={isSavingAction} onClick={() => handleCancelReminder(row)}>
+
+            <Button
+              type="button"
+              variant="ghost"
+              icon={XCircle}
+              disabled={isSavingAction}
+              onClick={() => handleCancelReminder(row)}
+            >
               Cancel
             </Button>
           </div>
@@ -163,67 +240,132 @@ export default function FollowupsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-heading">
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-gold">Execution Tracker</p>
-        <h2 className="mt-2 font-display text-3xl">Follow-up and reminder command center</h2>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold">
+          Execution Tracker
+        </p>
+
+        <h2 className="mt-2 font-display text-3xl text-heading">
+          Follow-up and reminder command center
+        </h2>
       </div>
 
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-glass md:grid-cols-2 lg:grid-cols-6 xl:grid-cols-6">
+      <div className="grid gap-4 rounded-[28px] border border-border bg-surface p-5 shadow-glass md:grid-cols-2 lg:grid-cols-6 xl:grid-cols-6">
         <SelectDropdown
           label="Status"
           options={reminderStatuses}
           value={filters.status}
-          onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value, overdue: "" }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              status: event.target.value,
+              overdue: "",
+            }))
+          }
         />
+
         <SelectDropdown
           label="Type"
           options={reminderTypes}
           value={filters.type}
-          onChange={(event) => setFilters((current) => ({ ...current, type: event.target.value }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              type: event.target.value,
+            }))
+          }
         />
+
         <SelectDropdown
           label="Staff"
           options={staffOptions}
           value={filters.staff}
-          onChange={(event) => setFilters((current) => ({ ...current, staff: event.target.value }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              staff: event.target.value,
+            }))
+          }
         />
+
         <FormInput
           label="From"
           type="date"
           value={filters.dateFrom}
-          onChange={(event) => setFilters((current) => ({ ...current, dateFrom: event.target.value, today: "", overdue: "" }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              dateFrom: event.target.value,
+              today: "",
+              overdue: "",
+            }))
+          }
         />
+
         <FormInput
           label="To"
           type="date"
           value={filters.dateTo}
-          onChange={(event) => setFilters((current) => ({ ...current, dateTo: event.target.value, today: "", overdue: "" }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              dateTo: event.target.value,
+              today: "",
+              overdue: "",
+            }))
+          }
         />
+
         <SelectDropdown
           label="Quick Filter"
           options={[
             { value: "today", label: "Today" },
             { value: "overdue", label: "Overdue" },
           ]}
-          value={filters.today ? "today" : filters.overdue ? "overdue" : ""}
+          value={
+            filters.today
+              ? "today"
+              : filters.overdue
+                ? "overdue"
+                : ""
+          }
           onChange={(event) =>
             setFilters((current) => ({
               ...current,
-              today: event.target.value === "today" ? "true" : "",
-              overdue: event.target.value === "overdue" ? "true" : "",
-              status: event.target.value === "overdue" ? "" : current.status,
+              today:
+                event.target.value === "today"
+                  ? "true"
+                  : "",
+              overdue:
+                event.target.value === "overdue"
+                  ? "true"
+                  : "",
+              status:
+                event.target.value === "overdue"
+                  ? ""
+                  : current.status,
             }))
           }
         />
+
         <div className="flex items-end xl:col-span-3">
-          <Button type="button" variant="secondary" className="w-full" onClick={() => setFilters(initialFilters)}>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            onClick={() => setFilters(initialFilters)}
+          >
             Reset Filters
           </Button>
         </div>
       </div>
 
-      {actionError ? <p className="text-sm text-rose-300">{actionError}</p> : null}
+      {actionError ? (
+        <p className="text-sm text-rose-600">
+          {actionError}
+        </p>
+      ) : null}
 
       <AdvancedDataTable
         columns={columns}
@@ -252,15 +394,31 @@ export default function FollowupsPage() {
             as="textarea"
             rows={4}
             value={completionNote}
-            onChange={(event) => setCompletionNote(event.target.value)}
+            onChange={(event) =>
+              setCompletionNote(event.target.value)
+            }
             error={actionError}
           />
+
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary" disabled={isSavingAction} onClick={() => setCompletionTarget(null)}>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isSavingAction}
+              onClick={() => setCompletionTarget(null)}
+            >
               Cancel
             </Button>
-            <Button type="button" icon={CheckCircle2} disabled={isSavingAction} onClick={handleCompleteReminder}>
-              {isSavingAction ? "Saving..." : "Complete"}
+
+            <Button
+              type="button"
+              icon={CheckCircle2}
+              disabled={isSavingAction}
+              onClick={handleCompleteReminder}
+            >
+              {isSavingAction
+                ? "Saving..."
+                : "Complete"}
             </Button>
           </div>
         </div>

@@ -1,20 +1,33 @@
 import Badge from "./Badge";
 
-export default function StatCard({ label, value, accent, meta, icon: Icon }) {
+export default function StatCard({
+  label,
+  value,
+  accent,
+  meta,
+  icon: Icon,
+}) {
   return (
-    <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-glass backdrop-blur-xl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div className="rounded-[28px] border border-border bg-surface p-5 shadow-md transition-all duration-200 ">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           {Icon ? (
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-2 text-gold-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-gold/20 bg-gold-soft text-gold">
               <Icon className="h-4 w-4" />
             </div>
           ) : null}
-          <p className="text-sm text-muted">{label}</p>
+
+          <p className="truncate text-sm font-medium text-body">
+            {label}
+          </p>
         </div>
-        <Badge tone={accent}>{meta}</Badge>
+
+        {meta ? <Badge tone={accent}>{meta}</Badge> : null}
       </div>
-      <p className="mt-4 font-display text-3xl text-ivory">{value}</p>
+
+      <p className="mt-4 font-display text-3xl font-semibold text-heading">
+        {value}
+      </p>
     </div>
   );
 }

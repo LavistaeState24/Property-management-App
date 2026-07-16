@@ -109,9 +109,9 @@ export default function ProjectsPage() {
   };
 
   const actionButtonClassName =
-    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2";
+    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-(--heading)transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-2";
   const deleteActionButtonClassName =
-    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-300";
+    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-(--heading)transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-300";
 
   const getProjectsReturnPath = () => {
     const state = JSON.parse(sessionStorage.getItem("projectsTableState") || "{}");
@@ -127,7 +127,7 @@ export default function ProjectsPage() {
       label: "Project",
       render: (row) => (
         <div>
-          <p className="font-medium text-ivory">{row.projectName}</p>
+          <p className="font-medium text-heading">{row.projectName}</p>
           <p className="text-xs uppercase tracking-[0.2em] text-muted">{row.publicAlias}</p>
         </div>
       ),
@@ -206,73 +206,105 @@ export default function ProjectsPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-gold">Inventory Library</p>
-          <h2 className="mt-2 font-display text-3xl">Search by requirement, not guesswork</h2>
-        </div>
-        {canCreateProjects ? (
-          <Link to="/projects/new">
-            <Button icon={Plus}>Add Project</Button>
-          </Link>
-        ) : null}
-      </div>
+   <div className="space-y-6">
+  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div>
+      <p className="text-xs uppercase tracking-[0.3em] text-gold">
+        Inventory Library
+      </p>
 
-      <SearchFilter
-        {...filters}
-        propertyTypeOptions={projectSearchTypeOptions}
-        onSubmit={(formValues) => {
-          setFilters(formValues);
-          loadProjects(formValues);
-        }}
-      />
+      <h2 className="mt-2 font-display text-3xl text-heading">
+        Search by requirement, not guesswork
+      </h2>
+    </div>
 
-      {listError ? <p className="text-sm text-rose-300">{listError}</p> : null}
-      <AdvancedDataTable
-        columns={columns}
-        rows={projects}
-        totalRecords={totalProjects}
-        loading={isLoading}
-        emptyMessage="No projects found."
-        searchPlaceholder="Search projects..."
-        defaultRowsPerPage={10}
-        initialPage={initialTablePage}
-        initialRowsPerPage={initialTableRows}
-        onTableStateChange={handleProjectsTableStateChange}
-      />
+    {canCreateProjects ? (
+      <Link to="/projects/new">
+        <Button icon={Plus}>
+          Add Project
+        </Button>
+      </Link>
+    ) : null}
+  </div>
 
-      <Modal
-        title="Delete Project"
-        isOpen={canDeleteProjects && Boolean(projectToDelete)}
-        onClose={() => {
-          if (!isDeleting) {
+  <SearchFilter
+    {...filters}
+    propertyTypeOptions={projectSearchTypeOptions}
+    onSubmit={(formValues) => {
+      setFilters(formValues);
+      loadProjects(formValues);
+    }}
+  />
+
+  {listError ? (
+    <p className="text-sm text-rose-600">
+      {listError}
+    </p>
+  ) : null}
+
+  <AdvancedDataTable
+    columns={columns}
+    rows={projects}
+    totalRecords={totalProjects}
+    loading={isLoading}
+    emptyMessage="No projects found."
+    searchPlaceholder="Search projects..."
+    defaultRowsPerPage={10}
+    initialPage={initialTablePage}
+    initialRowsPerPage={initialTableRows}
+    onTableStateChange={handleProjectsTableStateChange}
+  />
+
+  <Modal
+    title="Delete Project"
+    isOpen={
+      canDeleteProjects &&
+      Boolean(projectToDelete)
+    }
+    onClose={() => {
+      if (!isDeleting) {
+        setProjectToDelete(null);
+        setDeleteError("");
+      }
+    }}
+  >
+    <div className="space-y-4">
+      <p className="text-sm text-body">
+        Are you sure you want to delete this project?
+      </p>
+
+      {deleteError ? (
+        <p className="text-sm text-rose-600">
+          {deleteError}
+        </p>
+      ) : null}
+
+      <div className="flex justify-end gap-3">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => {
             setProjectToDelete(null);
             setDeleteError("");
-          }
-        }}
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-muted">Are you sure you want to delete this project?</p>
-          {deleteError ? <p className="text-sm text-rose-300">{deleteError}</p> : null}
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setProjectToDelete(null);
-                setDeleteError("");
-              }}
-              disabled={isDeleting}
-            >
-              No, Cancel
-            </Button>
-            <Button type="button" onClick={handleDeleteProject} disabled={isDeleting} className="bg-rose-500 text-white hover:opacity-90">
-              {isDeleting ? "Deleting..." : "Yes, Delete"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+          }}
+          disabled={isDeleting}
+        >
+          No, Cancel
+        </Button>
+
+        <Button
+          type="button"
+          onClick={handleDeleteProject}
+          disabled={isDeleting}
+          className="border border-rose-600 bg-rose-600 text-white hover:bg-rose-700"
+        >
+          {isDeleting
+            ? "Deleting..."
+            : "Yes, Delete"}
+        </Button>
+      </div>
     </div>
+  </Modal>
+</div>
   );
 }

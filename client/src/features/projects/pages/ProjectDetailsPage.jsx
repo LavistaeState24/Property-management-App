@@ -186,24 +186,38 @@ export default function ProjectDetailsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-gold">{project.location}</p>
-          <h2 className="mt-2 font-display text-4xl">{project.projectName}</h2>
+          <p className="text-xs uppercase tracking-[0.3em] text-gold">
+            {project.location}
+          </p>
+
+          <h2 className="mt-2 font-display text-4xl text-heading">
+            {project.projectName}
+          </h2>
         </div>
+
         <div className="flex items-center gap-3">
           <Badge tone="green">{project.status}</Badge>
+
           {canCreateShareRecords ? (
-            <Button onClick={() => setIsShareOpen(true)} icon={Link2}>
+            <Button
+              onClick={() => setIsShareOpen(true)}
+              icon={Link2}
+            >
               Share Client
             </Button>
           ) : null}
         </div>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-2">
-        <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-2">
+        {/* Project Details */}
+        <div className="rounded-[32px] border border-border bg-surface p-6 shadow-card">
           <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-gold-2" />
-            <h3 className="font-display text-2xl">Project Details</h3>
+            <Sparkles className="h-5 w-5 text-gold" />
+
+            <h3 className="font-display text-2xl text-heading">
+              Project Details
+            </h3>
           </div>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -212,102 +226,193 @@ export default function ProjectDetailsPage() {
               ["Client-safe Alias", project.publicAlias],
               ["Location", project.location],
               ["Area", project.area],
-              ["Property Type", formatPropertyTypes(project.propertyType)],
+              [
+                "Property Type",
+                formatPropertyTypes(project.propertyType),
+              ],
               ["Configuration", project.configuration],
-              ["Size Range", project.sizeRange?.label || `${project.sizeRange?.min || "-"} - ${project.sizeRange?.max || "-"}`],
+              [
+                "Size Range",
+                project.sizeRange?.label ||
+                `${project.sizeRange?.min || "-"} - ${project.sizeRange?.max || "-"
+                }`,
+              ],
               ["Price Range", formatPrice(project.priceRange)],
               ["Total Plot Size", project.totalPlotSize],
               ["Total Blocks", project.totalBlocks],
               ["Total Units", project.totalUnits],
               ["Available Units", project.availableUnits],
-              ["Possession Date", project.possessionDate ? new Date(project.possessionDate).toLocaleDateString("en-IN") : "Not added"],
+              [
+                "Possession Date",
+                project.possessionDate
+                  ? new Date(
+                    project.possessionDate,
+                  ).toLocaleDateString("en-IN")
+                  : "Not added",
+              ],
               ["Status", project.status],
-              ["Amenities", Array.isArray(project.amenities) ? project.amenities.join(", ") : project.amenities],
+              [
+                "Amenities",
+                Array.isArray(project.amenities)
+                  ? project.amenities.join(", ")
+                  : project.amenities,
+              ],
               ["Sample House Video", sampleVideoUrl],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{label}</p>
-                <p className="mt-2 break-words text-base font-medium text-ivory">{value || "Not added"}</p>
+              <div
+                key={label}
+                className="rounded-3xl border border-border bg-surface-soft p-4"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-body">
+                  {label}
+                </p>
+
+                <p className="mt-2 break-words text-base font-medium text-heading">
+                  {value || "Not added"}
+                </p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glass">
+        {/* Internal Details */}
+        <div className="rounded-[32px] border border-border bg-surface p-6 shadow-card">
           <div className="flex items-center gap-3">
-            <ScrollText className="h-5 w-5 text-gold-2" />
-            <h3 className="font-display text-2xl">Internal Details</h3>
+            <ScrollText className="h-5 w-5 text-gold" />
+
+            <h3 className="font-display text-2xl text-heading">
+              Internal Details
+            </h3>
           </div>
 
           <div className="mt-5 space-y-4">
             {[
               ["Builder Details", project.builderDetails],
               ["Internal Notes", project.internalNotes],
-              ["Floor Plans", project.floorPlans?.length ? `${project.floorPlans.length} file(s) added` : ""],
-              ["Project Images", project.projectImages?.length ? `${project.projectImages.length} image(s) added` : ""],
+              [
+                "Floor Plans",
+                project.floorPlans?.length
+                  ? `${project.floorPlans.length} file(s) added`
+                  : "",
+              ],
+              [
+                "Project Images",
+                project.projectImages?.length
+                  ? `${project.projectImages.length} image(s) added`
+                  : "",
+              ],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{label}</p>
-                <p className="mt-2 break-words text-base font-medium text-ivory">{value || "Not added"}</p>
+              <div
+                key={label}
+                className="rounded-3xl border border-border bg-surface-soft p-4"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-body">
+                  {label}
+                </p>
+
+                <p className="mt-2 break-words text-base font-medium text-heading">
+                  {value || "Not added"}
+                </p>
               </div>
             ))}
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Brochure</p>
+
+            <div className="rounded-3xl border border-border bg-surface-soft p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-body">
+                Brochure
+              </p>
+
               {brochureUrl ? (
                 <a
                   href={brochureUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-flex break-all text-base font-medium text-gold-2 hover:text-gold"
+                  className="mt-2 inline-flex break-all text-base font-medium text-gold transition hover:text-heading"
                 >
                   Open brochure PDF
                 </a>
               ) : (
-                <p className="mt-2 break-words text-base font-medium text-ivory">Not added</p>
+                <p className="mt-2 break-words text-base font-medium text-heading">
+                  Not added
+                </p>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      <Modal title="Share Client-Safe Details" isOpen={canCreateShareRecords && isShareOpen} onClose={() => setIsShareOpen(false)}>
-        <form className="space-y-4" onSubmit={handleSubmit(handleWhatsAppShare)}>
+      <Modal
+        title="Share Client-Safe Details"
+        isOpen={canCreateShareRecords && isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+      >
+        <form
+          className="space-y-4"
+          onSubmit={handleSubmit(handleWhatsAppShare)}
+        >
           <FormInput
             label="Client Name"
             placeholder="Enter client name"
             error={getErrorMessage(errors.clientName)}
-            {...register("clientName", textRules("Client name", { min: 3, max: 60 }))}
+            {...register(
+              "clientName",
+              textRules("Client name", {
+                min: 3,
+                max: 60,
+              }),
+            )}
           />
+
           <FormInput
             label="Client WhatsApp Number"
             placeholder="Enter 10 digit mobile number"
             error={getErrorMessage(errors.clientPhone)}
             {...register("clientPhone", phoneRules())}
           />
+
           <FormInput
             label="Client Email"
             placeholder="Enter client email"
             error={getErrorMessage(errors.clientEmail)}
-            {...register("clientEmail", emailRules({ required: false }))}
+            {...register(
+              "clientEmail",
+              emailRules({ required: false }),
+            )}
           />
+
           <FormInput
             label="Client Requirement"
             placeholder="Optional client requirement"
             error={getErrorMessage(errors.clientRequirement)}
-            {...register("clientRequirement", textRules("Client requirement", { min: 3, max: 200, required: false }))}
+            {...register(
+              "clientRequirement",
+              textRules("Client requirement", {
+                min: 3,
+                max: 200,
+                required: false,
+              }),
+            )}
           />
 
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-muted">
-            <p className="text-ivory">Shared by</p>
+          <div className="rounded-2xl border border-border bg-surface-soft p-4 text-sm text-body">
+            <p className="font-medium text-heading">
+              Shared by
+            </p>
+
             <p className="mt-2">{user?.name}</p>
             <p>{user?.phone}</p>
           </div>
 
-          {shareError ? <p className="text-sm text-rose-300">{shareError}</p> : null}
+          {shareError ? (
+            <p className="text-sm text-rose-600">
+              {shareError}
+            </p>
+          ) : null}
 
           <div className="flex justify-end">
             <Button disabled={isSubmitting} icon={Send}>
-              {isSubmitting ? "Preparing..." : "Open WhatsApp"}
+              {isSubmitting
+                ? "Preparing..."
+                : "Open WhatsApp"}
             </Button>
           </div>
         </form>

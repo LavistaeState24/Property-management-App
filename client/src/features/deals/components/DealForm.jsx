@@ -28,95 +28,152 @@ export default function DealForm({
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-5 lg:grid-cols-2">
-        <SelectDropdown label="Deal Status" options={dealStatusOptions} error={errors.dealStatus?.message} {...register("dealStatus")} />
-        <SelectDropdown label="Lead" options={leadSelectOptions} error={errors.leadId?.message} {...register("leadId")} />
-        <SelectDropdown label="Final Project" options={projectSelectOptions} error={errors.finalProject?.message} {...register("finalProject")} />
-        <FormInput label="Final Unit" placeholder="Tower 2, 1403" error={errors.finalUnit?.message} {...register("finalUnit")} />
-        <FormInput label="Token Amount" type="number" placeholder="Enter token amount" error={errors.tokenAmount?.message} {...register("tokenAmount")} />
-        <SelectDropdown
-          label="Payment Status"
-          options={paymentStatusOptions}
-          error={errors.paymentStatus?.message}
-          {...register("paymentStatus")}
-        />
-        <FormInput
-          label="Booking Date"
-          type="date"
-          error={errors.bookingDate?.message}
-          {...register("bookingDate")}
-        />
-        <SelectDropdown
-          label="Deal Closed By"
-          options={closerSelectOptions}
-          error={errors.dealClosedBy?.message}
-          {...register("dealClosedBy")}
-        />
-      </div>
+  <div className="grid gap-5 lg:grid-cols-2">
+    <SelectDropdown
+      label="Deal Status"
+      options={dealStatusOptions}
+      error={errors.dealStatus?.message}
+      {...register("dealStatus")}
+    />
 
-      {showClosedFields ? (
-        <div className="grid gap-5 rounded-[28px] lg:grid-cols-2">
-          <FormInput
-            label="Final Price"
-            type="number"
-            placeholder="Enter final price"
-            error={errors.finalPrice?.message}
-            {...register("finalPrice")}
-          />
-          <FormInput
-            label="Brokerage Details"
-            as="textarea"
-            rows={4}
-            placeholder="Brokerage split, commission, and terms"
-            error={errors.brokerageDetails?.message}
-            {...register("brokerageDetails")}
-          />
-        </div>
-      ) : (
-        <div className="grid gap-5 rounded-[28px] lg:grid-cols-2">
-          <FormInput
-            label="Final Price"
-            type="number"
-            placeholder="Enter agreed final price"
-            error={errors.finalPrice?.message}
-            {...register("finalPrice")}
-          />
-          <FormInput
-            label="Brokerage Details"
-            as="textarea"
-            rows={4}
-            placeholder="Brokerage split, commission, and terms"
-            error={errors.brokerageDetails?.message}
-            {...register("brokerageDetails")}
-          />
-        </div>
-      )}
+    <SelectDropdown
+      label="Lead"
+      options={leadSelectOptions}
+      error={errors.leadId?.message}
+      {...register("leadId")}
+    />
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-1">
-          <input type="checkbox" className="h-4 w-4 accent-[#c9a35d]" {...register("documentsPending")} />
-          <span className="text-sm text-ivory">Documents pending</span>
-        </label>
-        <FormInput
-          label="Notes"
-          as="textarea"
-          rows={1}
-          placeholder="Internal notes"
-          error={errors.notes?.message}
-          {...register("notes")}
-        />
-      </div>
+    <SelectDropdown
+      label="Final Project"
+      options={projectSelectOptions}
+      error={errors.finalProject?.message}
+      {...register("finalProject")}
+    />
 
-      {formError ? <p className="text-sm text-rose-300">{formError}</p> : null}
+    <FormInput
+      label="Final Unit"
+      placeholder="Tower 2, 1403"
+      error={errors.finalUnit?.message}
+      {...register("finalUnit")}
+    />
 
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
-          Cancel
-        </Button>
-        <Button type="submit" icon={submitIcon} disabled={isSaving || isLocked}>
-          {isSaving ? "Saving..." : saveLabel}
-        </Button>
-      </div>
+    <FormInput
+      label="Token Amount"
+      type="number"
+      placeholder="Enter token amount"
+      error={errors.tokenAmount?.message}
+      {...register("tokenAmount")}
+    />
+
+    <SelectDropdown
+      label="Payment Status"
+      options={paymentStatusOptions}
+      error={errors.paymentStatus?.message}
+      {...register("paymentStatus")}
+    />
+
+    <FormInput
+      label="Booking Date"
+      type="date"
+      error={errors.bookingDate?.message}
+      {...register("bookingDate")}
+    />
+
+    <SelectDropdown
+      label="Deal Closed By"
+      options={closerSelectOptions}
+      error={errors.dealClosedBy?.message}
+      {...register("dealClosedBy")}
+    />
+  </div>
+
+  {showClosedFields ? (
+    <div className="grid gap-5 rounded-[28px] lg:grid-cols-2">
+      <FormInput
+        label="Final Price"
+        type="number"
+        placeholder="Enter final price"
+        error={errors.finalPrice?.message}
+        {...register("finalPrice")}
+      />
+
+      <FormInput
+        label="Brokerage Details"
+        as="textarea"
+        rows={4}
+        placeholder="Brokerage split, commission, and terms"
+        error={errors.brokerageDetails?.message}
+        {...register("brokerageDetails")}
+      />
     </div>
+  ) : (
+    <div className="grid gap-5 rounded-[28px] lg:grid-cols-2">
+      <FormInput
+        label="Final Price"
+        type="number"
+        placeholder="Enter agreed final price"
+        error={errors.finalPrice?.message}
+        {...register("finalPrice")}
+      />
+
+      <FormInput
+        label="Brokerage Details"
+        as="textarea"
+        rows={4}
+        placeholder="Brokerage split, commission, and terms"
+        error={errors.brokerageDetails?.message}
+        {...register("brokerageDetails")}
+      />
+    </div>
+  )}
+
+  <div className="grid gap-5 lg:grid-cols-2">
+    <label className="flex items-center gap-3 rounded-2xl border border-border bg-surface-soft px-4 py-3 transition hover:border-gold/40">
+      <input
+        type="checkbox"
+        className="h-4 w-4 accent-gold"
+        {...register("documentsPending")}
+      />
+
+      <span className="text-sm font-medium text-heading">
+        Documents pending
+      </span>
+    </label>
+
+    <FormInput
+      label="Notes"
+      as="textarea"
+      rows={1}
+      placeholder="Internal notes"
+      error={errors.notes?.message}
+      {...register("notes")}
+    />
+  </div>
+
+  {formError ? (
+    <p className="text-sm text-rose-600">
+      {formError}
+    </p>
+  ) : null}
+
+  <div className="flex justify-end gap-3">
+    <Button
+      type="button"
+      variant="secondary"
+      onClick={onCancel}
+      disabled={isSaving}
+    >
+      Cancel
+    </Button>
+
+    <Button
+      type="submit"
+      icon={submitIcon}
+      disabled={isSaving || isLocked}
+    >
+      {isSaving ? "Saving..." : saveLabel}
+    </Button>
+  </div>
+</div>
   );
 }

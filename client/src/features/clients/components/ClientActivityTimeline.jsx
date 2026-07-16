@@ -180,11 +180,11 @@ const renderDiff = (label, oldValue, newValue) => {
       <div className="mt-2 grid gap-2 text-sm md:grid-cols-2">
         <div>
           <p className="text-xs uppercase tracking-[0.16em] text-muted">Before</p>
-          <p className="mt-1 break-words text-ivory">{formatValue(oldValue)}</p>
+          <p className="mt-1 break-words text-heading">{formatValue(oldValue)}</p>
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.16em] text-muted">After</p>
-          <p className="mt-1 break-words text-ivory">{formatValue(newValue)}</p>
+          <p className="mt-1 break-words text-heading">{formatValue(newValue)}</p>
         </div>
       </div>
     </div>
@@ -338,7 +338,7 @@ export default function ClientActivityTimeline({ leadId, refreshKey = 0 }) {
                     {/* Content */}
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                        <h4 className="break-words text-sm font-semibold text-ivory sm:text-base">
+                        <h4 className="break-words text-sm font-semibold text-heading sm:text-base">
                           {activity.title}
                         </h4>
 
@@ -353,7 +353,7 @@ export default function ClientActivityTimeline({ leadId, refreshKey = 0 }) {
 
                       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
                         <span className="inline-flex items-center gap-1">
-                          By <span className="text-ivory/80">{activity.performedBy?.name || "System"}</span>
+                          By <span className="text-heading/80">{activity.performedBy?.name || "System"}</span>
                         </span>
 
                         <span>{formatDateTime(activity.createdAt)}</span>

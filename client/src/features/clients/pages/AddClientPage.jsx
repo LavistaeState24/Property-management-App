@@ -711,7 +711,7 @@ export default function AddClientPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <ImagePlus className="h-5 w-5 text-gold-2" />
-                  <p className="text-sm font-semibold text-ivory">Property Images</p>
+                  <p className="text-sm font-semibold text-heading">Property Images</p>
                 </div>
                 <p className="mt-2 text-sm text-muted">
                   Upload up to {MAX_PROPERTY_IMAGES} property images. Existing project brochure uploads remain unchanged.
@@ -732,7 +732,7 @@ export default function AddClientPage() {
 
             <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
               <span className="text-muted">Uploaded images</span>
-              <span className="font-medium text-ivory">
+              <span className="font-medium text-heading">
                 {propertyImageAssets.length}/{MAX_PROPERTY_IMAGES}
               </span>
             </div>
@@ -749,11 +749,11 @@ export default function AddClientPage() {
                       />
                     </a>
                     <div className="flex items-center justify-between gap-3 px-4 py-3">
-                      <p className="truncate text-sm text-ivory">{asset.name || `Property image ${index + 1}`}</p>
+                      <p className="truncate text-sm text-heading">{asset.name || `Property image ${index + 1}`}</p>
                       <button
                         type="button"
                         onClick={() => removePropertyImage(index)}
-                        className="rounded-full p-1 text-muted transition hover:bg-white/10 hover:text-ivory"
+                        className="rounded-full p-1 text-muted transition hover:bg-white/10 hover:text-heading"
                         aria-label={`Remove property image ${index + 1}`}
                       >
                         <X className="h-4 w-4" />
@@ -776,7 +776,7 @@ export default function AddClientPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <PlayCircle className="h-5 w-5 text-gold-2" />
-                  <p className="text-sm font-semibold text-ivory">House Video Upload</p>
+                  <p className="text-sm font-semibold text-heading">House Video Upload</p>
                 </div>
                 <p className="mt-2 text-sm text-muted">
                   Upload one property video directly to S3. You can remove or replace it before saving the lead.
@@ -798,7 +798,7 @@ export default function AddClientPage() {
               <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-muted">Upload progress</span>
-                  <span className="font-medium text-ivory">{houseVideoUploadProgress}%</span>
+                  <span className="font-medium text-heading">{houseVideoUploadProgress}%</span>
                 </div>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
                   <div
@@ -822,7 +822,7 @@ export default function AddClientPage() {
                 ) : (
                   <div className="flex min-h-48 items-center justify-center bg-black px-6 py-10 text-center">
                     <div>
-                      <p className="text-sm font-medium text-ivory">Existing house video is linked from an external source.</p>
+                      <p className="text-sm font-medium text-heading">Existing house video is linked from an external source.</p>
                       <a
                         href={resolveAssetUrl(houseVideoAsset.url)}
                         target="_blank"
@@ -836,7 +836,7 @@ export default function AddClientPage() {
                 )}
                 <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="truncate text-sm text-ivory">{houseVideoAsset.name || "House video"}</p>
+                    <p className="truncate text-sm text-heading">{houseVideoAsset.name || "House video"}</p>
                     <p className="truncate text-xs text-muted">{resolveAssetUrl(houseVideoAsset.url)}</p>
                   </div>
                   <button
