@@ -3,13 +3,20 @@ import mongoose from "mongoose";
 import { connectDatabase } from "../config/db.js";
 import { User } from "../models/User.js";
 
+const requiredEnvVars = ["SEED_ADMIN_EMAIL", "SEED_ADMIN_PASSWORD", "SEED_ADMIN_NAME"];
+const missing = requiredEnvVars.filter((key) => !process.env[key]);
+
+if (missing.length > 0) {
+  throw new Error(`Missing required env vars for seeding: ${missing.join(", ")}`);
+}
+
 const seedUsers = [
   {
-    name: "Super Admin",
-    email: "deepthakkar@gmail.com",
-    password: "Lavista@4249",
+    name: process.env.SEED_ADMIN_NAME,
+    email: process.env.SEED_ADMIN_EMAIL,
+    password: process.env.SEED_ADMIN_PASSWORD,
     role: "super-admin",
-    phone: "7778910804",
+    phone: process.env.SEED_ADMIN_PHONE || undefined,
   },
 ];
 
@@ -23,7 +30,7 @@ const run = async () => {
       if (existingUser) {
         existingUser.name = payload.name;
         existingUser.role = payload.role;
-        existingUser.phone = payload.phone;
+        if (payload.phone) existingUser.phone = payload.phone;
         existingUser.password = payload.password;
         await existingUser.save();
         console.log(`Updated ${payload.email}`);
@@ -43,4 +50,3 @@ const run = async () => {
 };
 
 run();
-
