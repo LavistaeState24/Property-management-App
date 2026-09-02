@@ -27,7 +27,7 @@ const FormInput = forwardRef(function FormInput(
 
   return (
     <label className={`flex flex-col gap-1.5 sm:gap-2 ${className}`}>
-      <span className="text-sm font-semibold text-surface sm:text-md">
+      <span className="text-sm font-semibold text-gold sm:text-md">
         {label}
       </span>
 

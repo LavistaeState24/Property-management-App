@@ -71,7 +71,7 @@ export default function UploadBox({
 
         <Upload className="mx-auto h-6 w-6 text-gold" />
 
-        <p className="mt-3 text-sm font-semibold text-heading">
+        <p className="mt-3 text-sm font-semibold text-gold">
           {label}
         </p>
 

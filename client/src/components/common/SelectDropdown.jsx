@@ -15,7 +15,7 @@ const SelectDropdown = forwardRef(function SelectDropdown(
 ) {
   return (
     <label className={`flex flex-col gap-1.5 sm:gap-2 ${className}`}>
-      <span className="text-sm font-semibold text-body">
+      <span className="text-sm font-semibold text-gold">
         {label}
       </span>
 

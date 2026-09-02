@@ -6,20 +6,15 @@
   --page: #f6f7f9;
   --surface: #ffffff;
   --surface-soft: #f8fafc;
-
   --sidebar: #192231;
-
   --gold: #c9a35d;
   --gold-light: #f3d79b;
   --gold-soft: #f8f1e6;
-
   --heading: #192231;
   --body: #64748b;
   --subtle: #94a3b8;
-
   --line: #e5e7eb;
   --line-soft: #f1f5f9;
-
   --green: #1d4a3f;
   --wine: #5d2638;
 }
@@ -36,7 +31,7 @@ body {
   min-height: 100vh;
   background-color: var(--page);
   color: var(--heading);
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: "Segoe UI", "system-ui", "-apple-system", "sans-serif";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }

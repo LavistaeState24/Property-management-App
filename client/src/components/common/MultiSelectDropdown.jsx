@@ -80,7 +80,7 @@ const MultiSelectDropdown = forwardRef(function MultiSelectDropdown(
             selectedValues.map((item) => (
               <span
                 key={item}
-                className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold-soft px-3 py-1 text-xs font-semibold text-[#9a6f2f]"
+                className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold-soft px-3 py-1 text-xs font-semibold text-gold"
               >
                 {item}
 

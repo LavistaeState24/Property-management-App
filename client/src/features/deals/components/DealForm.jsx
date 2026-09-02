@@ -119,7 +119,7 @@ export default function DealForm({
       <FormInput
         label="Brokerage Details"
         as="textarea"
-        rows={4}
+        rows={1}
         placeholder="Brokerage split, commission, and terms"
         error={errors.brokerageDetails?.message}
         {...register("brokerageDetails")}
@@ -135,7 +135,7 @@ export default function DealForm({
         {...register("documentsPending")}
       />
 
-      <span className="text-sm font-medium text-heading">
+      <span className="text-sm font-medium text-gold">
         Documents pending
       </span>
     </label>

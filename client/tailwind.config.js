@@ -31,9 +31,13 @@ export default {
       },
 
       fontFamily: {
-        display: ["Georgia", "serif"],
-        sans: ["Segoe UI", "system-ui", "sans-serif"],
+        // Option 1: Clean, professional, and dense UI optimization (Recommended)
+        sans: ["Inter", "Segoe UI", "system-ui", "-apple-system", "sans-serif"],
+
+        // Option 2: Clean geometric minimalist look
+        display: ["Plus Jakarta Sans", "Inter", "sans-serif"],
       },
+
 
       boxShadow: {
         card: "0 8px 30px rgba(15, 23, 42, 0.06)",
