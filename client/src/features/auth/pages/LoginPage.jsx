@@ -15,6 +15,8 @@ import {
   phoneRules,
   textRules,
 } from "../../../utils/validation";
+import Logo from "../../../assets/Logo.png";
+import BgVideo from "../../../assets/Bgvideo.mp4";
 
 const initialRegisterState = {
   name: "",
@@ -90,43 +92,42 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-page px-6 py-12 text-heading">
-      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.2fr,0.8fr]">
-        <section className="rounded-[36px] border border-border bg-surface p-8 shadow-lg">
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
-            Luxury Inventory Desk
-          </p>
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-page/10 px-6 py-12 text-heading">
 
-          <h1 className="mt-4 max-w-xl font-display text-5xl leading-tight text-heading">
-            The premium control system for real estate inventory, leads, and curated client sharing.
+      {/* Background Image with Dark Vignette/Overlay */}
+      <div className="absolute inset-0 overflow-hidden">
+  <video
+    src={BgVideo}
+    autoPlay
+    loop
+    muted
+    playsInline
+    className="h-full w-full object-cover"
+  />
+  <div className="absolute inset-0 bg-slate-950/30" />
+</div>
+
+      {/* Main Container - Centered Vertically & Horizontally */}
+      <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-12 items-center">
+
+        {/* Left Side: Brand Identity */}
+        <div className="hidden lg:block lg:col-span-6 space-y-4">
+
+        </div>
+
+        {/* Right Side: Centered Form Card */}
+        <section className="max-w-md lg:col-span-8 lg:col-start-10 md:col-end-10 rounded-[20px] border border-gold  bg-heading/10 p-6 backdrop-blur-sm">
+
+          <img src={Logo} alt="Logo" className="mx-auto mb-4 h-16 w-auto p-2 rounded-lg" />
+          <h1 className="mb-6 text-center text-white  text-lg font-semibold">
+            {mode === "login" ? "Login with your account" : "Create an Account"}
           </h1>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            {[
-              { label: "Inventory intelligence", icon: Building2 },
-              { label: "Role-based operations", icon: Users },
-              { label: "Client-safe sharing", icon: ShieldCheck },
-            ].map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <div
-                  key={item.label}
-                  className="rounded-3xl border border-border bg-surface-soft p-4 text-sm text-body"
-                >
-                  <Icon className="mb-3 h-5 w-5 text-gold" />
-                  {item.label}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="rounded-[36px] border border-border bg-surface p-8 shadow-lg">
           <div className="mb-6 flex gap-3">
             <Button
               variant={mode === "login" ? "primary" : "secondary"}
               onClick={() => setMode("login")}
+              className="flex-1"
             >
               Login
             </Button>
@@ -134,6 +135,8 @@ export default function LoginPage() {
             <Button
               variant={mode === "register" ? "primary" : "secondary"}
               onClick={() => setMode("register")}
+              target="_blank"
+              className="flex-1"
             >
               Register
             </Button>
@@ -188,124 +191,123 @@ export default function LoginPage() {
                 </p>
               ) : null}
 
+              <div className="flex items-center justify-end gap-2 mt-5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-surface font-medium cursor-pointer hover:text-primary transition" title="We are working on this feature. It will be available soon.">
+                    Forgot your password?
+                  </span>
+                </div>
+              </div>
+
               <Button
                 className="w-full"
                 disabled={isLoginSubmitting}
                 icon={ShieldCheck}
               >
                 {isLoginSubmitting
-                  ? "Authenticating..."
-                  : "Enter CRM"}
+                  ? "Loading..."
+                  : "Log in"}
               </Button>
             </form>
           ) : (
-            <form
-              className="space-y-4"
-              onSubmit={handleRegisterSubmit(handleRegister)}
-            >
-              <FormInput
-                label="Full Name"
-                icon={UserRound}
-                placeholder="Enter your full name"
-                error={getErrorMessage(registerErrors.name)}
-                {...registerRegister(
-                  "name",
-                  textRules("Name", {
-                    min: 3,
-                    max: 60,
-                  }),
-                )}
-              />
-
-              <FormInput
-                label="Email"
-                type="email"
-                icon={Mail}
-                placeholder="Enter your email"
-                error={getErrorMessage(registerErrors.email)}
-                {...registerRegister("email", emailRules())}
-              />
-
-              <FormInput
-                label="Phone"
-                type="tel"
-                icon={Phone}
-                placeholder="Enter your mobile number"
-                error={getErrorMessage(registerErrors.phone)}
-                {...registerRegister("phone", phoneRules())}
-              />
-
-              <FormInput
-                label="Password"
-                type={showRegisterPassword ? "text" : "password"}
-                icon={KeyRound}
-                placeholder="Create a strong password"
-                error={getErrorMessage(registerErrors.password)}
-                rightElement={
-                  <button
-                    type="button"
-                    className="text-body transition hover:text-heading"
-                    onClick={() =>
-                      setShowRegisterPassword((prev) => !prev)
-                    }
-                    aria-label={
-                      showRegisterPassword
-                        ? "Hide password"
-                        : "Show password"
-                    }
-                  >
-                    {showRegisterPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                }
-                {...registerRegister("password", passwordRules())}
-              />
-
-              <FormInput
-                label="Confirm Password"
-                type={showRegisterPassword ? "text" : "password"}
-                icon={KeyRound}
-                placeholder="Re-enter your password"
-                error={getErrorMessage(
-                  registerErrors.confirmPassword,
-                )}
-                {...registerRegister("confirmPassword", {
-                  required: "Confirm password is required",
-                  validate: (value) =>
-                    value === registerPassword ||
-                    "Passwords do not match",
-                })}
-              />
-
-              <div className="rounded-2xl border border-border bg-surface-soft p-4 text-sm text-body">
-                Public registration creates a{" "}
-                <span className="font-medium text-heading">
-                  Sales Executive
-                </span>{" "}
-                account only. Admin and Super Admin accounts must be created from the secured team access settings.
-              </div>
-
-              {registerError ? (
-                <p className="text-sm text-rose-600">
-                  {registerError}
-                </p>
-              ) : null}
-
-              <Button
-                className="w-full"
-                disabled={isRegisterSubmitting}
-                icon={Users}
+            <div className="mb-4">
+              <form
+                className="grid grid-cols-1 gap-4 lg:grid-cols-2 md:grid-cols-1 sm:grid-cols-1"
+                onSubmit={handleRegisterSubmit(handleRegister)}
               >
-                {isRegisterSubmitting
-                  ? "Creating..."
-                  : "Create account"}
-              </Button>
-            </form>
+                <FormInput
+                  label="Full Name"
+                  icon={UserRound}
+                  placeholder="Enter your full name"
+                  error={getErrorMessage(registerErrors.name)}
+                  {...registerRegister(
+                    "name",
+                    textRules("Name", {
+                      min: 3,
+                      max: 60,
+                    }),
+                  )}
+                />
+
+                <FormInput
+                  label="Email"
+                  type="email"
+                  icon={Mail}
+                  placeholder="Enter your email"
+                  error={getErrorMessage(registerErrors.email)}
+                  {...registerRegister("email", emailRules())}
+                />
+
+                <FormInput
+                  label="Phone"
+                  type="tel"
+                  icon={Phone}
+                  placeholder="Enter your number"
+                  error={getErrorMessage(registerErrors.phone)}
+                  {...registerRegister("phone", phoneRules())}
+                />
+
+                <FormInput
+                  label="Password"
+                  type={showRegisterPassword ? "text" : "password"}
+                  icon={KeyRound}
+                  placeholder="Create a strong password"
+                  error={getErrorMessage(registerErrors.password)}
+                  rightElement={
+                    <button
+                      type="button"
+                      className="text-body transition hover:text-heading"
+                      onClick={() => setShowRegisterPassword((prev) => !prev)}
+                      aria-label={
+                        showRegisterPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                    >
+                      {showRegisterPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  }
+                  {...registerRegister("password", passwordRules())}
+                />
+
+                <FormInput
+                  label="Confirm Password"
+                  type={showRegisterPassword ? "text" : "password"}
+                  icon={KeyRound}
+                  placeholder="Re-enter your password"
+                  error={getErrorMessage(registerErrors.confirmPassword)}
+                  {...registerRegister("confirmPassword", {
+                    required: "Confirm password is required",
+                    validate: (value) =>
+                      value === registerPassword ||
+                      "Passwords do not match",
+                  })}
+                />
+                {registerError ? (
+                  <p className="lg:col-span-2 text-sm text-rose-600">
+                    {registerError}
+                  </p>
+                ) : null}
+
+                {/* Full width button */}
+                <div className="lg:col-span-2">
+                  <Button
+                    className="w-full"
+                    disabled={isRegisterSubmitting}
+                    icon={Users}
+                  >
+                    {isRegisterSubmitting ? "Creating..." : "Create account"}
+                  </Button>
+                </div>
+              </form>
+            </div>
           )}
         </section>
+
       </div>
     </div>
   );

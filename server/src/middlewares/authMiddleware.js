@@ -29,6 +29,8 @@ export const protect = async (req, _res, next) => {
       lastSeenAt: new Date(),
     }).catch(() => { });
 
+    console.log("USER FOUND:", !!user);
+
     next();
   } catch (error) {
     next(new ApiError(401, "Invalid or expired token"));
